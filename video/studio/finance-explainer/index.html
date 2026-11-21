@@ -3,11 +3,20 @@
 <head>
 <meta charset="utf-8">
 <title>Kurkoos Finance: the product film</title>
-<!-- The product film shown in the finance system after sign-in and sign-out. 1920x1080, about a minute.
+<!-- The product film shown in the finance system after sign-in and sign-out. 1920x1080, about fifty seconds.
      Story: the promise, the problem, the answer, five things the system does for you, the name.
      Every position is a pure function of time (seek) and every time comes from the narration (timeline.js).
      The screens are screenshots of the local test system with demo data (docs/finance/EXPLAINER-VIDEO.md).
-     Rules of this film: one calm camera move per screen, cross-fades between screens, no sound effects at all. -->
+     v4 (2026-11-21), the owner's notes on v3: faster, sharper transitions, subtitles, the narrator to the very end.
+     Motion vocabulary, used everywhere and nowhere else:
+       CUT   a scene change on the navy background: the old scene leaves in 0.12 s, the new one arrives at once and
+             settles from a slightly larger size in 0.3 s (fast attack, clean stop). Every scene change is on a beat.
+       PUSH  a screen change inside the screen: the new screenshot slides in from the left in 0.32 s behind a red edge
+             (Hebrew reads right to left, so the next thing comes from the left) and the old one gives way.
+       SNAP  text: every word arrives whole, rising 22 px in 0.3 s; it leaves in 0.12 s. No masks, no bounces.
+     The overlays inside a screen (rows arriving, a status chip turning, the month counting, bars rising, folders
+     appearing, the report button pressed) are cut from the same screenshot and sit on the element they dramatise,
+     so they move with the camera. No number, name or claim that is not in the screenshot. No sound effects. -->
 <link rel="icon" href="data:,">
 <style>
   @font-face{font-family:"Almoni";font-weight:300;src:url(../../fonts/Almoni-300.ttf)}
@@ -19,28 +28,38 @@
   .abs{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform,opacity}
   .rtl{direction:rtl;text-align:right;unicode-bidi:plaintext}
   .mid{direction:rtl;text-align:center;unicode-bidi:plaintext}
-  /* type: one family, three sizes */
+  /* type: one family, a few sizes */
   .hero{font-weight:700;font-size:118px;line-height:1.06;white-space:nowrap}
   .title{font-weight:700;font-size:82px;line-height:1.08;width:580px}
   .wide{width:1400px}
-  .value{font-weight:300;font-size:40px;line-height:1.32;width:580px;color:#d3e2ea}
-  .lead{font-weight:300;font-size:46px;line-height:1.25;white-space:nowrap;color:#d3e2ea}
+  .value{font-weight:300;font-size:42px;line-height:1.3;width:580px;color:#d3e2ea}
+  .lead{font-weight:400;font-size:52px;line-height:1.25;white-space:nowrap;color:#8fb6c8;direction:rtl;display:flex;gap:16px}
+  /* the subtitles: one short chunk at a time, bottom centre, the word being said in white */
+  .sub{display:flex;gap:15px;direction:rtl;white-space:nowrap;font-weight:700;font-size:52px;line-height:1.15;padding:13px 32px 15px;
+    border-radius:20px;background:rgba(5,30,43,.80);box-shadow:0 0 0 1px rgba(143,182,200,.22),0 14px 34px rgba(0,0,0,.28)}
+  .sub span{color:#8fb6c8}
   /* the screen */
   #card{width:1140px;height:738px;border-radius:22px;overflow:hidden;background:#f3f5f7;box-shadow:0 40px 90px rgba(0,0,0,.42),0 0 0 1px rgba(255,255,255,.10)}
   #card .bar{position:absolute;left:0;top:0;width:100%;height:44px;background:#e6eaee;border-bottom:1px solid #d4dae0}
   #card .bar i{position:absolute;top:15px;width:14px;height:14px;border-radius:50%;background:#c4ccd4}
   #card .bar span{position:absolute;right:22px;top:11px;font-weight:400;font-size:19px;color:#4d6170;direction:rtl}
   #view{position:absolute;left:0;top:44px;width:1140px;height:694px;overflow:hidden;background:#fff}
-  #view .shot{position:absolute;left:0;top:0;width:1440px;transform-origin:0 0}
+  #view .shot{position:absolute;left:0;top:0;width:1440px;height:900px;transform-origin:0 0;overflow:hidden}
   #view .shot img{display:block;width:1440px;height:900px}
-  .glow{position:absolute;border:4px solid #a90b0c;border-radius:16px;box-sizing:border-box;box-shadow:0 0 0 3000px rgba(7,41,58,.34),0 0 0 10px rgba(169,11,12,.14)}
+  #edge{position:absolute;left:0;top:0;width:6px;height:694px;background:#a90b0c;box-shadow:0 0 24px rgba(169,11,12,.55)}
+  .o{position:absolute;transform-origin:50% 50%}
+  .clip{position:absolute;overflow:hidden}
+  .glow{position:absolute;left:0;top:0;border:4px solid #a90b0c;border-radius:14px;box-sizing:border-box;box-shadow:0 0 0 3000px rgba(7,41,58,.34),0 0 0 10px rgba(169,11,12,.14)}
+  .ring{position:absolute;border:3px solid #105572;border-radius:999px;box-sizing:border-box}
+  .count{position:absolute;font-weight:700;font-size:35px;line-height:1;color:#0b2b3c;direction:ltr;text-align:right;white-space:nowrap}
+  .scan{position:absolute;width:150px;background:linear-gradient(270deg,rgba(16,85,114,0),rgba(16,85,114,.10) 96%,#105572 96%)}
   .dots{display:flex;flex-direction:row-reverse;gap:10px}
   .dots i{width:44px;height:6px;border-radius:3px;background:rgba(143,182,200,.30)}
   .dots i.on{background:#f7f8fa}
   /* the problem: papers everywhere */
   .paper{width:230px;height:150px;border-radius:16px;background:#f7f8fa;color:#07293a;box-shadow:0 22px 50px rgba(0,0,0,.32);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-weight:700;font-size:30px}
   .paper svg{width:46px;height:46px}
-  .pain{font-weight:700;font-size:44px;white-space:nowrap;padding:16px 34px;border-radius:999px;border:2px solid rgba(143,182,200,.6);color:#f7f8fa}
+  .pain{font-weight:700;font-size:44px;white-space:nowrap;padding:14px 34px;border-radius:999px;border:2px solid rgba(143,182,200,.6);color:#f7f8fa}
   #phone{width:290px;height:600px;border-radius:44px;background:#0b1820;padding:12px;box-sizing:border-box;box-shadow:0 40px 80px rgba(0,0,0,.5)}
   #phone div{width:100%;height:100%;border-radius:34px;overflow:hidden;background:#fff}
   #phone img{display:block;width:100%}
@@ -52,10 +71,11 @@
 <div id="stage">
   <div id="intro" class="abs"></div>
   <div id="problem" class="abs"></div>
-  <div id="card" class="abs"><div class="bar"><i style="left:22px"></i><i style="left:46px"></i><i style="left:70px"></i><span>המספרים במסכים להדגמה בלבד</span></div><div id="view"></div></div>
+  <div id="card" class="abs"><div class="bar"><i style="left:22px"></i><i style="left:46px"></i><i style="left:70px"></i><span>המספרים במסכים להדגמה בלבד</span></div><div id="view"><div id="edge"></div></div></div>
   <div id="phone" class="abs"><div><img src="shots/phone.jpg" alt=""></div></div>
   <div id="text" class="abs"></div>
   <div id="outro" class="abs"></div>
+  <div id="subs" class="abs"></div>
   <div id="prog" class="abs"><i></i></div>
 </div>
 <script src="../lib/studio.js"></script>
@@ -68,11 +88,19 @@ const CFG = Studio.config({ durations: null })
 const $ = (id) => document.getElementById(id)
 const el = (parent, cls, html) => { const d = document.createElement('div'); d.className = cls; if (html != null) d.innerHTML = html; parent.appendChild(d); return d }
 const put = (node, x, y, o = 1, s = 1, r = 0) => { node.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) scale(${s.toFixed(4)}) rotate(${r.toFixed(3)}deg)`; node.style.opacity = clamp(o).toFixed(3) }
-const ease = (k) => { k = clamp(k); return k * k * k * (k * (k * 6 - 15) + 10) }        // a slow start and a slow stop
-const fade = (t, t0, t1, i = 0.6, o = 0.5) => smooth((t - t0) / i) * (1 - smooth((t - (t1 - o)) / o))
-const lift = (t, t0, d = 0.9, px = 28) => px * (1 - ease((t - t0) / d))
+const box = (node, x, y, w, h) => Object.assign(node.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' })
 
-// what the narrator says (the on-screen text is shorter: a title and one line of value)
+// ---- motion: fast attack, clean stop ----
+const outX = (k) => (k = clamp(k), k >= 1 ? 1 : (1 - Math.pow(2, -10 * k)) / (1 - Math.pow(2, -10)))   // expo out
+const outC = (k) => 1 - Math.pow(1 - clamp(k), 3)                                                    // cubic out
+const SNAP = 0.3, LEAVE = 0.12, PUSH = 0.32
+// visible from a (arriving in 0.14 s) until b (gone 0.12 s later)
+const vis = (t, a, b = 1e9) => clamp((t - a) / 0.14) * (1 - clamp((t - b) / LEAVE))
+const rise = (t, a, px = 22) => px * (1 - outX((t - a) / SNAP))
+// CUT: the scale a new scene settles from
+const settle = (t, a, from = 1.06) => lerp(from, 1, outX((t - a) / SNAP))
+
+// ---- what the narrator says, and how it is cut into subtitles (whole words; joined they are the sentence) ----
 const SAY = {
   v01: 'כל ההוצאות של הקבוצה. במקום אחד. בכל רגע.',
   v02: 'היום, חשבוניות מגיעות מכל כיוון. במייל, בוואטסאפ, בנייר. ושעות הולכות על חיפושים, הקלדות ומעקב.',
@@ -84,156 +112,327 @@ const SAY = {
   v08: 'וכל מסמך נשמר במקומו, וזמין מכל מקום. גם מהטלפון.',
   v09: 'קורקוס פיננס. פחות ניירת, יותר שליטה.',
 }
+const CHUNKS = {
+  v01: ['כל ההוצאות של הקבוצה.', 'במקום אחד.', 'בכל רגע.'],
+  v02: ['היום, חשבוניות מגיעות', 'מכל כיוון.', 'במייל, בוואטסאפ, בנייר.', 'ושעות הולכות', 'על חיפושים,', 'הקלדות ומעקב.'],
+  v03: ['קורקוס פיננס מרכזת', 'הכול במערכת אחת,', 'שעובדת בשבילכם.'],
+  v04: ['המסמכים נאספים לבד.', 'המערכת קוראת כל חשבונית,', 'וממלאת את הפרטים במקומכם.'],
+  v05: ['אתם רק מאשרים.', 'מה שדורש תשומת לב מסומן,', 'וכל השאר כבר מסודר.'],
+  v06: ['ובכל רגע,', 'תמונת מצב מלאה.', 'כמה הוצאנו החודש,', 'באיזו חברה,', 'ומה השתנה.'],
+  v07: ['בסוף החודש,', 'הדוח לרואה החשבון', 'כבר מוכן.', 'לחיצה אחת,', 'והוא בדרך.'],
+  v08: ['וכל מסמך נשמר במקומו,', 'וזמין מכל מקום.', 'גם מהטלפון.'],
+  v09: ['קורקוס פיננס.', 'פחות ניירת,', 'יותר שליטה.'],
+}
 const T = timeline(SAY, CFG.durations), DUR = T.duration
 
+// Word timing. Only a line's start and end are known, so the words share the line by their letters, and a comma or a
+// full stop adds the pause the narrator makes there. WT[id][chunk][word] = { a: start, b: end } in seconds.
+const WT = {}
+for (const id of Object.keys(CHUNKS)) {
+  const v = T.v[id], a0 = v.at + 0.06, a1 = v.end - 0.12
+  const words = CHUNKS[id].flatMap((c, ci) => c.split(' ').map((w, wi) => ({ ci, wi, w })))
+  const weight = (w) => w.replace(/[.,]/g, '').length + 1.2 + (/[.]$/.test(w) ? 4 : /,$/.test(w) ? 2.5 : 0)
+  const total = words.reduce((s, x) => s + weight(x.w), 0)
+  let acc = 0; WT[id] = CHUNKS[id].map(() => [])
+  for (const x of words) { const s = a0 + (a1 - a0) * acc / total; acc += weight(x.w); WT[id][x.ci][x.wi] = { a: s, b: a0 + (a1 - a0) * acc / total } }
+}
+const word = (id, c, w = 0) => WT[id][c][w].a                 // when a word starts
+const chunkAt = (id, c) => WT[id][c][0].a
+const chunkEnd = (id, c) => WT[id][c][WT[id][c].length - 1].b
+
 /* ---------- five things the system does for you ----------
-   One screen each, already framed on its clean part (no menus, no clutter), and one calm camera move.
-   cam: [[part of the sentence 0..1, zoom, centre x, centre y], …] in the screenshot's own pixels (1440 x 900).
-   glow: [[from, to, x, y, w, h], …] the place the sentence is about, lit while it is said (parts of the sentence). */
+   One screen each, framed on its clean part, with one continuous camera move (zoom, centre in the screenshot's own
+   1440 x 900 pixels) and the overlays that make it live. Each overlay is defined in the screenshot's pixels. */
 const FEATURES = [
-  { shot: 'today', title: 'הכול נאסף לבד', value: 'כל חשבונית נקראת ונרשמת,<br>בלי להקליד דבר',
-    cam: [[0, 1.3, 640, 740], [1, 1.5, 780, 740]], glow: [[0.42, 1.05, 476, 596, 688, 300]] },
-  { shot: 'documents', title: 'אתם רק מאשרים', value: 'מה שדורש תשומת לב מסומן.<br>כל השאר כבר מסודר',
-    cam: [[0, 1.3, 760, 430], [1, 1.5, 800, 440]], glow: [[0.3, 1.05, 690, 250, 92, 330]] },
-  { shot: 'home2', title: 'תמונת מצב<br>בכל רגע', value: 'כמה הוצאנו, באיזו חברה,<br>ומה השתנה',
-    cam: [[0, 1.42, 800, 340], [0.62, 1.42, 800, 340], [1, 1.42, 760, 700]], glow: [[0.26, 0.5, 762, 274, 400, 236], [0.5, 0.72, 174, 176, 990, 76], [0.8, 1.08, 376, 540, 786, 360]] },
-  { shot: 'report', title: 'הדוח מוכן.<br>בלחיצה אחת', value: 'לרואה החשבון,<br>בסוף כל חודש',
-    cam: [[0, 1.3, 760, 600], [1, 1.5, 820, 720]], glow: [[0.55, 1.05, 696, 822, 438, 60]] },
-  { shot: 'drive', title: 'כל מסמך במקומו', value: 'ארכיון מסודר,<br>זמין גם מהטלפון',
-    cam: [[0, 1.3, 560, 560], [1, 1.42, 520, 590]], glow: [[0.12, 0.6, 46, 458, 862, 246]] },
+  { shot: 'today', title: 'הכול נאסף לבד', value: 'בלי להקליד דבר' },
+  { shot: 'documents', title: 'אתם רק מאשרים', value: 'כל השאר כבר מסודר' },
+  { shot: 'home2', title: 'תמונת מצב<br>בכל רגע', value: 'לפי חברה ולפי חודש' },
+  { shot: 'report', title: 'הדוח מוכן.<br>בלחיצה אחת', value: 'לרואה החשבון, בכל חודש' },
+  { shot: 'drive', title: 'כל מסמך במקומו', value: 'זמין גם מהטלפון' },
 ]
 FEATURES.forEach((f, k) => Object.assign(f, T.features[k], { v: T.v[T.features[k].id] }))
-const at = (f, part) => f.v.at + part * (f.v.end - f.v.at)      // a part of the sentence, as a time
 const CARD = { x: 84, y: 196, w: 1140, h: 694 }                   // where the screen rests while the features play
 const TEXT = { right: 1836 }
+const SUB = { y: 940 }                                            // the subtitles' top; the screen ends at 890
 
 const ICON = {
   mail: '<svg viewBox="0 0 24 24" fill="none" stroke="#105572" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
   chat: '<svg viewBox="0 0 24 24" fill="none" stroke="#1f8f4e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-12 7l-5 1 1-5a8 8 0 1 1 16-3z"/></svg>',
   paper: '<svg viewBox="0 0 24 24" fill="none" stroke="#a90b0c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg>',
   sheet: '<svg viewBox="0 0 24 24" fill="none" stroke="#8a6d1c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg>',
+  plane: '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#07293a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>',
 }
 const N = {}
+
+// pieces of a screenshot, at their own place in it: a patch of plain colour, a slice of the picture, a stretched column
+const patch = (p, x, y, w, h, c = '#fff') => { const d = el(p, 'o'); box(d, x, y, w, h); d.style.background = c; return d }
+const slice = (p, file, x, y, w, h, cls = 'o') => {
+  const d = el(p, cls); box(d, x, y, w, h)
+  Object.assign(d.style, { backgroundImage: `url(shots/${file}.jpg)`, backgroundSize: '1440px 900px', backgroundPosition: `${-x}px ${-y}px` })
+  return d
+}
+const column = (p, file, sx0, sx1, x, y, w, h) => {      // the picture of an empty column (gridlines only), stretched to w
+  const d = el(p, 'o'), k = w / (sx1 - sx0); box(d, x, y, w, h)
+  Object.assign(d.style, { backgroundImage: `url(shots/${file}.jpg)`, backgroundSize: `${1440 * k}px 900px`, backgroundPosition: `${-sx0 * k}px ${-y}px` })
+  return d
+}
+const sc = (node, s, o = 1, dx = 0, dy = 0, r = 0) => { node.style.transform = `translate(${dx.toFixed(2)}px,${dy.toFixed(2)}px) scale(${s.toFixed(4)}) rotate(${r.toFixed(2)}deg)`; node.style.opacity = clamp(o).toFixed(3) }
 
 async function build() {
   // the promise
   N.logo = el($('intro'), 'abs', '<img src="../../assets/logo-white.png" style="display:block;width:150px" alt="">')
   N.promise = ['כל ההוצאות של הקבוצה', 'במקום אחד', 'בכל רגע'].map((x) => el($('intro'), 'abs hero rtl', x))
   // the problem
-  N.probTitle = el($('problem'), 'abs title wide mid', 'חשבוניות מגיעות מכל כיוון')
+  N.probTitle = el($('problem'), 'abs title wide mid', 'חשבוניות מכל כיוון')
   N.papers = [['mail', 'במייל'], ['chat', 'בוואטסאפ'], ['paper', 'בנייר'], ['sheet', 'בטבלאות'], ['paper', 'במגירה'], ['mail', 'בעוד מייל']].map(([i, x]) => el($('problem'), 'abs paper', ICON[i] + `<span class="rtl">${x}</span>`))
   N.pains = ['חיפושים', 'הקלדות', 'מעקב'].map((x) => el($('problem'), 'abs pain rtl', x))
   // the answer
   N.ansTitle = el($('text'), 'abs title wide mid', 'מערכת אחת')
-  N.ansLead = el($('text'), 'abs lead mid', 'שעובדת בשבילכם')
   // the screens: the overview appears twice (behind the answer, and as the third feature), so it has two layers
   N.shots = {}
-  for (const [name, file] of [['home', 'home'], ['today', 'today'], ['documents', 'documents'], ['home2', 'home'], ['report', 'report'], ['drive', 'drive']]) N.shots[name] = el($('view'), 'shot', `<img src="shots/${file}.jpg" alt="">`)
+  for (const [name, file] of [['home', 'home'], ['today', 'today'], ['documents', 'documents'], ['home2', 'home'], ['report', 'report'], ['drive', 'drive']]) {
+    N.shots[name] = el($('view'), 'shot', `<img src="shots/${file}.jpg" alt="">`); N.shots[name].file = file
+  }
+  $('view').appendChild($('edge'))
+  const [F1, F2, F3, F4, F5] = FEATURES
+  for (const f of FEATURES) { f.node = N.shots[f.shot]; f.o = {} }
+  // 1. the latest documents arrive in the list one by one; the newest is read and its details are filled in
+  { const p = F1.node, o = F1.o
+    o.blank = patch(p, 484, 652, 670, 250)
+    o.rows = [[719, 787], [787, 854], [854, 900]].map(([a, b]) => slice(p, 'today', 484, a, 670, b - a))
+    o.icon = slice(p, 'today', 1088, 656, 60, 62)
+    o.name = slice(p, 'today', 936, 656, 152, 62)
+    o.sum = slice(p, 'today', 488, 656, 84, 62)
+    o.scan = el(p, 'scan'); box(o.scan, 0, 659, 150, 56) }
+  // 2. a document waiting for review is approved: its chip turns from "לבדיקה" to "מוכן לרו״ח"; the others are marked
+  { const p = F2.node, o = F2.o
+    o.cover = patch(p, 690, 482, 78, 30)
+    o.amber = slice(p, 'documents', 706, 484, 60, 26)
+    o.green = slice(p, 'documents', 692, 270, 72, 26); o.green.style.top = '483px'
+    o.press = el(p, 'ring'); box(o.press, 690, 478, 80, 40)
+    o.marks = [[703, 620], [703, 762]].map(([x, y]) => { const d = el(p, 'ring'); box(d, x, y, 66, 34); d.style.borderColor = '#a90b0c'; return d }) }
+  // 3. the month counts up to the number printed in the screenshot, the lit area moves to the companies, the bars rise
+  { const p = F3.node, o = F3.o
+    o.numCover = patch(p, 946, 332, 190, 44)
+    o.count = el(p, 'count'); box(o.count, 940, 336, 192, 36)
+    const bars = [[442, 477, 788], [502, 536, 821], [561, 595, 835], [620, 655, 860], [680, 714, 850], [739, 773, 875], [800, 832, 896]]
+    o.bars = bars.map(([x0, x1, top]) => {
+      const x = x0 - 5, w = x1 - x0 + 10, y = top - 34, h = 900 - y
+      column(p, 'home', 483, 499, x, y, w, h)
+      const c = el(p, 'clip'); box(c, x, y, w, h)
+      const s = slice(c, 'home', x, y, w, h); s.style.left = '0px'; s.style.top = '0px'
+      return { s, h }
+    }) }
+  // 4. the summary is ready, the send button is pressed, and the report is on its way
+  { const p = F4.node, o = F4.o
+    o.kpiCover = patch(p, 64, 662, 1064, 70)
+    o.kpis = [[976, 1122], [825, 972], [673, 820], [521, 669], [371, 517], [219, 366], [68, 214]].map(([a, b]) => slice(p, 'report', a, 663, b - a, 68))
+    o.btn = slice(p, 'report', 702, 827, 169, 48)
+    o.iconCover = patch(p, 836, 840, 24, 22)
+    o.press = el(p, 'ring'); box(o.press, 702, 827, 169, 48); o.press.style.borderRadius = '14px'
+    o.plane = el(p, 'o', ICON.plane); box(o.plane, 833, 836, 30, 30) }
+  // 5. the archive's folders appear in place
+  { const p = F5.node, o = F5.o
+    o.cover = patch(p, 44, 456, 868, 236)
+    const cols = [[624, 905], [336, 618], [49, 330]], rows = [[460, 572], [570, 684]]
+    o.folders = rows.flatMap(([y0, y1]) => cols.map(([x0, x1]) => slice(p, 'drive', x0, y0, x1 - x0, y1 - y0))) }
+  // the lit area, one per screen, above everything inside it
+  for (const f of FEATURES) f.glowNode = el(f.node, 'glow')
   for (const f of FEATURES) {
-    f.node = N.shots[f.shot]
-    f.glows = f.glow.map((g) => { const d = el(f.node, 'glow'); Object.assign(d.style, { left: g[2] + 'px', top: g[3] + 'px', width: g[4] + 'px', height: g[5] + 'px' }); return d })
     f.titleNode = el($('text'), 'abs title rtl', f.title)
     f.valueNode = el($('text'), 'abs value rtl', f.value)
   }
   N.dots = el($('text'), 'abs dots', FEATURES.map(() => '<i></i>').join(''))
-  // the name
+  // the name, said word by word
   N.endLogo = el($('outro'), 'abs', '<img src="../../assets/logo-white.png" style="display:block;width:200px" alt="">')
   N.endName = el($('outro'), 'abs hero', 'Kurkoos Finance')
-  N.endLine = el($('outro'), 'abs lead mid', 'פחות ניירת, יותר שליטה')
+  N.endLine = el($('outro'), 'abs lead', '<span>פחות ניירת,</span><span>יותר שליטה</span>')
+  // the subtitles: one element per chunk, one span per word
+  N.subs = []
+  for (const id of Object.keys(CHUNKS)) if (id !== 'v01' && id !== 'v09')
+    CHUNKS[id].forEach((c, ci) => { const d = el($('subs'), 'abs sub', c.split(' ').map((w) => `<span>${w}</span>`).join('')); d.id_ = id; d.ci = ci; N.subs.push(d) })
   await Promise.all([...document.images].map((i) => i.decode().catch(() => {})))
   // measure once: text is placed by its own size
   for (const d of document.querySelectorAll('#stage .abs')) { d.style.transform = 'none'; d._w = d.offsetWidth; d._h = d.offsetHeight }
 }
-const centre = (n, y, o, dy = 0) => put(n, (W - n._w) / 2, y + dy, o)
+const centre = (n, y, o, dy = 0, s = 1) => put(n, (W - n._w * s) / 2, y + dy + n._h * (1 - s) / 2, o, s)
 const right = (n, y, o, dy = 0) => put(n, TEXT.right - n._w, y + dy, o)
 
-// the camera inside the screen: zoom and centre, kept inside the screenshot
-function frame(node, z, cx, cy) {
-  const sc = (CARD.w / 1440) * z
-  const x = clamp(CARD.w / 2 - cx * sc, CARD.w - 1440 * sc, 0), y = clamp(CARD.h / 2 - cy * sc, CARD.h - 900 * sc, 0)
-  node.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) scale(${sc.toFixed(4)})`
+// the camera inside the screen: zoom and centre, kept inside the screenshot; dx shifts the whole pane (PUSH)
+function frame(node, z, cx, cy, dx = 0) {
+  const s = (CARD.w / 1440) * z
+  const x = clamp(CARD.w / 2 - cx * s, CARD.w - 1440 * s, 0), y = clamp(CARD.h / 2 - cy * s, CARD.h - 900 * s, 0)
+  node.style.transform = `translate(${(x + dx).toFixed(2)}px,${y.toFixed(2)}px) scale(${s.toFixed(4)})`
 }
-// a path through keys [[time, …values]] with a slow start and stop on every leg
-function along(t, keys) {
-  if (t <= keys[0][0]) return keys[0].slice(1)
-  for (let i = 1; i < keys.length; i++) if (t <= keys[i][0]) { const k = ease((t - keys[i - 1][0]) / (keys[i][0] - keys[i - 1][0])); return keys[i].slice(1).map((v, n) => lerp(keys[i - 1][n + 1], v, k)) }
-  return keys[keys.length - 1].slice(1)
+// a camera path: keys [[time, zoom, cx, cy], …]: the frame holds, and at each key's time it moves to the key's framing
+// in 0.8 s (fast attack, clean stop); under it a slow push-in never stops, so the screen is never still
+function cam(t, f, keys) {
+  let v = keys[0].slice(1)
+  for (let i = 1; i < keys.length; i++) { const k = outC((t - keys[i][0]) / 0.8); v = v.map((x, n) => lerp(x, keys[i][n + 1], k)) }
+  return [v[0] * (1 + 0.012 * Math.max(0, t - f.t0)), v[1], v[2]]
 }
+// the lit area: a rectangle that can travel from one place to the next ([[time, x, y, w, h], …]) and fades in and out
+function glow(node, t, keys, a, b) {
+  let r = keys[0].slice(1)
+  for (let i = 1; i < keys.length; i++) { const k = outX((t - keys[i][0]) / 0.42); r = r.map((x, n) => lerp(x, keys[i][n + 1], k)) }
+  box(node, r[0], r[1], r[2], r[3]); node.style.opacity = (smooth((t - a) / 0.3) * (1 - smooth((t - b) / 0.3))).toFixed(3)
+}
+const ring = (node, t, a, grow = 0.25) => { const k = clamp((t - a) / 0.5); sc(node, 1 + grow * outC(k), k > 0 && k < 1 ? 0.9 * (1 - k) : 0) }
+
+// what happens inside each screen
+const PLAY = [
+  (t, f) => { // 1. collected by themselves, read, filled in
+    const o = f.o, c0 = word('v04', 0, 1), cr = chunkAt('v04', 1)
+    frame(f.node, ...cam(t, f, [[f.t0, 1.3, 800, 700], [cr - 0.2, 1.45, 820, 760]]), f.dx)
+    o.rows.forEach((r, i) => { const a = c0 + 0.14 * (i + 1); sc(r, 1, vis(t, a), 0, -26 * (1 - outX((t - a) / SNAP))) })
+    sc(o.icon, 1, vis(t, c0), 0, -26 * (1 - outX((t - c0) / SNAP)))
+    ;[o.name, o.sum].forEach((d, i) => { const a = word('v04', 2, 1 + i * 2) - 0.05; sc(d, 1, vis(t, a), 0, 14 * (1 - outX((t - a) / SNAP))) })
+    const k = clamp((t - word('v04', 1, 1)) / 0.7); sc(o.scan, 1, k > 0 && k < 1 ? 1 : 0, lerp(1004, 484, outC(k)))
+    glow(f.glowNode, t, [[0, 478, 646, 682, 260]], c0, f.t1)
+  },
+  (t, f) => { // 2. you only approve; what needs attention is marked
+    const o = f.o, a = word('v05', 0, 2) - 0.1, m = word('v05', 1, 4)
+    frame(f.node, ...cam(t, f, [[f.t0, 1.5, 880, 480], [chunkAt('v05', 1) - 0.2, 1.62, 860, 560]]), f.dx)
+    const dip = clamp((t - a) / 0.09), up = clamp((t - a - 0.09) / 0.12)
+    sc(o.amber, (1 - 0.1 * dip) * (1 - 0.3 * up), 1 - up)
+    sc(o.green, lerp(0.7, 1, outX((t - a - 0.09) / 0.26)), clamp((t - a - 0.09) / 0.1))
+    o.cover.style.opacity = t >= a + 0.09 ? '1' : '0'
+    ring(o.press, t, a + 0.09)
+    o.marks.forEach((d, i) => ring(d, t, m + 0.12 * i, 0.3))
+    glow(f.glowNode, t, [[0, 684, 252, 92, 560]], chunkAt('v05', 1) - 0.1, f.t1)
+  },
+  (t, f) => { // 3. the whole picture: how much this month, which company, what changed
+    const o = f.o, c0 = chunkAt('v06', 1), c1 = chunkEnd('v06', 2), ch = chunkAt('v06', 4)
+    frame(f.node, ...cam(t, f, [[f.t0, 1.36, 680, 360], [ch, 1.36, 640, 640]]), f.dx)
+    const k = outC((t - c0) / (c1 - c0)), done = t >= c1
+    o.count.textContent = (216880.52 * k).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    o.count.style.opacity = done ? '0' : '1'; o.numCover.style.opacity = done ? '0' : '1'
+    o.bars.forEach((b, i) => { const a = ch + 0.06 * (6 - i); b.s.style.transform = `translateY(${(b.h * (1 - outX((t - a) / 0.45))).toFixed(2)}px)` })
+    glow(f.glowNode, t, [[0, 896, 322, 250, 92], [chunkAt('v06', 3) - 0.05, 172, 172, 992, 80], [ch - 0.05, 428, 736, 420, 170]], c0 - 0.1, f.t1)
+  },
+  (t, f) => { // 4. the report is ready; one click and it is on its way
+    const o = f.o, r = chunkAt('v07', 1), p = word('v07', 3, 0), g = chunkAt('v07', 4)
+    frame(f.node, ...cam(t, f, [[f.t0, 1.32, 700, 640], [p - 0.45, 1.62, 820, 790]]), f.dx)
+    o.kpis.forEach((d, i) => { const a = r + 0.05 * i; sc(d, lerp(0.88, 1, outX((t - a) / SNAP)), vis(t, a)) })
+    const dn = clamp((t - p) / 0.08), up = outC((t - p - 0.08) / 0.22); sc(o.btn, 1 - 0.06 * dn + 0.06 * up)
+    ring(o.press, t, p + 0.08, 0.12)
+    const fly = clamp((t - g) / 0.75), e = fly * fly
+    o.iconCover.style.opacity = t >= g ? '1' : '0'
+    sc(o.plane, 1 + 0.6 * e, t >= g && fly < 1 ? 1 - smooth((fly - 0.7) / 0.3) : 0, -160 * e, -330 * e, -12 * e)
+    glow(f.glowNode, t, [[0, 60, 656, 1072, 82], [p - 0.25, 692, 818, 446, 66]], chunkAt('v07', 2) - 0.1, f.t1)
+  },
+  (t, f) => { // 5. every document in its place, and on the phone too
+    const o = f.o, a = word('v08', 0, 2)
+    frame(f.node, ...cam(t, f, [[f.t0, 1.4, 480, 560], [chunkAt('v08', 1) - 0.2, 1.5, 480, 575]]), f.dx)
+    o.folders.forEach((d, i) => { const s = a + 0.07 * i; sc(d, lerp(0.84, 1, Studio.step(t - s, { f: 2.6, z: 0.7 })), vis(t, s)) })
+    glow(f.glowNode, t, [[0, 40, 452, 876, 240]], a - 0.1, f.t1 + 1)
+  },
+]
 
 function seek(t) {
   const I = T.intro, P = T.problem, A = T.answer, O = T.outro, F0 = FEATURES[0], FL = FEATURES[FEATURES.length - 1]
-  // ---- the promise: three short lines, each arriving with its words ----
-  { const v = T.v.v01, span = (v.end - v.at) / 3, top = 330
-    put(N.logo, (W - N.logo._w) / 2, 96, fade(t, 0.1, I.t1))
-    N.promise.forEach((d, i) => { const a = v.at - 0.15 + i * span; centre(d, top + i * 138, fade(t, a, I.t1, 0.5), lift(t, a)); d.style.color = i === 0 ? '#f7f8fa' : '#8fb6c8' }) }
-  // ---- the problem: papers everywhere, and three things that eat the day ----
-  { const v = T.v.v02
-    centre(N.probTitle, 120, fade(t, P.t0 + 0.1, P.t1, 0.6, 0.6), lift(t, P.t0 + 0.1))
-    const home = [[1320, 390, -7], [820, 360, 5], [330, 410, -4], [1120, 620, 6], [560, 650, -6], [1500, 680, 4]]
+  // ---- the promise: three lines, each arriving with its words; the line being said is white ----
+  { const top = 330, cut = I.t1 - LEAVE
+    centre(N.logo, 96, vis(t, 0.05, cut), 0, settle(t, 0.05))
+    N.promise.forEach((d, i) => { const a = chunkAt('v01', i) - 0.08; centre(d, top + i * 138, vis(t, a, cut), rise(t, a)); d.style.color = i === 2 || t < chunkAt('v01', i + 1) ? '#f7f8fa' : '#8fb6c8' }) }
+  // ---- the problem: papers fly in from every side, three of them on their words; then three things that eat the day ----
+  { const v = T.v.v02, gone = A.t0
+    centre(N.probTitle, 120, vis(t, P.t0, gone - LEAVE), 0, settle(t, P.t0))
+    const home = [[1350, 360, -7], [960, 330, 5], [560, 380, -4], [1180, 600, 6], [720, 620, -6], [1560, 610, 4], [330, 600, 3]]
+    const land = [word('v02', 2, 0), word('v02', 2, 1), word('v02', 2, 2), word('v02', 0, 2), word('v02', 1, 0), word('v02', 1, 1)]
     N.papers.forEach((d, i) => {
-      const a = P.t0 + 0.5 + i * 0.32, drift = t - P.t0
-      // towards the answer they come together and fade: one place for all of them
-      const pull = ease((t - (P.t1 - 0.9)) / 1.3)
-      const x = lerp(home[i][0] - 115 + 16 * Math.sin(drift * 0.5 + i * 1.7), W / 2 - 115, pull)
-      const y = lerp(home[i][1] - 75 + 12 * Math.cos(drift * 0.45 + i * 1.3), 470, pull)
-      put(d, x, y + lift(t, a, 0.9, 40), smooth((t - a) / 0.6) * (1 - smooth((t - (P.t1 - 0.4)) / 0.9)), lerp(1, 0.7, pull), lerp(home[i][2] + 1.5 * Math.sin(drift * 0.4 + i), 0, pull))
+      const a = land[i] - 0.12, k = outX((t - a) / 0.36), drift = t - a
+      const [hx, hy, hr] = home[i], dirx = (hx - W / 2) / 600, diry = (hy - 470) / 300
+      // CUT into the answer: they all fly into the middle, where the system appears
+      const pull = outX((t - gone) / 0.3)
+      const x = lerp(hx - 115 + dirx * 300 * (1 - k) + 10 * Math.sin(drift * 0.6 + i), W / 2 - 115, pull)
+      const y = lerp(hy - 75 + diry * 200 * (1 - k) + 8 * Math.cos(drift * 0.5 + i), 520, pull)
+      put(d, x, y, clamp((t - a - 0.04) / 0.1) * (1 - clamp((t - gone - 0.18) / 0.12)), lerp(1, 0.35, pull), lerp(hr + 14 * (1 - k), 0, pull))
     })
-    const p0 = v.at + (v.end - v.at) * 0.62, gap = (v.end - p0) / 3, total = N.pains.reduce((s, d) => s + d._w, 0) + 2 * 28
+    const total = N.pains.reduce((s, d) => s + d._w, 0) + 2 * 28, pw = [word('v02', 4, 1), word('v02', 5, 0), word('v02', 5, 1)]
     let x = (W + total) / 2
-    N.pains.forEach((d, i) => { x -= d._w; const a = p0 + i * gap - 0.1; put(d, x, 880 + lift(t, a, 0.7, 20), fade(t, a, P.t1, 0.4, 0.5)); x -= 28 }) }
-  // ---- the screen: born in the middle as the answer, then moves aside and stays for all five ----
-  { const k = ease((t - (F0.t0 - 0.1)) / 1.0), out = ease((t - (O.t0 - 0.1)) / 1.0)
-    const s = lerp(0.74, 1, k) * lerp(1, 0.94, out)
+    N.pains.forEach((d, i) => { x -= d._w; const a = pw[i] - 0.08; { const s = settle(t, a, 1.12); put(d, x - d._w * (s - 1) / 2, 770 + rise(t, a, 18) - d._h * (s - 1) / 2, vis(t, a, gone - LEAVE), s) }; x -= 28 }) }
+  // ---- the screen: cut in as the answer, then it moves aside and stays for all five ----
+  { const k = outX((t - F0.t0) / 0.45), out = clamp((t - O.t0 + 0.16) / 0.16)
+    const s = lerp(lerp(0.66, 0.74, outX((t - A.t0 - 0.12) / SNAP)), 1, k) * lerp(1, 0.92, out)
     const x = lerp((W - CARD.w * 0.74) / 2, CARD.x, k), y = lerp(330, CARD.y - 44, k)
-    const o = smooth((t - (A.t0 + 0.25)) / 0.9) * (1 - smooth((t - (O.t0 - 0.1)) / 0.8))
-    put($('card'), x, y + 46 * (1 - ease((t - (A.t0 + 0.25)) / 1.1)), o, s)
-    centre(N.ansTitle, 96, fade(t, A.t0 + 0.2, F0.t0 + 0.2, 0.7, 0.5), lift(t, A.t0 + 0.2))
-    centre(N.ansLead, 196, fade(t, A.t0 + 0.7, F0.t0 + 0.2, 0.7, 0.5), lift(t, A.t0 + 0.7)) }
-  // ---- inside the screen: the overview behind the answer, then one screen per feature, each fading in over the last ----
-  { N.shots.home.style.opacity = 1; N.shots.home.style.zIndex = 1; frame(N.shots.home, 1, 720, 450)
+    put($('card'), x + (1 - lerp(1, 0.92, out)) * CARD.w / 2, y + (1 - lerp(1, 0.92, out)) * 369, clamp((t - A.t0 - 0.12) / 0.12) * (1 - out), s)
+    centre(N.ansTitle, 110, vis(t, A.t0 + 0.12, F0.t0), rise(t, A.t0 + 0.12)) }
+  // ---- inside the screen: the overview behind the answer, then one screen per feature, each PUSHed in from the left ----
+  { frame(N.shots.home, 1.0 + 0.04 * clamp((t - A.t0) / (F0.t0 - A.t0)), 720, 450, 0.3 * CARD.w * outX((t - F0.t0) / PUSH))
+    N.shots.home.style.zIndex = 1
+    let edge = -1
     FEATURES.forEach((f, k) => {
+      const p = outX((t - f.t0) / PUSH), next = FEATURES[k + 1]
       f.node.style.zIndex = 2 + k
-      f.node.style.opacity = smooth((t - (f.t0 + 0.1)) / 0.8).toFixed(3)
-      const [z, cx, cy] = along(t, f.cam.map(([part, ...c]) => [part === 0 ? f.t0 : at(f, part), ...c]))
-      frame(f.node, z, cx, cy)
-      f.glows.forEach((g, i) => { const [a, b] = f.glow[i]; g.style.opacity = (smooth((t - at(f, a)) / 0.5) * (1 - smooth((t - (at(f, b) - 0.5)) / 0.5))).toFixed(3) })
-    }) }
+      f.node.style.opacity = t >= f.t0 && (!next || t < next.t0 + PUSH) ? '1' : '0'
+      f.dx = -(1 - p) * CARD.w + (next ? 0.3 * CARD.w * outX((t - next.t0) / PUSH) : 0)
+      PLAY[k](t, f)
+      if (t >= f.t0 && p < 0.999) edge = p * CARD.w
+    })
+    $('edge').style.transform = `translateX(${(edge - 3).toFixed(2)}px)`; $('edge').style.opacity = edge < 0 ? '0' : '1' }
   // ---- the words next to the screen ----
   FEATURES.forEach((f, k) => {
-    const a = f.t0 + 0.35, b = k === FEATURES.length - 1 ? O.t0 + 0.1 : f.t1 + 0.25
-    f.top = (H - (f.titleNode._h + 26 + f.valueNode._h)) / 2 - 6
-    right(f.titleNode, f.top, fade(t, a, b, 0.6, 0.45), lift(t, a))
-    right(f.valueNode, f.top + f.titleNode._h + 26, fade(t, a + 0.35, b, 0.6, 0.45), lift(t, a + 0.35))
+    const a = f.t0 + 0.08, b = (k === FEATURES.length - 1 ? O.t0 : f.t1) - LEAVE
+    f.top = (H - (f.titleNode._h + 26 + f.valueNode._h)) / 2 - 30
+    right(f.titleNode, f.top, vis(t, a, b), rise(t, a))
+    right(f.valueNode, f.top + f.titleNode._h + 26, vis(t, a + 0.1, b), rise(t, a + 0.1))
   })
-  { const cur = FEATURES.findIndex((f) => t >= f.t0 + 0.2 && t < f.t1 + 0.2)
-    right(N.dots, 330, fade(t, F0.t0 + 0.4, O.t0 + 0.1, 0.6, 0.4))
+  { const cur = FEATURES.findIndex((f) => t >= f.t0 && t < f.t1)
+    right(N.dots, 300, vis(t, F0.t0 + 0.1, O.t0 - LEAVE))
     ;[...N.dots.children].forEach((d, i) => { d.className = i === cur ? 'on' : '' }) }
-  // the phone, when the sentence reaches it
-  { const a = at(FL, 0.45), p = ease((t - a) / 1.0); put($('phone'), 900, 290 + 90 * (1 - p), smooth((t - a) / 0.6) * (1 - smooth((t - (O.t0 - 0.1)) / 0.7))) }
-  // ---- the name ----
-  { const a = O.t0 + 0.7, top = 250
-    centre(N.endLogo, top, fade(t, a, DUR + 2, 0.8), lift(t, a))
-    centre(N.endName, top + N.endLogo._h + 50, fade(t, a + 0.4, DUR + 2, 0.8), lift(t, a + 0.4))
-    centre(N.endLine, top + N.endLogo._h + 50 + N.endName._h + 26, fade(t, a + 1.0, DUR + 2, 0.8), lift(t, a + 1.0)) }
+  // the phone, on its words
+  { const a = chunkAt('v08', 2) - 0.1, p = outX((t - a) / 0.42), out = clamp((t - O.t0 + 0.16) / 0.16)
+    put($('phone'), lerp(-340, 950, p), 290, clamp((t - a) / 0.1) * (1 - out)) }
+  // ---- the name: the logo cuts in, then the words as they are said ----
+  { const a = O.t0 + 0.05, top = 250
+    centre(N.endLogo, top, vis(t, a), 0, settle(t, a))
+    const n = word('v09', 0, 0) - 0.08
+    centre(N.endName, top + N.endLogo._h + 50, vis(t, n), rise(t, n))
+    const l = chunkAt('v09', 1) - 0.08
+    centre(N.endLine, top + N.endLogo._h + 50 + N.endName._h + 26, vis(t, l), rise(t, l))
+    ;[...N.endLine.children].forEach((s, i) => { s.style.color = t >= chunkAt('v09', 1 + i) - 0.05 ? '#f7f8fa' : '#8fb6c8' }) }
+  // ---- the subtitles: the chunk being said; the word being said and the ones before it in white ----
+  for (const d of N.subs) {
+    const id = d.id_, ci = d.ci, v = T.v[id], last = ci === CHUNKS[id].length - 1
+    const a = chunkAt(id, ci) - 0.04, b = last ? v.end + 0.2 : chunkAt(id, ci + 1) - 0.04
+    const on = t >= a && t < b
+    put(d, (W - d._w) / 2, SUB.y, on ? 1 : 0)
+    if (on) [...d.children].forEach((s, wi) => { s.style.color = t >= WT[id][ci][wi].a - 0.04 ? '#f7f8fa' : '#8fb6c8' })
+  }
   $('prog').firstChild.style.transform = `scaleX(${clamp(t / DUR).toFixed(4)})`
 }
 
-// every text stays inside the frame, and the words next to the screen never touch it
+// every text stays inside the frame, the words next to the screen never touch it, and the subtitles cover nothing
 function check(t) {
-  const bad = []
-  for (const d of document.querySelectorAll('#text .abs, #intro .abs, #outro .abs, #problem .abs')) {
-    if (+d.style.opacity < 0.05) continue
+  const bad = [], seen = (d) => +d.style.opacity >= 0.05 && getComputedStyle(d).opacity !== '0'
+  const hit = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
+  const texts = [...document.querySelectorAll('#text .abs, #intro .abs, #outro .abs, #problem .abs')].filter(seen)
+  for (const d of texts) {
     const r = d.getBoundingClientRect(), name = d.textContent.trim().slice(0, 24)
     if (r.left < 40 || r.right > W - 40 || r.top < 30 || r.bottom > H - 24) bad.push(`out of frame: ${name}`)
     const side = FEATURES.some((f) => f.titleNode === d || f.valueNode === d)
     if (side && r.left < CARD.x + CARD.w + 30) bad.push(`text over the screen: ${name} (${Math.round(r.left)})`)
   }
+  const subs = N.subs.filter(seen)
+  if (subs.length > 1) bad.push('two subtitles at once')
+  for (const s of subs) {
+    const r = s.getBoundingClientRect(), name = 'subtitle ' + s.textContent.slice(0, 20)
+    if (r.left < 60 || r.right > W - 60 || r.bottom > H - 30) bad.push(`out of frame: ${name}`)
+    if (r.height > 100) bad.push(`subtitle on two lines: ${name}`)
+    for (const d of texts) if (hit(r, d.getBoundingClientRect())) bad.push(`${name} over ${d.textContent.trim().slice(0, 20)}`)
+    for (const n of [$('card'), $('phone')]) if (seen(n) && hit(r, n.getBoundingClientRect())) bad.push(`${name} over the ${n.id}`)
+  }
   return bad
 }
 
+const mid = (f) => f.t0 + PUSH / 2
 Studio.define({ w: W, h: H, duration: DUR,
-  stages: [{ t: T.intro.t1 - 0.9, label: 'promise' }, { t: (T.problem.t0 + T.problem.t1) / 2, label: 'problem' }, { t: T.problem.t1 - 1.1, label: 'pains' }, { t: T.answer.t1 - 0.9, label: 'answer' },
-    ...FEATURES.flatMap((f, k) => [{ t: f.t0 + 0.5, label: `into ${k + 1}` }, { t: at(f, 0.5), label: `feature ${k + 1}` }, { t: at(f, 0.95), label: `feature ${k + 1} end` }]), { t: DUR - 1, label: 'name' }],
+  stages: [{ t: chunkAt('v01', 2) + 0.4, label: 'promise' }, { t: T.problem.t0 + 0.06, label: 'cut to problem' }, { t: word('v02', 2, 2) + 0.4, label: 'problem' }, { t: T.problem.t1 - 0.3, label: 'pains' },
+    { t: T.answer.t0 + 0.12, label: 'cut to answer' }, { t: T.answer.t1 - 0.6, label: 'answer' },
+    ...FEATURES.flatMap((f, k) => [{ t: mid(f), label: `push ${k + 1}` }, { t: (f.v.at + f.v.end) / 2, label: `feature ${k + 1}` }, { t: f.v.end - 0.2, label: `feature ${k + 1} end` }]),
+    { t: chunkAt('v05', 0) + 0.75, label: 'chip turns' }, { t: chunkAt('v06', 2) + 0.3, label: 'counting' }, { t: chunkAt('v07', 4) + 0.3, label: 'report on its way' },
+    { t: T.outro.t0 + 0.08, label: 'cut to name' }, { t: DUR - 1, label: 'name' }],
   fonts: ['700 82px "Almoni"', '400 30px "Almoni"', '300 40px "Almoni"'], build, seek, check })
 </script>
 </body>

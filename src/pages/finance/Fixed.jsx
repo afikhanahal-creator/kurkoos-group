@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { openDocs as openDocsList } from './links.js'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { counts, docDate, money, monthLabel, nameOf, period, shiftMonth, signedTotal, thisMonth } from './format.js'
@@ -69,7 +70,7 @@ export default function Fixed() {
   }, [list, documents, now, biz])
 
   const act = async (key, fn, done) => { setBusy(key); setErr(''); setMsg(''); try { await fn(); await load(); if (done) setMsg(done) } catch (e) { setErr(e.message) } finally { setBusy('') } }
-  const openDocs = (docs, title) => { try { sessionStorage.setItem('fin-x-ids', JSON.stringify({ ids: docs.map((d) => d.id), title, sort: 'chrono' })) } catch { /* noop */ } go('/documents?ids=1') }
+  const openDocs = (docs, title) => openDocsList(go, docs, title)
   const stop = async (x) => { if (await askConfirm({ title: 'הפסקת הוצאה קבועה', text: `להפסיק לסווג את ${x.r.label} כהוצאה קבועה? המסמכים נשארים במערכת, בלי הסימון.`, ok: 'הפסקה' })) act(x.r.id, () => api.setRecurring(x.r.id, { active: false }), `${x.r.label} כבר לא הוצאה קבועה.`) }
   const tot = rows.reduce((a, x) => ({ monthly: a.monthly + x.monthly, yearly: a.yearly + x.yearly }), { monthly: 0, yearly: 0 })
   const missing = rows.filter((x) => x.missing)

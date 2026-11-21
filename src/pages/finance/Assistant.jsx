@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { openIds } from './links.js'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
 import { money } from './format.js'
@@ -55,7 +56,7 @@ export default function Assistant() {
       setQ((cur) => cur || question)
     } finally { sending.current = false; setBusy(false); if (!touch) input.current?.focus() }
   }
-  const openDocs = (ids, title) => { try { sessionStorage.setItem('fin-x-ids', JSON.stringify({ ids, title })) } catch { /* noop */ } go('/documents?ids=1') }
+  const openDocs = (ids, title) => openIds(go, ids, title)
   const excel = (ids, title) => exportSheet(documents.filter((d) => ids.includes(d.id)), 'excel', { businesses, projects }, {}, title)
   const first = String(me?.full_name || '').split(' ')[0]
 

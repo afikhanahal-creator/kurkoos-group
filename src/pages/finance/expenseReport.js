@@ -1,12 +1,11 @@
 // The expenses report as rows: used by the browser (Excel / CSV download) and by the server (the accountant email),
 // so the file looks the same wherever it is made. Pure: no DOM, no network.
+import { israelDay } from './format.js'
 import { buildXlsx } from './xlsx.js'
 
 const TYPE = { invoice: 'חשבונית מס', invoice_receipt: 'חשבונית מס/קבלה', receipt: 'קבלה', credit: 'חשבונית זיכוי', supplier_bill: 'חשבון ספק', payment_confirmation: 'אישור תשלום', proforma: 'חשבון עסקה', quote: 'הצעת מחיר', other: 'אחר' }
 const num = (v) => (v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? null : Number(v))
 const sign = (d) => (d.doc_type === 'credit' ? -1 : 1)
-const IL_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' })
-const israelDay = (t) => { const x = new Date(t || 0); return Number.isNaN(x.getTime()) || !t ? '' : IL_DAY.format(x) }
 const dateOf = (d) => d.issue_date || israelDay(d.email_date || d.created_at)
 const r2 = (n) => Math.round(n * 100) / 100
 

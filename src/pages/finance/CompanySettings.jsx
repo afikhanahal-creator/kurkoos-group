@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import DateField from './DateField.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { ago } from './format.js'
+import { ago, HE_MONTHS } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import { prettyPhone } from './phone.js'
 import Select from './Select.jsx'
@@ -16,7 +16,7 @@ export const REPORT_DEFAULTS = { logo: '', deductions_file: '', incorporated_on:
 export const reportOf = (b) => ({ ...REPORT_DEFAULTS, ...(b?.report_settings || {}) })
 const ENTITY = { company: 'חברה בע״מ', licensed: 'עוסק מורשה', exempt: 'עוסק פטור', partnership: 'שותפות', nonprofit: 'עמותה / מלכ״ר' }
 const VAT_PERIOD = { monthly: 'חודשי', bimonthly: 'דו-חודשי', none: 'לא מדווח (פטור)' }
-const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+const MONTHS = HE_MONTHS
 const TABS = [['details', 'פרופיל החברה', 'company'], ['reporting', 'דיווח ומע״מ', 'reports'], ['accountant', 'רואה החשבון', 'users'], ['sources', 'מקורות קליטה', 'inbox']]
 const digits = (s) => String(s || '').replace(/\D/g, '')
 const idOk = (s) => { const d = digits(s); if (!d) return true; if (d.length !== 9) return false; let sum = 0; for (let i = 0; i < 9; i++) { let x = Number(d[i]) * ((i % 2) + 1); if (x > 9) x -= 9; sum += x } return sum % 10 === 0 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { ago, nameOf } from './format.js'
+import { ago, nameOf, HE_MONTHS } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import { Field, Icon, InfoTip, Modal, MoreMenu, Pill, Toggle, useAsync, askConfirm } from './ui.jsx'
 import Select from './Select.jsx'
@@ -13,7 +13,7 @@ const P = {
 }
 // {year}/{month} = "2026/11 נובמבר", by the date printed on the document
 const STRUCT = { '{year}/{month}': 'שנה ‹ חודש (מומלץ)', '{company}/{year}/{month}': 'חברה ‹ שנה ‹ חודש', '{year}/{month}/{company}': 'שנה ‹ חודש ‹ חברה', '{company}/{project}/{year}/{month}': 'חברה ‹ פרויקט ‹ שנה ‹ חודש', '{company}/{period}': 'חברה ‹ חודש (הסידור הקודם)', '{period}': 'חודש בלבד' }
-const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+const MONTHS = HE_MONTHS
 const example = (t, company) => { const n = new Date(); const mm = String(n.getMonth() + 1).padStart(2, '0'); return [t.folder || 'Kurkoos Finance', ...String(t.structure || '{year}/{month}').replace('{year}', n.getFullYear()).replace('{month}', `${mm} ${MONTHS[n.getMonth()]}`).replace('{period}', `${n.getFullYear()}-${mm}`).replace('{company}', company || 'חברה').replace('{project}', 'פרויקט').split('/')].join(' / ') }
 
 export default function Cloud() {

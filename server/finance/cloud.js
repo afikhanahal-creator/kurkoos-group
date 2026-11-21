@@ -1,6 +1,7 @@
 // Cloud sync: copies of documents go to a folder in Google Drive or Dropbox, one subfolder per company and month.
 // Google Drive uses the drive.file scope (the app sees only the files it created). Dropbox uses a scoped app
 // with files.content.write. Tokens live in fin_cloud_secrets (server only). Originals stay in our storage.
+import { HE_MONTHS } from '../../src/pages/finance/format.js'
 import { env } from './env.js'
 import { fetchRetry, json } from './http.js'
 import { sb, one, insert, patch, download, audit, rpc, q } from './db.js'
@@ -13,7 +14,7 @@ const dropboxLink = (path) => `https://www.dropbox.com/home${encodeURI(String(pa
 // the calendar day in Israel (an email at 00:30 on the 1st belongs to that month, not to the previous one in UTC)
 const IL_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' })
 const israelDay = (t) => { const d = new Date(t || Date.now()); return Number.isNaN(d.getTime()) ? '' : IL_DAY.format(d) }
-export const HEB_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+export const HEB_MONTHS = HE_MONTHS
 export const TYPE_HE = { invoice: 'חשבונית מס', invoice_receipt: 'חשבונית מס-קבלה', receipt: 'קבלה', credit: 'חשבונית זיכוי', supplier_bill: 'דרישת תשלום', payment_confirmation: 'אישור תשלום', proforma: 'חשבון עסקה', quote: 'הצעת מחיר', other: 'מסמך' }
 const asciiJson = (o) => JSON.stringify(o).replace(/[\u007f-￿]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)
 

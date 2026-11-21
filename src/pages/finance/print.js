@@ -1,3 +1,4 @@
+import { escHtml as esc } from './format.js'
 // Printing a document from the browser. Pages go to a hidden frame as images (works on phones too, where a PDF inside
 // a frame cannot be printed); an email body goes to a frame that may not run scripts.
 const frame = (attrs = {}) => {
@@ -43,7 +44,6 @@ export function printHtml(html) {
    the same in-memory cache the viewer uses. onProgress(done, total) reports as each document is ready. Returns what
    could not be printed (a Word file, a damaged file), so the screen can say so. */
 const MAX_PDF_PAGES = 30
-const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
 async function pdfPages(blob) {
   const { loadPdf } = await import('./Thumbnail.jsx')
   const lib = await loadPdf()

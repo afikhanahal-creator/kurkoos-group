@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as api from './api.js'
-import { DOC_TYPE, date, dateTime, money, monthLabel } from './format.js'
+import { DOC_TYPE, date, dateTime, money, monthLabel, HE_MONTHS } from './format.js'
 import { Empty, Field, Icon, Modal, Pill, askConfirm } from './ui.jsx'
 import Thumbnail from './Thumbnail.jsx'
 import Peek, { DocPic } from './Peek.jsx'
@@ -36,7 +36,7 @@ const EVENT = { uploaded: 'הועלה ל-Drive', verified: 'אומת מול Driv
   trashed_in_drive: 'הועבר לפח ב-Google Drive', restored_in_drive: 'שוחזר מהפח ב-Google Drive', restored_by_user: 'שוחזר מהאשפה', excluded_by_user: 'הועבר לאשפה במערכת', included_by_user: 'הוחזר לארכיון', withdrawn: 'העותק עבר לפח של Drive', missing: 'נעלם מ-Drive ושוחזר', changed: 'התוכן שונה ב-Drive',
   restored: 'שוחזר', corrected: 'תוקן', retry: 'ניסיון חוזר', failed: 'נכשל', requeued: 'נשלח שוב לסנכרון', duplicate: 'כפילות', rate_limited: 'Drive ביקש להאט', pin_lost: 'התיקייה שנבחרה נעלמה מ-Drive', folder_created: 'נוצרה תיקייה' }
 const bytes = (b) => (b == null ? '—' : b < 1024 ** 3 ? `${(b / 1048576).toFixed(0)} MB` : `${(b / 1024 ** 3).toFixed(1)} GB`)
-const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+const MONTHS = HE_MONTHS
 const readStars = () => { try { return new Set(JSON.parse(localStorage.getItem('fin-drive-stars') || '[]')) } catch { return new Set() } }
 
 /* the folders as Drive holds them: company → year → month (→ kind). Each knows which company and month it stands for,

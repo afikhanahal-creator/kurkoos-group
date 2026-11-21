@@ -5,9 +5,10 @@
 // in fin_agent_runs (agent "summary", details.kind "report") with the figures it sent and a line per recipient, so a
 // past report opens as it was and a failed delivery is sent again. All figures are computed from fin_documents; the
 // optional AI lines are written only from those figures and are marked as AI.
+import { nis } from './format-server.js'
 import { sb, one, insert, patch, agentRun } from './db.js'
 import { env, costOf } from './env.js'
-import { DOC_TYPE, docDate } from '../../src/pages/finance/format.js'
+import { DOC_TYPE, docDate, HE_MONTHS, escHtml as esc } from '../../src/pages/finance/format.js'
 
 export const TEMPLATES = {
   morning: { name: 'דוח בוקר', hint: 'מה נאסף ב-24 השעות האחרונות, מה ממתין לבדיקה ומה מוכן לרו״ח בתקופת הדיווח', fixedPeriod: true },
@@ -27,7 +28,7 @@ export const FIELDS = {
 export const PERIODS = { today: 'היום', yesterday: 'אתמול', last7: '7 הימים האחרונים', this_week: 'השבוע', prev_week: 'השבוע שעבר', this_month: 'החודש', prev_month: 'החודש שעבר', days: 'ימים בשבוע לבחירה', custom: 'טווח תאריכים' }
 export const TZS = ['Asia/Jerusalem', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'UTC']
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
-const HE_M = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+const HE_M = HE_MONTHS
 
 // ---------- time ----------
 /* the wall clock of a time zone: { date: 'YYYY-MM-DD', time: 'HH:MM', dow: 0 (Sunday) … 6 } */
@@ -71,7 +72,6 @@ const INVOICE = ['invoice', 'invoice_receipt', 'supplier_bill', 'proforma']
 const OUT = ['rejected', 'duplicate', 'archived', 'failed', 'processing']
 const r2 = (v) => Math.round(v * 100) / 100
 const ils = (d) => ((d.currency || 'ILS') === 'ILS' ? (d.doc_type === 'credit' ? -1 : 1) * Math.abs(Number(d.total_amount) || 0) : 0)
-const nis = (v) => `₪${Number(v || 0).toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const int = (v) => Number(v || 0).toLocaleString('he-IL')
 const need = (d) => !d.supplier_name || !d.doc_type || d.doc_type === 'other' || !d.business_id || !d.issue_date || d.total_amount == null || d.total_amount === '' || !d.doc_number
 const pct = (cur, prev) => (prev ? Math.round(((cur - prev) / Math.abs(prev)) * 100) : null)
@@ -165,7 +165,6 @@ export function buildModel(report, { docs, businesses, today }) {
 }
 
 // ---------- how it reads ----------
-const esc = (v) => String(v ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
 const TONE = { navy: '#07293a', blue: '#16688c', warn: '#b7791f', ok: '#1f6f4c', bad: '#a90b0c' }
 /* the email: tables and inline styles, every cell right to left (mail apps drop <body> styles) */
 export function reportHtml(m, origin = '', now = new Date()) {

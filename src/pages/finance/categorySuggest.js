@@ -8,7 +8,8 @@
 // A document that was approved or sent to the accountant is LOCKED for every bulk change here: changing its category sends
 // it back to review (the database does that on purpose), so nothing in this file ever lists it as "to move".
 
-const OUT = ['rejected', 'duplicate', 'archived']
+/* documents that are not counted in any category figure */
+export const OUT = ['rejected', 'duplicate', 'archived']
 export const isLocked = (d) => ['approved', 'sent'].includes(d?.status)
 const norm = (s) => String(s ?? '').toLowerCase().replace(/[֑-ׇ"'`׳״’.,;:()\-_/\\]/g, ' ').replace(/\s+/g, ' ').trim()
 const when = (d) => String(d.approved_at || d.updated_at || d.created_at || '')

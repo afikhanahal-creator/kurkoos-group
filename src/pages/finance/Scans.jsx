@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { openIds } from './links.js'
 import DateField from './DateField.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
@@ -62,7 +63,7 @@ function MailboxScan({ row, documents, can, onAction, onStart, go }) {
   const count = (f) => docs.filter(f).length
   const active = job && ['queued', 'running', 'paused'].includes(job.status)
   const pct = progress ? progress.pct : 0
-  const openDocs = () => { try { sessionStorage.setItem('fin-x-ids', JSON.stringify({ ids: docs.map((d) => d.id), title: `מסמכים מ-${mb.email}` })) } catch { /* noop */ } go('/documents?ids=1') }
+  const openDocs = () => openIds(go, docs.map((d) => d.id), `מסמכים מ-${mb.email}`)
   return (
     <article className={`fin-scan ${active ? 'is-active' : ''}`} aria-label={`סריקה של ${mb.email}`}>
       <header className="fin-scan__head">

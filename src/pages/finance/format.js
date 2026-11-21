@@ -128,7 +128,12 @@ export const seriesColor = (i) => SERIES[i % SERIES.length]
    Bimonthly (the default, the group's reporting): January–February, March–April, … November–December. Monthly when every
    active company reports monthly (CompanySettings, "תדירות דיווח מע״מ"). "Ready for the accountant" means approved, not
    yet sent, and dated inside the current reporting period; an older approved document is shown on request, never lost. */
-const HE_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+/* the Hebrew month names, the HTML escape and the Israel calendar day: defined once, used by the screens and the server */
+export const HE_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+export const escHtml = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const IL_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' })
+/* the calendar day in Israel of a moment (YYYY-MM-DD); '' for an empty or invalid time */
+export const israelDay = (t) => { const x = new Date(t || 0); return !t || Number.isNaN(x.getTime()) ? '' : IL_DAY.format(x) }
 export const periodKindOf = (businesses = []) => {
   const live = businesses.filter((b) => b.active !== false && !b.archived_at)
   return live.length && live.every((b) => (b.report_settings?.vat_period || 'bimonthly') === 'monthly') ? 'monthly' : 'bimonthly'

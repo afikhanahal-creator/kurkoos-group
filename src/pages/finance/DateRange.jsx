@@ -1,12 +1,13 @@
 // Date range picker: two months side by side (one on a phone, as a bottom sheet), Sunday first, right to left.
 // First tap sets the start, second tap the end; the range is shaded and previewed while hovering. Quick ranges on top,
 // "החל" applies, "ניקוי" clears. Keyboard: arrows move a day/week, PageUp/PageDown a month, Enter picks, Escape closes.
+import { HE_MONTHS } from './format.js'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { placeNear, popRoot } from './Select.jsx'
 import { Icon } from './ui.jsx'
 
-const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+const MONTHS = HE_MONTHS
 const DAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳']
 const pad = (n) => String(n).padStart(2, '0')
 export const iso = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`

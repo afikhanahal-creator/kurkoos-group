@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { moveImpact, sayDid, sayDocs } from './categorySuggest.js'
+import { moveImpact, sayDid, sayDocs, OUT } from './categorySuggest.js'
 import { categoryColor } from './execKit.jsx'
 import { money, signedTotal } from './format.js'
 import { Icon, Modal } from './ui.jsx'
@@ -9,7 +9,6 @@ import { Icon, Modal } from './ui.jsx'
 /* Merging categories: pick two or more that mean the same thing, choose the one that stays, see what will move (how many
    documents, how much money, what stays where it was reported) and only then merge. Nothing is merged without this
    confirmation. A document that was approved or sent to the accountant keeps the category it was reported under. */
-const OUT = ['rejected', 'duplicate', 'archived']
 
 export default function CategoryMerge({ start = [], onClose, onDone }) {
   const { documents, categories, suppliers, can, go, reload } = useFinance()

@@ -1,6 +1,7 @@
 // "Send to the accountant": the documents a person filtered (by date, company, status…) go out in one email,
 // with the original files attached, a CSV summary for the accounting software, and a short table in the body.
 // Attachments stop at ~25MB (Resend takes 40MB after base64); the rest go as links valid for 7 days.
+import { escHtml as esc } from '../../src/pages/finance/format.js'
 import { env } from './env.js'
 import { sb, download, audit, insert, rpc } from './db.js'
 import { signedUrl, emailOk } from './outbound.js'
@@ -9,7 +10,6 @@ import { expenseWorkbook, expenseCsv, summaryOf } from '../../src/pages/finance/
 
 const MAX_DOCS = 300
 const MAX_ATTACH = 25 * 1024 * 1024
-const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
 const safeName = (s) => String(s || '').replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').trim().slice(0, 60)
 
 export async function sendToAccountant({ ids, to, note, subject, ccMe, user, period, mark, kind = 'accountant' }) {

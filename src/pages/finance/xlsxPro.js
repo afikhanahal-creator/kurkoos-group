@@ -2,9 +2,8 @@
 // On top of xlsx.js (plain tables) this one gives every cell its own look (fill, font colour, bold, border, alignment,
 // number format), right-to-left sheets, frozen header rows, filters, merged title cells, drop-down lists, formulas with
 // their value kept beside them, and links to the original documents. Text is UTF-8, so Hebrew is stored as it is.
-import { zipBytes } from './xlsx.js'
+import { zipBytes, escXml as esc } from './xlsx.js'
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '')
 export const colName = (i) => { let s = ''; i += 1; while (i) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26) } return s }
 const serial = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || '')); if (!m) return null; return Math.round((Date.UTC(+m[1], +m[2] - 1, +m[3]) - Date.UTC(1899, 11, 30)) / 86400000) }
 const argb = (hex) => `FF${String(hex).replace('#', '').toUpperCase().padStart(6, '0')}`

@@ -1,10 +1,11 @@
+import { HE_MONTHS } from './format.js'
 import { useEffect, useId, useRef, useState } from 'react'
 import { iso, sayDate } from './DateRange.jsx'
 import { Icon } from './ui.jsx'
 
 // One date, picked from a calendar that looks the same in every browser and on every phone (the native control differs
 // from one to the next and ignores the design). Type a date (5.11.26, 05/11/2026) or pick a day; Escape closes.
-const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+const MONTHS = HE_MONTHS
 const DAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳']
 const todayIso = () => { const d = new Date(); return iso(d.getFullYear(), d.getMonth(), d.getDate()) }
 const parts = (s) => { const [y, m, d] = String(s).split('-').map(Number); return { y, m: m - 1, d } }

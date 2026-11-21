@@ -1,5 +1,7 @@
 // The daily run (Vercel cron) and the automations it drives. Each automation records its own
 // last run, status and error in fin_automations, and each agent records its batch in fin_agent_runs.
+import { nis } from './format-server.js'
+import { escHtml as esc } from '../../src/pages/finance/format.js'
 import { env, TIME_BUDGET_MS } from './env.js'
 import { rpc, sb, one, patch, insert, agentRun, audit } from './db.js'
 import { syncMailbox, processStored, MAX_ATTEMPTS, sweepEmailDuplicates } from './pipeline.js'
@@ -213,8 +215,6 @@ const israelDay = (t) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jeru
 
 /* the morning report: a professional email that reads right to left in every mail app (tables, inline styles, every cell
    with its own direction; Gmail drops <body> styles), the three numbers that need someone first, then the night's detail */
-const esc = (v) => String(v ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
-const nis = (v) => `₪${Number(v || 0).toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 export function summaryHtml(d, origin, now = new Date()) {
   const F = 'font-family:Arial,Helvetica,sans-serif'
   const day = new Intl.DateTimeFormat('he-IL', { timeZone: 'Asia/Jerusalem', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(now)

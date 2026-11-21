@@ -1,6 +1,7 @@
 // Automatic delivery: every document event (received, approved, rejected, exported) is queued in the database by a
 // trigger on fin_documents, and drained here. A webhook gets signed JSON; an email address gets the file attached.
 // Signature: X-Kurkoos-Signature: t=<unix>,v1=<hex HMAC-SHA256 of "<t>.<raw body>" with the endpoint secret>.
+import { escHtml as esc } from '../../src/pages/finance/format.js'
 import crypto from 'node:crypto'
 import dns from 'node:dns/promises'
 import net from 'node:net'
@@ -92,7 +93,6 @@ async function docPayload(d, names) {
 }
 
 const SUBJECT = { 'document.received': 'מסמך חדש', 'document.approved': 'מסמך אושר', 'document.rejected': 'מסמך נדחה', 'document.exported': 'מסמך יוצא לרו״ח', ping: 'בדיקת חיבור' }
-const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
 
 async function deliverWebhook(o, secret, event, data, deliveryId) {
   const body = JSON.stringify({ id: String(deliveryId), event, created_at: new Date().toISOString(), data })

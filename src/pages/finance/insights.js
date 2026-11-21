@@ -1,6 +1,7 @@
 // Management figures for the group, computed from stored documents only. Used by the executive overview in the
 // browser and by the finance assistant on the server, so a number on the screen and in an answer is the same number.
 // Pure: no DOM, no network. Documents must have gone through markLedger (ledger.js) first.
+import { HE_MONTHS, israelDay } from './format.js'
 import { markLedger, payState } from './ledger.js'
 
 export { markLedger }
@@ -9,14 +10,12 @@ const total = (d) => sign(d) * Math.abs(Number(d.total_amount) || 0)
 const vatOf = (d) => sign(d) * Math.abs(Number(d.vat_amount) || 0)
 const pad = (n) => String(n).padStart(2, '0')
 // one formatter for every call (creating one per date was 90% of the overview's time at 10,000 documents)
-const IL_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' })
-const israelDay = (t) => { const x = new Date(t || 0); return !t || Number.isNaN(x.getTime()) ? '' : IL_DAY.format(x) }
 export const dayOf = (d) => d.issue_date || israelDay(d.email_date || d.created_at)
 /* in the books: not rejected, duplicate, unread, a quote, a proforma replaced or not, a payment proof of a counted invoice */
 export const booked = (d) => !['rejected', 'duplicate', 'failed', 'processing', 'archived'].includes(d.status) && !['quote', 'proforma', 'payment_confirmation'].includes(d.doc_type) && !d._proofFor
 const INVOICE = ['invoice', 'invoice_receipt', 'supplier_bill', 'credit']
 const RECEIPT = ['receipt', 'payment_confirmation']
-const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+const MONTHS = HE_MONTHS
 export const monthName = (ym) => { const [y, m] = String(ym).split('-').map(Number); return `${MONTHS[m - 1]} ${y}` }
 const lastDay = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate()   // m is 1-based
 

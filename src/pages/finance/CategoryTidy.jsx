@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
+import { openIds } from './links.js'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { moveImpact, sayDid, sayDocs, similarCategories, supplierSpread, uncategorizedWithSuggestion } from './categorySuggest.js'
+import { moveImpact, sayDid, sayDocs, similarCategories, supplierSpread, uncategorizedWithSuggestion, OUT } from './categorySuggest.js'
 import { Icon, askConfirm } from './ui.jsx'
 import CategoryMerge from './CategoryMerge.jsx'
 import { money, signedTotal } from './format.js'
@@ -12,7 +13,6 @@ import Select from './Select.jsx'
    category that the office's own history can place, and two categories that read as one. A document that was approved or
    sent to the accountant is never changed here (changing its category would send it back to review). */
 const STEP = 5
-const OUT = ['rejected', 'duplicate', 'archived']
 
 export default function CategoryTidy({ onDone }) {
   const { documents, categories, suppliers, can, go, reload } = useFinance()
@@ -44,7 +44,7 @@ export default function CategoryTidy({ onDone }) {
   const [other, setOther] = useState({})     // supplier key → a category chosen instead of the most common one
   const total = spread.length + (loose.length ? 1 : 0) + pairs.length
   const run = async (key, fn, text) => { setBusy(key); setErr(''); try { await fn(); await reload(); onDone?.(text) } catch (e) { setErr(e.message) } finally { setBusy('') } }
-  const openDocs = (ids, title) => { try { sessionStorage.setItem('fin-x-ids', JSON.stringify({ ids, title })) } catch { /* noop */ } go('/documents?ids=1') }
+  const openDocs = (ids, title) => openIds(go, ids, title)
 
   const unify = async (s, toId) => {
     const im = moveImpact(s.docs, toId, categories)

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { openIds } from './links.js'
 import DateField from './DateField.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import { useResizableColumns } from './columns.js'
@@ -198,7 +199,7 @@ export default function MasterData({ kind }) {
     const sumOf = (ds) => ds.reduce((a, d) => a + (d.currency && d.currency !== 'ILS' ? 0 : (d.doc_type === 'credit' ? -1 : 1) * Math.abs(Number(d.total_amount) || 0)), 0)
     return { active: list.filter((c) => c.active !== false).length, all: list.length, placed: live.length - none.length, docs: live.length, none, noneSum: sumOf(none), spend, allSpend: spend + Math.max(0, sumOf(none)) }
   }, [kind, documents, categories, list, stats])
-  const openDocs = (ids, title) => { try { sessionStorage.setItem('fin-x-ids', JSON.stringify({ ids, title })) } catch { /* noop */ } go('/documents?ids=1') }
+  const openDocs = (ids, title) => openIds(go, ids, title)
   // categories can be read as a list, as bars ranked by spending, or as tiles; the choice is kept on this device
   const [catView, setCatView] = useState(() => { try { return ['bars', 'tiles'].includes(localStorage.getItem('fin-cat-view')) ? localStorage.getItem('fin-cat-view') : 'list' } catch { return 'list' } })
   const setCat = (v) => { setCatView(v); try { localStorage.setItem('fin-cat-view', v) } catch { /* a preference only */ } }

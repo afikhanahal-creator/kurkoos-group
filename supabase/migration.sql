@@ -192,8 +192,20 @@ drop policy if exists "logos admin all" on public.site_logos;
 create policy "logos admin all" on public.site_logos for all to authenticated using (true) with check (true);
 
 -- leads: כל מבקר יכול לשלוח פנייה (insert), אך רק מנהל מחובר רואה/מנהל אותן
+-- the form may insert only a well-formed lead: lengths within the columns' limits and a known source.
+-- An older, open policy ("leads insert anon") is dropped: permissive policies are OR-ed, so it would cancel this one.
+drop policy if exists "leads insert anon" on public.leads;
 drop policy if exists "leads public insert" on public.leads;
-create policy "leads public insert" on public.leads for insert to anon, authenticated with check (true);
+create policy "leads public insert" on public.leads
+  for insert to anon, authenticated
+  with check (
+    (name    is null or length(name)    <= 200) and
+    (phone   is null or length(phone)   <= 30)  and
+    (email   is null or length(email)   <= 200) and
+    (message is null or length(message) <= 2000) and
+    (notes   is null or length(notes)   <= 2000) and
+    (coalesce(source, 'contact') in ('project', 'contact', 'home', 'manual'))
+  );
 drop policy if exists "leads admin all" on public.leads;
 create policy "leads admin all" on public.leads for all to authenticated using (true) with check (true);
 
@@ -302,7 +314,9 @@ create table if not exists public.newsletter_subscribers (
 alter table public.newsletter_subscribers enable row level security;
 -- הציבור יכול להירשם; רק מנהל מחובר רואה/מוחק
 drop policy if exists "newsletter insert public" on public.newsletter_subscribers;
-create policy "newsletter insert public" on public.newsletter_subscribers for insert with check (true);
+create policy "newsletter insert public" on public.newsletter_subscribers
+  for insert
+  with check (email ~* '^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$' and length(email) <= 200);
 drop policy if exists "newsletter admin read" on public.newsletter_subscribers;
 create policy "newsletter admin read" on public.newsletter_subscribers for select using (auth.role() = 'authenticated');
 drop policy if exists "newsletter admin delete" on public.newsletter_subscribers;
@@ -321,9 +335,12 @@ create table if not exists public.site_settings (
   value jsonb
 );
 alter table public.site_settings enable row level security;
+-- visitors read every setting except the newsletter webhook address (a signed-in admin reads it through the write policy).
+-- An older, open policy ("read settings") is dropped: it would expose the webhook again.
+drop policy if exists "read settings" on public.site_settings;
 drop policy if exists "settings public read" on public.site_settings;
 create policy "settings public read" on public.site_settings
-  for select using (true);
+  for select using (key <> 'newsletter_webhook');
 drop policy if exists "settings admin write" on public.site_settings;
 create policy "settings admin write" on public.site_settings
   for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');

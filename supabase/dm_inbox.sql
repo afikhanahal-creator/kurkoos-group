@@ -49,3 +49,24 @@ alter table public.dm_messages enable row level security;
 alter table public.dm_rules enable row level security;
 alter table public.dm_rule_hits enable row level security;
 alter table public.dm_snippets enable row level security;
+
+-- replies waiting to be sent by the "dm" function (written from the live schema on 2026-11-21; it existed only there)
+create table if not exists public.dm_queue (
+  id bigserial primary key,
+  event_id text not null unique,
+  account_id text not null,
+  rule_id uuid references public.dm_rules(id) on delete set null,
+  kind text not null check (kind in ('comment','dm')),
+  target text not null,
+  thread_id text not null,
+  person_name text,
+  incoming text,
+  status text not null default 'pending' check (status in ('pending','sending','sent','failed')),
+  attempts integer not null default 0,
+  error text,
+  created_at timestamptz not null default now(),
+  sent_at timestamptz
+);
+create index if not exists dm_queue_status on public.dm_queue (status, created_at);
+create index if not exists dm_queue_sent on public.dm_queue (account_id, sent_at);
+alter table public.dm_queue enable row level security;

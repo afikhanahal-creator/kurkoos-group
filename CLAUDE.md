@@ -16,6 +16,12 @@ daily cron reads `storage_usage()` and texts the office once a day while this pr
 old preview (`prune.cjs --previews`). Engine photos and studio designs are re-encoded in place by
 `scripts/storage/recompress-images.cjs`. Every temporary anon policy (`policies_*_on.sql`) is dropped right after the run.
 
+## Database files
+
+`supabase/README.md` lists every SQL file, the order they run in and the rules. Two that matter most: a policy that must
+stay strict is defined in one file only (permissive policies are OR-ed, so a looser twin cancels it), and every table the
+code uses has its `create table` in `supabase/`. The owner runs SQL in the Supabase editor; give only the block.
+
 ## Every page lives in the page editor
 
 The owner edits the site pages in the admin tab "עמודים", the visual page editor. **Every new page must be added to the editor in the same change that adds the page.** No exceptions without the owner's approval.

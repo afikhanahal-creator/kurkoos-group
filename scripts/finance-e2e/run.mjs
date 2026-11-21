@@ -1548,7 +1548,7 @@ record('ASSIGN', 'שיוך חשבוניות לחברות בשלוש רמות', '
 // the overview: the receipt that pays the Ronir invoice is not a second expense
 await go(''); await page.waitForTimeout(1500)
 const thisMonth11 = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' }).slice(0, 7)
-const naive = Number(sql(`select coalesce(sum(case when doc_type='credit' then -abs(total_amount) else abs(total_amount) end),0) from fin_documents where status not in ('rejected','duplicate','failed','processing','archived') and doc_type not in ('quote','proforma','payment_confirmation') and coalesce(currency,'ILS')='ILS' and to_char(coalesce(issue_date, (email_date at time zone 'Asia/Jerusalem')::date, (created_at at time zone 'Asia/Jerusalem')::date),'YYYY-MM')='${thisMonth11}'`))
+const naive = Number(sql(`select coalesce(sum(case when doc_type='credit' then -abs(total_amount) else abs(total_amount) end),0) from fin_documents where status not in ('rejected','duplicate','failed','processing','archived') and (status in ('approved','sent') or doc_type not in ('quote','proforma','payment_confirmation')) and coalesce(currency,'ILS')='ILS' and to_char(coalesce(issue_date, (email_date at time zone 'Asia/Jerusalem')::date, (created_at at time zone 'Asia/Jerusalem')::date),'YYYY-MM')='${thisMonth11}'`))
 const heroTxt = await page.locator('.fin-x-big').innerText().catch(() => '')
 const hero = Number(heroTxt.replace(/[^\d.\-]/g, ''))
 const kpiTxt = await page.locator('.fin-x-kpis').innerText().catch(() => '')
@@ -1558,7 +1558,7 @@ const xShot = await shot('92-executive-overview')
 await page.locator('.fin-x-cos button', { hasText: 'רוניר' }).click(); await page.waitForTimeout(800)
 const coPage = page.url()
 const ronirHero = Number((await page.locator('.fin-x-big').innerText()).replace(/[^\d.\-]/g, ''))
-const ronirExpect = Number(sql(`select coalesce(sum(case when doc_type='credit' then -abs(total_amount) else abs(total_amount) end),0) from fin_documents where business_id='${ronir.id}' and status not in ('rejected','duplicate','failed','processing','archived') and doc_type not in ('quote','proforma','payment_confirmation') and coalesce(currency,'ILS')='ILS' and to_char(coalesce(issue_date, (email_date at time zone 'Asia/Jerusalem')::date, (created_at at time zone 'Asia/Jerusalem')::date),'YYYY-MM')='${thisMonth11}'`)) - 1180
+const ronirExpect = Number(sql(`select coalesce(sum(case when doc_type='credit' then -abs(total_amount) else abs(total_amount) end),0) from fin_documents where business_id='${ronir.id}' and status not in ('rejected','duplicate','failed','processing','archived') and (status in ('approved','sent') or doc_type not in ('quote','proforma','payment_confirmation')) and coalesce(currency,'ILS')='ILS' and to_char(coalesce(issue_date, (email_date at time zone 'Asia/Jerusalem')::date, (created_at at time zone 'Asia/Jerusalem')::date),'YYYY-MM')='${thisMonth11}'`)) - 1180
 const coCard = await page.locator('.fin-x-company').innerText().catch(() => '')
 const coDashShot = await shot('93-company-picture')
 await page.reload(); await page.waitForTimeout(1200)

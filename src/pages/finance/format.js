@@ -106,7 +106,13 @@ export function claimableVat(doc, categories) {
      is a request for payment, not an invoice. What may be deducted for VAT is a separate, stricter rule (vatRules.js). */
 export const NOT_COUNTED = ['rejected', 'duplicate', 'archived', 'failed', 'processing']
 export const INVOICE_TYPES = ['invoice', 'invoice_receipt', 'supplier_bill', 'credit']
-export const counts = (d) => !NOT_COUNTED.includes(d.status) && !['quote', 'proforma', 'payment_confirmation'].includes(d.doc_type) && !d._proofFor   // a receipt that pays an invoice already counted (ledger.js)
+/* A document a person approved always counts (owner's decision, 2026-11-21): approval is the person saying "this is an
+   expense of ours", whatever type the reading gave it (a payment confirmation, a proforma, a quote). The only thing kept
+   out is the same money twice: a receipt that pays an invoice already counted, a proforma replaced by its tax invoice. */
+export const APPROVED = ['approved', 'sent']
+const TYPE_NOT_COUNTED = ['quote', 'proforma', 'payment_confirmation']
+export const counts = (d) => !NOT_COUNTED.includes(d.status) && !d._proofFor   // a receipt that pays an invoice already counted (ledger.js)
+  && (APPROVED.includes(d.status) ? !d._replacedBy : !TYPE_NOT_COUNTED.includes(d.doc_type))
 export const issuesOf = (d) => (Array.isArray(d.issues) ? d.issues : [])
 export const hasError = (d) => issuesOf(d).some((i) => i.level === 'error')
 export const nameOf = (list, id) => list.find((x) => x.id === id)?.name || ''

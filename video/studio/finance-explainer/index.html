@@ -2,11 +2,12 @@
 <html lang="he">
 <head>
 <meta charset="utf-8">
-<title>Kurkoos Finance explainer</title>
-<!-- The explainer shown in the finance system after sign-in and sign-out. 1920x1080, 62 seconds. Subtitles carry the narration script; a voice track can be laid over with --audio.
-     Every position is a pure function of time (seek). The screens are screenshots of the local test system with
-     demo data (scripts in docs/finance/EXPLAINER-VIDEO.md); a small label says so on every screen scene.
-     Render: node engine/anim_render.cjs studio/finance-explainer/index.html --fps 30 --sub 2 -o out/finance-explainer.mp4 -->
+<title>Kurkoos Finance: the product film</title>
+<!-- The product film shown in the finance system after sign-in and sign-out. 1920x1080, about a minute.
+     Story: the promise, the problem, the answer, five things the system does for you, the name.
+     Every position is a pure function of time (seek) and every time comes from the narration (timeline.js).
+     The screens are screenshots of the local test system with demo data (docs/finance/EXPLAINER-VIDEO.md).
+     Rules of this film: one calm camera move per screen, cross-fades between screens, no sound effects at all. -->
 <link rel="icon" href="data:,">
 <style>
   @font-face{font-family:"Almoni";font-weight:300;src:url(../../fonts/Almoni-300.ttf)}
@@ -14,229 +15,226 @@
   @font-face{font-family:"Almoni";font-weight:700;src:url(../../fonts/Almoni-700.ttf)}
   html,body{margin:0;background:#07293a}
   #stage{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:"Almoni";color:#f7f8fa;
-    background:radial-gradient(1400px 900px at 22% 30%, #12506c 0%, #0a3549 45%, #07293a 100%)}
+    background:radial-gradient(1500px 950px at 24% 28%, #135672 0%, #0a3549 46%, #07293a 100%)}
   .abs{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform,opacity}
   .rtl{direction:rtl;text-align:right;unicode-bidi:plaintext}
-  /* the screen card */
+  .mid{direction:rtl;text-align:center;unicode-bidi:plaintext}
+  /* type: one family, three sizes */
+  .hero{font-weight:700;font-size:118px;line-height:1.06;white-space:nowrap}
+  .title{font-weight:700;font-size:82px;line-height:1.08;width:580px}
+  .wide{width:1400px}
+  .value{font-weight:300;font-size:40px;line-height:1.32;width:580px;color:#d3e2ea}
+  .lead{font-weight:300;font-size:46px;line-height:1.25;white-space:nowrap;color:#d3e2ea}
+  /* the screen */
   #card{width:1140px;height:738px;border-radius:22px;overflow:hidden;background:#f3f5f7;box-shadow:0 40px 90px rgba(0,0,0,.42),0 0 0 1px rgba(255,255,255,.10)}
   #card .bar{position:absolute;left:0;top:0;width:100%;height:44px;background:#e6eaee;border-bottom:1px solid #d4dae0}
   #card .bar i{position:absolute;top:15px;width:14px;height:14px;border-radius:50%;background:#c4ccd4}
+  #card .bar span{position:absolute;right:22px;top:11px;font-weight:400;font-size:19px;color:#4d6170;direction:rtl}
   #view{position:absolute;left:0;top:44px;width:1140px;height:694px;overflow:hidden;background:#fff}
   #view .shot{position:absolute;left:0;top:0;width:1440px;transform-origin:0 0}
   #view .shot img{display:block;width:1440px;height:900px}
-  .spot{position:absolute;border:4px solid #a90b0c;border-radius:14px;box-sizing:border-box;box-shadow:0 0 0 3000px rgba(7,41,58,.58),0 0 0 8px rgba(169,11,12,.18);z-index:3}
-  .ptr{position:absolute;left:0;top:0;width:44px;height:44px;transform-origin:0 0;z-index:4}
-  .ptr svg{position:absolute;left:0;top:0;width:44px;height:44px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35))}
-  .ptr i{position:absolute;left:-18px;top:-18px;width:44px;height:44px;border-radius:50%;border:5px solid #a90b0c;box-sizing:border-box}
-  .steps{display:flex;flex-direction:row-reverse;gap:14px}
-  .steps i{width:46px;height:46px;border-radius:50%;border:2px solid rgba(143,182,200,.55);box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-style:normal}
-  .steps b{font-weight:700;font-size:22px;color:#8fb6c8}
-  .steps i.done{background:rgba(143,182,200,.25);border-color:transparent}
-  .steps i.on{background:#f7f8fa;border-color:#f7f8fa}.steps i.on b{color:#07293a}
-  .say{font-weight:400;font-size:36px;line-height:1.2;white-space:nowrap;color:#fff;background:rgba(4,20,30,.72);padding:14px 30px;border-radius:14px}
-  #demo{font-weight:400;font-size:19px;color:#4d6170;white-space:nowrap;z-index:5}
-  /* the text column */
-  .step{font-weight:700;font-size:26px;color:#8fb6c8;white-space:nowrap}
-  .h{font-weight:700;font-size:64px;line-height:1.08;white-space:nowrap}
-  .b{font-weight:400;font-size:34px;line-height:1.3;color:#c2d6e0;white-space:nowrap}
-  .b::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;background:#a90b0c;margin-inline-end:16px;vertical-align:middle}
-  .big{font-weight:700;font-size:104px;line-height:1.05;white-space:nowrap}
-  .sub{font-weight:300;font-size:44px;line-height:1.25;color:#dbe7ee;white-space:nowrap}
-  .chip{display:flex;align-items:center;gap:16px;flex-direction:row-reverse;padding:22px 34px;border-radius:999px;background:#f7f8fa;color:#07293a;font-weight:700;font-size:40px;white-space:nowrap;box-shadow:0 18px 40px rgba(0,0,0,.3)}
-  .chip svg{width:38px;height:38px;flex:none}
-  #hub{width:360px;height:220px;border-radius:28px;background:#f7f8fa;color:#07293a;box-shadow:0 30px 70px rgba(0,0,0,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
-  #hub b{font-weight:700;font-size:40px}
-  #hub span{font-weight:400;font-size:25px;color:#105572}
-  .tick{display:flex;align-items:center;gap:20px;flex-direction:row-reverse;font-weight:400;font-size:42px;white-space:nowrap}
-  .tick svg{width:46px;height:46px;flex:none}
-  #phone{width:300px;height:620px;border-radius:44px;background:#0b1820;padding:12px;box-sizing:border-box;box-shadow:0 40px 80px rgba(0,0,0,.5)}
+  .glow{position:absolute;border:4px solid #a90b0c;border-radius:16px;box-sizing:border-box;box-shadow:0 0 0 3000px rgba(7,41,58,.34),0 0 0 10px rgba(169,11,12,.14)}
+  .dots{display:flex;flex-direction:row-reverse;gap:10px}
+  .dots i{width:44px;height:6px;border-radius:3px;background:rgba(143,182,200,.30)}
+  .dots i.on{background:#f7f8fa}
+  /* the problem: papers everywhere */
+  .paper{width:230px;height:150px;border-radius:16px;background:#f7f8fa;color:#07293a;box-shadow:0 22px 50px rgba(0,0,0,.32);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-weight:700;font-size:30px}
+  .paper svg{width:46px;height:46px}
+  .pain{font-weight:700;font-size:44px;white-space:nowrap;padding:16px 34px;border-radius:999px;border:2px solid rgba(143,182,200,.6);color:#f7f8fa}
+  #phone{width:290px;height:600px;border-radius:44px;background:#0b1820;padding:12px;box-sizing:border-box;box-shadow:0 40px 80px rgba(0,0,0,.5)}
   #phone div{width:100%;height:100%;border-radius:34px;overflow:hidden;background:#fff}
   #phone img{display:block;width:100%}
-  #prog{left:0;top:1072px;height:8px;width:1920px;background:rgba(255,255,255,.10)}
+  #prog{left:0;top:1074px;height:6px;width:1920px;background:rgba(255,255,255,.08)}
   #prog i{display:block;height:100%;width:100%;background:#8fb6c8;transform-origin:0 0}
 </style>
 </head>
 <body>
 <div id="stage">
   <div id="intro" class="abs"></div>
-  <div id="flow" class="abs"></div>
-  <div id="card" class="abs"><div class="bar"><i style="left:22px"></i><i style="left:46px"></i><i style="left:70px"></i></div><div id="view"></div></div>
-  <div id="demo" class="abs rtl">המספרים במסכים להדגמה בלבד</div>
+  <div id="problem" class="abs"></div>
+  <div id="card" class="abs"><div class="bar"><i style="left:22px"></i><i style="left:46px"></i><i style="left:70px"></i><span>המספרים במסכים להדגמה בלבד</span></div><div id="view"></div></div>
   <div id="phone" class="abs"><div><img src="shots/phone.jpg" alt=""></div></div>
   <div id="text" class="abs"></div>
   <div id="outro" class="abs"></div>
   <div id="prog" class="abs"><i></i></div>
 </div>
 <script src="../lib/studio.js"></script>
+<script src="timeline.js"></script>
 <script>
-const { clamp, lerp, smooth, step, track } = Studio
-const W = 1920, H = 1080, DUR = 62
+const { clamp, lerp, smooth } = Studio
+const W = 1920, H = 1080
+// ?c={"durations":{…}} from the renderer (out/finance-explainer-config.json, written by mix.cjs) sets the clock to the voice
+const CFG = Studio.config({ durations: null })
 const $ = (id) => document.getElementById(id)
-const el = (parent, cls, html, tag = 'div') => { const d = document.createElement(tag); d.className = cls; if (html != null) d.innerHTML = html; parent.appendChild(d); return d }
-const put = (node, x, y, o = 1, s = 1) => { node.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) scale(${s.toFixed(4)})`; node.style.opacity = clamp(o).toFixed(3) }
-// in over 0.35 s from t0, out over 0.3 s before t1
-const vis = (t, t0, t1) => smooth((t - t0) / 0.35) * (1 - smooth((t - (t1 - 0.3)) / 0.3))
-const rise = (t, t0) => 22 * (1 - step(t - t0, { f: 2.2, z: 1 }))
+const el = (parent, cls, html) => { const d = document.createElement('div'); d.className = cls; if (html != null) d.innerHTML = html; parent.appendChild(d); return d }
+const put = (node, x, y, o = 1, s = 1, r = 0) => { node.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) scale(${s.toFixed(4)}) rotate(${r.toFixed(3)}deg)`; node.style.opacity = clamp(o).toFixed(3) }
+const ease = (k) => { k = clamp(k); return k * k * k * (k * (k * 6 - 15) + 10) }        // a slow start and a slow stop
+const fade = (t, t0, t1, i = 0.6, o = 0.5) => smooth((t - t0) / i) * (1 - smooth((t - (t1 - o)) / o))
+const lift = (t, t0, d = 0.9, px = 28) => px * (1 - ease((t - t0) / d))
 
-/* ---------- the screen scenes: text on the right, the screen on the left ----------
-   Every line of text has its own place on the screen: while the line is the active one, the camera goes there,
-   the rest of the screen dims, a frame marks the place and the pointer clicks on it.
-   items: [text, what the narrator says, [x, y, w, h] of the place, [zoom, centre x, centre y]] in the screenshot's own pixels (1440 x 900). */
-const SCENES = [
-  { t0: 11, t1: 21, shot: 'today', step: 1, h: 'אוספת וקוראת לבד', items: [
-    ['סורקת את המייל ואת הוואטסאפ', 'המערכת סורקת את המייל ואת הוואטסאפ,', [30, 596, 432, 300], [1.5, 380, 740]],
-    ['קוראת ספק, סכום, מע״מ ותאריך', 'קוראת מכל מסמך ספק, סכום, מע״מ ותאריך,', [476, 596, 688, 300], [1.5, 800, 740]],
-    ['מראה מה מחכה לטיפול', 'ומראה במבט אחד מה מחכה לטיפול.', [30, 270, 1134, 120], [1.3, 640, 330]]] },
-  { t0: 21, t1: 29, shot: 'documents', step: 2, h: 'בודקים ומאשרים', items: [
-    ['כל המסמכים ברשימה אחת', 'כל המסמכים מרוכזים ברשימה אחת.', [30, 206, 1134, 380], [1.15, 640, 420]],
-    ['מה שלא ברור מחכה לבדיקה', 'מה שלא ברור מחכה לבדיקה,', [30, 462, 1134, 70], [1.5, 780, 500]],
-    ['מסמך שאושר נכנס לדוחות', 'ומסמך שאושר נכנס לדוחות.', [690, 250, 92, 330], [1.5, 780, 410]]] },
-  { t0: 29, t1: 40, shot: 'home', step: 3, h: 'המנכ״ל רואה הכול', items: [
-    ['הוצאות החודש של כל הקבוצה', 'המנכ״ל רואה את הוצאות החודש של כל הקבוצה,', [762, 274, 400, 236], [1.6, 900, 380]],
-    ['כל חברה בנפרד, בלחיצה', 'כל חברה בנפרד, בלחיצה אחת,', [174, 176, 990, 76], [1.45, 700, 230]],
-    ['השוואה לחודשים קודמים', 'והשוואה לחודשים קודמים.', [376, 540, 786, 360], [1.45, 760, 700]]] },
-  { t0: 40, t1: 49, shot: 'report', step: 4, h: 'דוח לרואה החשבון', items: [
-    ['בוחרים תקופה וחברה', 'בסוף התקופה בוחרים תקופה וחברה,', [50, 222, 1092, 216], [1.4, 760, 320]],
-    ['דוח Excel עם הקבצים המקוריים', 'מפיקים דוח Excel עם הקבצים המקוריים,', [874, 826, 256, 52], [1.6, 860, 780]],
-    ['נשלח במייל בלחיצה אחת', 'ושולחים לרואה החשבון בלחיצה אחת.', [700, 826, 170, 52], [1.6, 800, 780]]] },
-  { t0: 49, t1: 56, shot: 'drive', step: 5, h: 'הכול שמור ומסודר', items: [
-    ['ארכיון ב-Google Drive', 'הכול נשמר בארכיון ב-Google Drive,', [50, 276, 1092, 52], [1.3, 640, 360]],
-    ['תיקייה לכל חברה', 'בתיקייה מסודרת לכל חברה,', [46, 458, 862, 246], [1.35, 560, 600]],
-    ['עובדת גם מהטלפון', 'וזמין גם מהטלפון.', null, [1.35, 560, 620]]] },
+// what the narrator says (the on-screen text is shorter: a title and one line of value)
+const SAY = {
+  v01: 'כל ההוצאות של הקבוצה. במקום אחד. בכל רגע.',
+  v02: 'היום, חשבוניות מגיעות מכל כיוון. במייל, בוואטסאפ, בנייר. ושעות הולכות על חיפושים, הקלדות ומעקב.',
+  v03: 'קורקוס פיננס מרכזת הכול במערכת אחת, שעובדת בשבילכם.',
+  v04: 'המסמכים נאספים לבד. המערכת קוראת כל חשבונית, וממלאת את הפרטים במקומכם.',
+  v05: 'אתם רק מאשרים. מה שדורש תשומת לב מסומן, וכל השאר כבר מסודר.',
+  v06: 'ובכל רגע, תמונת מצב מלאה. כמה הוצאנו החודש, באיזו חברה, ומה השתנה.',
+  v07: 'בסוף החודש, הדוח לרואה החשבון כבר מוכן. לחיצה אחת, והוא בדרך.',
+  v08: 'וכל מסמך נשמר במקומו, וזמין מכל מקום. גם מהטלפון.',
+  v09: 'קורקוס פיננס. פחות ניירת, יותר שליטה.',
+}
+const T = timeline(SAY, CFG.durations), DUR = T.duration
+
+/* ---------- five things the system does for you ----------
+   One screen each, already framed on its clean part (no menus, no clutter), and one calm camera move.
+   cam: [[part of the sentence 0..1, zoom, centre x, centre y], …] in the screenshot's own pixels (1440 x 900).
+   glow: [[from, to, x, y, w, h], …] the place the sentence is about, lit while it is said (parts of the sentence). */
+const FEATURES = [
+  { shot: 'today', title: 'הכול נאסף לבד', value: 'כל חשבונית נקראת ונרשמת,<br>בלי להקליד דבר',
+    cam: [[0, 1.3, 640, 740], [1, 1.5, 780, 740]], glow: [[0.42, 1.05, 476, 596, 688, 300]] },
+  { shot: 'documents', title: 'אתם רק מאשרים', value: 'מה שדורש תשומת לב מסומן.<br>כל השאר כבר מסודר',
+    cam: [[0, 1.3, 760, 430], [1, 1.5, 800, 440]], glow: [[0.3, 1.05, 690, 250, 92, 330]] },
+  { shot: 'home2', title: 'תמונת מצב<br>בכל רגע', value: 'כמה הוצאנו, באיזו חברה,<br>ומה השתנה',
+    cam: [[0, 1.42, 800, 340], [0.62, 1.42, 800, 340], [1, 1.42, 760, 700]], glow: [[0.26, 0.5, 762, 274, 400, 236], [0.5, 0.72, 174, 176, 990, 76], [0.8, 1.08, 376, 540, 786, 360]] },
+  { shot: 'report', title: 'הדוח מוכן.<br>בלחיצה אחת', value: 'לרואה החשבון,<br>בסוף כל חודש',
+    cam: [[0, 1.3, 760, 600], [1, 1.5, 820, 720]], glow: [[0.55, 1.05, 696, 822, 438, 60]] },
+  { shot: 'drive', title: 'כל מסמך במקומו', value: 'ארכיון מסודר,<br>זמין גם מהטלפון',
+    cam: [[0, 1.3, 560, 560], [1, 1.42, 520, 590]], glow: [[0.12, 0.6, 46, 458, 862, 246]] },
 ]
-for (const s of SCENES) { const span = (s.t1 - s.t0 - 1.5) / s.items.length; s.items = s.items.map(([text, say, box, cam], k) => ({ text, say, box, cam, a: s.t0 + 1.1 + k * span, b: s.t0 + 1.1 + (k + 1) * span })) }
-// what a narrator says, shown as subtitles (and the script for a voice track: docs/finance/EXPLAINER-VIDEO.md)
-const SAY = [
-  [4.2, 7.4, 'חשבוניות מגיעות מהמייל, מהוואטסאפ ומצילום בטלפון.'], [7.4, 10.9, 'קל לאבד אחת בדרך. כאן כולן נאספות למקום אחד.'],
-  ...SCENES.flatMap((s) => s.items.map((q, k) => [k === 0 ? s.t0 + 0.3 : q.a, q.b, q.say])),
-]
-const CARD = { x: 84, y: 170, w: 1140, h: 694 }
-const TEXT = { right: 1836, top: 250 }
+FEATURES.forEach((f, k) => Object.assign(f, T.features[k], { v: T.v[T.features[k].id] }))
+const at = (f, part) => f.v.at + part * (f.v.end - f.v.at)      // a part of the sentence, as a time
+const CARD = { x: 84, y: 196, w: 1140, h: 694 }                   // where the screen rests while the features play
+const TEXT = { right: 1836 }
 
 const ICON = {
   mail: '<svg viewBox="0 0 24 24" fill="none" stroke="#105572" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
   chat: '<svg viewBox="0 0 24 24" fill="none" stroke="#1f8f4e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-12 7l-5 1 1-5a8 8 0 1 1 16-3z"/></svg>',
-  cam: '<svg viewBox="0 0 24 24" fill="none" stroke="#a90b0c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
-  tick: '<svg viewBox="0 0 24 24" fill="none" stroke="#8fb6c8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>',
+  paper: '<svg viewBox="0 0 24 24" fill="none" stroke="#a90b0c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg>',
+  sheet: '<svg viewBox="0 0 24 24" fill="none" stroke="#8a6d1c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg>',
 }
 const N = {}
 
 async function build() {
-  // intro
-  N.logo = el($('intro'), 'abs', '<img src="../../assets/logo-white.png" style="display:block;width:230px" alt="">')
-  N.title = el($('intro'), 'abs big', 'Kurkoos Finance')
-  N.tag = el($('intro'), 'abs sub rtl', 'כל ההוצאות של הקבוצה במקום אחד')
+  // the promise
+  N.logo = el($('intro'), 'abs', '<img src="../../assets/logo-white.png" style="display:block;width:150px" alt="">')
+  N.promise = ['כל ההוצאות של הקבוצה', 'במקום אחד', 'בכל רגע'].map((x) => el($('intro'), 'abs hero rtl', x))
   // the problem
-  N.q = el($('flow'), 'abs h rtl', 'חשבוניות מגיעות מכל מקום')
-  N.chips = [['mail', 'מהמייל'], ['chat', 'מהוואטסאפ'], ['cam', 'מצילום בטלפון']].map(([i, x]) => el($('flow'), 'abs chip', ICON[i] + `<span class="rtl">${x}</span>`))
-  N.hub = el($('flow'), 'abs', '<div id="hub"><b>Kurkoos Finance</b><span class="rtl">אוספת את כולן לבד</span></div>')
-  // screens
-  for (const s of SCENES) {
-    s.node = el($('view'), 'shot', `<img src="shots/${s.shot}.jpg" alt="">`)
-    s.dim = el(s.node, 'spot')
-    s.ptr = el(s.node, 'ptr', '<i></i><svg viewBox="0 0 24 24"><path d="M5 3l14 8-6.2 1.6L9.6 19z" fill="#07293a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>')
-    s.hNode = el($('text'), 'abs h rtl', s.h)
-    s.bNodes = s.items.map((x) => el($('text'), 'abs b rtl', x.text))
+  N.probTitle = el($('problem'), 'abs title wide mid', 'חשבוניות מגיעות מכל כיוון')
+  N.papers = [['mail', 'במייל'], ['chat', 'בוואטסאפ'], ['paper', 'בנייר'], ['sheet', 'בטבלאות'], ['paper', 'במגירה'], ['mail', 'בעוד מייל']].map(([i, x]) => el($('problem'), 'abs paper', ICON[i] + `<span class="rtl">${x}</span>`))
+  N.pains = ['חיפושים', 'הקלדות', 'מעקב'].map((x) => el($('problem'), 'abs pain rtl', x))
+  // the answer
+  N.ansTitle = el($('text'), 'abs title wide mid', 'מערכת אחת')
+  N.ansLead = el($('text'), 'abs lead mid', 'שעובדת בשבילכם')
+  // the screens: the overview appears twice (behind the answer, and as the third feature), so it has two layers
+  N.shots = {}
+  for (const [name, file] of [['home', 'home'], ['today', 'today'], ['documents', 'documents'], ['home2', 'home'], ['report', 'report'], ['drive', 'drive']]) N.shots[name] = el($('view'), 'shot', `<img src="shots/${file}.jpg" alt="">`)
+  for (const f of FEATURES) {
+    f.node = N.shots[f.shot]
+    f.glows = f.glow.map((g) => { const d = el(f.node, 'glow'); Object.assign(d.style, { left: g[2] + 'px', top: g[3] + 'px', width: g[4] + 'px', height: g[5] + 'px' }); return d })
+    f.titleNode = el($('text'), 'abs title rtl', f.title)
+    f.valueNode = el($('text'), 'abs value rtl', f.value)
   }
-  N.steps = el($('text'), 'abs steps', SCENES.map((s) => `<i><b>${s.step}</b></i>`).join(''))
-  N.say = SAY.map((x) => el($('stage'), 'abs say rtl', x[2]))
-  // outro
-  N.end = el($('outro'), 'abs big rtl', 'פחות ניירת, יותר שליטה')
-  N.ticks = ['כל המסמכים במקום אחד', 'דוחות מוכנים לרואה החשבון', 'תמונת מצב למנכ״ל בכל רגע'].map((x) => el($('outro'), 'abs tick', ICON.tick + `<span class="rtl">${x}</span>`))
-  N.endLogo = el($('outro'), 'abs', '<img src="../../assets/logo-white.png" style="display:block;width:170px" alt="">')
+  N.dots = el($('text'), 'abs dots', FEATURES.map(() => '<i></i>').join(''))
+  // the name
+  N.endLogo = el($('outro'), 'abs', '<img src="../../assets/logo-white.png" style="display:block;width:200px" alt="">')
+  N.endName = el($('outro'), 'abs hero', 'Kurkoos Finance')
+  N.endLine = el($('outro'), 'abs lead mid', 'פחות ניירת, יותר שליטה')
   await Promise.all([...document.images].map((i) => i.decode().catch(() => {})))
-  // measure once: right-aligned text is placed by its own width
+  // measure once: text is placed by its own size
   for (const d of document.querySelectorAll('#stage .abs')) { d.style.transform = 'none'; d._w = d.offsetWidth; d._h = d.offsetHeight }
 }
-const centre = (n, y, o, dy = 0, s = 1) => put(n, (W - n._w * s) / 2, y + dy, o, s)
+const centre = (n, y, o, dy = 0) => put(n, (W - n._w) / 2, y + dy, o)
 const right = (n, y, o, dy = 0) => put(n, TEXT.right - n._w, y + dy, o)
-const soft = { f: 0.9, z: 1 }
+
+// the camera inside the screen: zoom and centre, kept inside the screenshot
+function frame(node, z, cx, cy) {
+  const sc = (CARD.w / 1440) * z
+  const x = clamp(CARD.w / 2 - cx * sc, CARD.w - 1440 * sc, 0), y = clamp(CARD.h / 2 - cy * sc, CARD.h - 900 * sc, 0)
+  node.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) scale(${sc.toFixed(4)})`
+}
+// a path through keys [[time, …values]] with a slow start and stop on every leg
+function along(t, keys) {
+  if (t <= keys[0][0]) return keys[0].slice(1)
+  for (let i = 1; i < keys.length; i++) if (t <= keys[i][0]) { const k = ease((t - keys[i - 1][0]) / (keys[i][0] - keys[i - 1][0])); return keys[i].slice(1).map((v, n) => lerp(keys[i - 1][n + 1], v, k)) }
+  return keys[keys.length - 1].slice(1)
+}
 
 function seek(t) {
-  // ---- 0 to 4: the name ----
-  { const top = (H - (N.logo._h + 50 + N.title._h + 22 + N.tag._h)) / 2 - 40
-    centre(N.logo, top, vis(t, 0.1, 4), rise(t, 0.1))
-    centre(N.title, top + N.logo._h + 50, vis(t, 0.5, 4), rise(t, 0.5))
-    centre(N.tag, top + N.logo._h + 50 + N.title._h + 22, vis(t, 1, 4), rise(t, 1)) }
-  // ---- 4 to 11: where invoices come from, and where they all go ----
-  { centre(N.q, 170, vis(t, 4.1, 11), rise(t, 4.1))
-    const hubIn = step(t - 7.4, { f: 2, z: 0.8 })
-    put(N.hub, (W - 360) / 2, 600 + 30 * (1 - hubIn), vis(t, 7.4, 11), 1 + 0.05 * Math.max(0, Math.sin((t - 9.2) * 9)) * Math.exp(-(t - 9.2) * 3) * (t > 9.2))
-    const from = [[1300, 400], [800, 350], [300, 420]]
-    N.chips.forEach((c, i) => {
-      const a = 4.6 + i * 0.5, pull = smooth((t - (8 + i * 0.35)) / 0.8)
-      const x = lerp(from[i][0], (W - c._w) / 2, pull), y = lerp(from[i][1] + 12 * Math.sin((t + i) * 1.4), 660, pull)
-      put(c, x, y + rise(t, a), vis(t, a, 11) * (1 - smooth((pull - 0.5) / 0.4)), lerp(1, 0.6, pull))
+  const I = T.intro, P = T.problem, A = T.answer, O = T.outro, F0 = FEATURES[0], FL = FEATURES[FEATURES.length - 1]
+  // ---- the promise: three short lines, each arriving with its words ----
+  { const v = T.v.v01, span = (v.end - v.at) / 3, top = 330
+    put(N.logo, (W - N.logo._w) / 2, 96, fade(t, 0.1, I.t1))
+    N.promise.forEach((d, i) => { const a = v.at - 0.15 + i * span; centre(d, top + i * 138, fade(t, a, I.t1, 0.5), lift(t, a)); d.style.color = i === 0 ? '#f7f8fa' : '#8fb6c8' }) }
+  // ---- the problem: papers everywhere, and three things that eat the day ----
+  { const v = T.v.v02
+    centre(N.probTitle, 120, fade(t, P.t0 + 0.1, P.t1, 0.6, 0.6), lift(t, P.t0 + 0.1))
+    const home = [[1320, 390, -7], [820, 360, 5], [330, 410, -4], [1120, 620, 6], [560, 650, -6], [1500, 680, 4]]
+    N.papers.forEach((d, i) => {
+      const a = P.t0 + 0.5 + i * 0.32, drift = t - P.t0
+      // towards the answer they come together and fade: one place for all of them
+      const pull = ease((t - (P.t1 - 0.9)) / 1.3)
+      const x = lerp(home[i][0] - 115 + 16 * Math.sin(drift * 0.5 + i * 1.7), W / 2 - 115, pull)
+      const y = lerp(home[i][1] - 75 + 12 * Math.cos(drift * 0.45 + i * 1.3), 470, pull)
+      put(d, x, y + lift(t, a, 0.9, 40), smooth((t - a) / 0.6) * (1 - smooth((t - (P.t1 - 0.4)) / 0.9)), lerp(1, 0.7, pull), lerp(home[i][2] + 1.5 * Math.sin(drift * 0.4 + i), 0, pull))
+    })
+    const p0 = v.at + (v.end - v.at) * 0.62, gap = (v.end - p0) / 3, total = N.pains.reduce((s, d) => s + d._w, 0) + 2 * 28
+    let x = (W + total) / 2
+    N.pains.forEach((d, i) => { x -= d._w; const a = p0 + i * gap - 0.1; put(d, x, 880 + lift(t, a, 0.7, 20), fade(t, a, P.t1, 0.4, 0.5)); x -= 28 }) }
+  // ---- the screen: born in the middle as the answer, then moves aside and stays for all five ----
+  { const k = ease((t - (F0.t0 - 0.1)) / 1.0), out = ease((t - (O.t0 - 0.1)) / 1.0)
+    const s = lerp(0.74, 1, k) * lerp(1, 0.94, out)
+    const x = lerp((W - CARD.w * 0.74) / 2, CARD.x, k), y = lerp(330, CARD.y - 44, k)
+    const o = smooth((t - (A.t0 + 0.25)) / 0.9) * (1 - smooth((t - (O.t0 - 0.1)) / 0.8))
+    put($('card'), x, y + 46 * (1 - ease((t - (A.t0 + 0.25)) / 1.1)), o, s)
+    centre(N.ansTitle, 96, fade(t, A.t0 + 0.2, F0.t0 + 0.2, 0.7, 0.5), lift(t, A.t0 + 0.2))
+    centre(N.ansLead, 196, fade(t, A.t0 + 0.7, F0.t0 + 0.2, 0.7, 0.5), lift(t, A.t0 + 0.7)) }
+  // ---- inside the screen: the overview behind the answer, then one screen per feature, each fading in over the last ----
+  { N.shots.home.style.opacity = 1; N.shots.home.style.zIndex = 1; frame(N.shots.home, 1, 720, 450)
+    FEATURES.forEach((f, k) => {
+      f.node.style.zIndex = 2 + k
+      f.node.style.opacity = smooth((t - (f.t0 + 0.1)) / 0.8).toFixed(3)
+      const [z, cx, cy] = along(t, f.cam.map(([part, ...c]) => [part === 0 ? f.t0 : at(f, part), ...c]))
+      frame(f.node, z, cx, cy)
+      f.glows.forEach((g, i) => { const [a, b] = f.glow[i]; g.style.opacity = (smooth((t - at(f, a)) / 0.5) * (1 - smooth((t - (at(f, b) - 0.5)) / 0.5))).toFixed(3) })
     }) }
-  // ---- 11 to 56: the five screens ----
-  const first = SCENES[0], last = SCENES[SCENES.length - 1]
-  const cardO = smooth((t - first.t0) / 0.4) * (1 - smooth((t - (last.t1 - 0.4)) / 0.4))
-  put($('card'), CARD.x, CARD.y - 44 + 36 * (1 - step(t - first.t0, { f: 1.8, z: 1 })), cardO)
-  put($('demo'), CARD.x + 110, CARD.y - 44 + 11, cardO)
-  SCENES.forEach((s, si) => {
-    const on = t >= s.t0 && t < s.t1
-    // the screen itself: cut in with a short cross-fade
-    s.node.style.opacity = (si === 0 ? (t < s.t1 ? 1 : 0) : (t >= s.t1 && s !== last ? 0 : smooth((t - s.t0) / 0.35))).toFixed(3)
-    s.node.style.zIndex = on ? 2 : 1
-    // camera: the whole screen first, then each line's own place
-    const keys = [[s.t0, 1, 720, 450]].concat(s.items.map((x) => [x.a - 0.15, x.cam[0], x.cam[1], x.cam[2]]))
-    const z = track(t, keys.map((c) => [c[0], c[1]]), soft), cx = track(t, keys.map((c) => [c[0], c[2]]), soft), cy = track(t, keys.map((c) => [c[0], c[3]]), soft)
-    const sc = (CARD.w / 1440) * z
-    const x = clamp(CARD.w / 2 - cx * sc, CARD.w - 1440 * sc, 0), y = clamp(CARD.h / 2 - cy * sc, CARD.h - 900 * sc, 0)
-    s.node.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) scale(${sc.toFixed(4)})`
-    // the active line and its place
-    const k = s.items.findIndex((it) => t >= it.a && t < it.b), it = s.items[k]
-    const boxed = s.items.filter((q) => q.box)
-    // the frame glides from place to place (a spring per edge), the dimming fades with it
-    const edge = (n) => track(t, boxed.map((q, qi) => [qi === 0 ? s.t0 : q.a - 0.1, q.box[n]]), { f: 1.3, z: 1 })
-    const [bx, by, bw, bh] = [0, 1, 2, 3].map(edge)
-    const lit = it && it.box ? smooth((t - it.a) / 0.35) * (1 - smooth((t - (it.b - 0.25)) / 0.25)) : 0
-    Object.assign(s.dim.style, { left: bx.toFixed(1) + 'px', top: by.toFixed(1) + 'px', width: bw.toFixed(1) + 'px', height: bh.toFixed(1) + 'px', opacity: (on ? lit : 0).toFixed(3) })
-    // the pointer: travels to the place, clicks once when the line starts
-    const px = track(t, [[s.t0, 1300, 0, soft]].concat(boxed.map((q) => [q.a - 0.35, q.box[0] + Math.min(q.box[2] * 0.3, 120)])), { f: 1.5, z: 0.9 })
-    const py = track(t, [[s.t0, 860, 0, soft]].concat(boxed.map((q) => [q.a - 0.35, q.box[1] + Math.min(q.box[3] * 0.6, 150)])), { f: 1.5, z: 0.9 })
-    const click = it && it.box ? clamp((t - it.a - 0.1) / 0.5) : 0
-    s.ptr.style.transform = `translate(${px.toFixed(1)}px,${py.toFixed(1)}px) scale(${(1 / z * (1 - 0.14 * Math.sin(Math.PI * clamp((t - (it ? it.a : 0)) / 0.25)) * (it && it.box ? 1 : 0))).toFixed(4)})`
-    s.ptr.style.opacity = (on ? smooth((t - s.t0 - 0.5) / 0.3) * (1 - smooth((t - (s.t1 - 0.3)) / 0.3)) : 0).toFixed(3)
-    s.ptr.firstChild.style.transform = `scale(${(0.3 + 2.2 * click).toFixed(3)})`; s.ptr.firstChild.style.opacity = (click > 0 && click < 1 ? 0.55 * (1 - click) : 0).toFixed(3)
-    // the text column
-    const a = s.t0 + 0.15
-    right(s.hNode, TEXT.top + 86, vis(t, a, s.t1), rise(t, a))
-    s.bNodes.forEach((d, i) => { const q = s.items[i], act = t >= q.a && t < q.b ? smooth((t - q.a) / 0.25) : t >= q.b ? 1 - smooth((t - q.b) / 0.25) : 0
-      right(d, TEXT.top + 210 + i * 76, vis(t, q.a - 0.5, s.t1) * lerp(0.5, 1, act), rise(t, q.a - 0.5)); d.style.color = act > 0.5 ? '#ffffff' : '#c2d6e0'; d.style.fontWeight = act > 0.5 ? 700 : 400 })
+  // ---- the words next to the screen ----
+  FEATURES.forEach((f, k) => {
+    const a = f.t0 + 0.35, b = k === FEATURES.length - 1 ? O.t0 + 0.1 : f.t1 + 0.25
+    f.top = (H - (f.titleNode._h + 26 + f.valueNode._h)) / 2 - 6
+    right(f.titleNode, f.top, fade(t, a, b, 0.6, 0.45), lift(t, a))
+    right(f.valueNode, f.top + f.titleNode._h + 26, fade(t, a + 0.35, b, 0.6, 0.45), lift(t, a + 0.35))
   })
-  // the five steps, the current one filled
-  { right(N.steps, TEXT.top, cardO)
-    const cur = SCENES.findIndex((s) => t >= s.t0 && t < s.t1)
-    ;[...N.steps.children].forEach((d, i) => { d.className = i === cur ? 'on' : i < cur ? 'done' : '' }) }
-  // the phone slides in for its own line
-  { const q = last.items[2], p = step(t - q.a, { f: 1.6, z: 0.85 }); put($('phone'), 880, 240 + 560 * (1 - p), smooth((t - q.a) / 0.3) * (1 - smooth((t - (last.t1 - 0.4)) / 0.4))) }
-  // ---- 56 to 62: what it gives ----
-  { centre(N.end, 170, vis(t, 56.2, 63), rise(t, 56.2))
-    N.ticks.forEach((d, i) => centre(d, 380 + i * 88, vis(t, 57.1 + i * 0.7, 63), rise(t, 57.1 + i * 0.7)))
-    centre(N.endLogo, 670, vis(t, 59.4, 63), rise(t, 59.4)) }
-  // subtitles
-  SAY.forEach((x, i) => centre(N.say[i], 944, vis(t, x[0], x[1]), 0))
+  { const cur = FEATURES.findIndex((f) => t >= f.t0 + 0.2 && t < f.t1 + 0.2)
+    right(N.dots, 330, fade(t, F0.t0 + 0.4, O.t0 + 0.1, 0.6, 0.4))
+    ;[...N.dots.children].forEach((d, i) => { d.className = i === cur ? 'on' : '' }) }
+  // the phone, when the sentence reaches it
+  { const a = at(FL, 0.45), p = ease((t - a) / 1.0); put($('phone'), 900, 290 + 90 * (1 - p), smooth((t - a) / 0.6) * (1 - smooth((t - (O.t0 - 0.1)) / 0.7))) }
+  // ---- the name ----
+  { const a = O.t0 + 0.7, top = 250
+    centre(N.endLogo, top, fade(t, a, DUR + 2, 0.8), lift(t, a))
+    centre(N.endName, top + N.endLogo._h + 50, fade(t, a + 0.4, DUR + 2, 0.8), lift(t, a + 0.4))
+    centre(N.endLine, top + N.endLogo._h + 50 + N.endName._h + 26, fade(t, a + 1.0, DUR + 2, 0.8), lift(t, a + 1.0)) }
   $('prog').firstChild.style.transform = `scaleX(${clamp(t / DUR).toFixed(4)})`
 }
 
-// every text stays inside the frame, the text column never touches the screen card, a subtitle never covers other text
+// every text stays inside the frame, and the words next to the screen never touch it
 function check(t) {
   const bad = []
-  const shown = [...document.querySelectorAll('#text .abs, #intro .abs, #outro .abs, #flow .abs, .say')].filter((d) => +d.style.opacity >= 0.05)
-  const says = shown.filter((d) => d.classList.contains('say')).map((d) => d.getBoundingClientRect())
-  for (const d of shown) {
+  for (const d of document.querySelectorAll('#text .abs, #intro .abs, #outro .abs, #problem .abs')) {
+    if (+d.style.opacity < 0.05) continue
     const r = d.getBoundingClientRect(), name = d.textContent.trim().slice(0, 24)
-    if (r.left < 40 || r.right > W - 40 || r.top < 30 || r.bottom > H - 20) bad.push(`out of frame: ${name}`)
-    if (d.parentNode.id === 'text' && r.left < CARD.x + CARD.w + 30) bad.push(`text over the screen: ${name} (${Math.round(r.left)})`)
-    if (!d.classList.contains('say') && says.some((q) => r.bottom > q.top && r.top < q.bottom && r.right > q.left && r.left < q.right)) bad.push(`under a subtitle: ${name}`)
+    if (r.left < 40 || r.right > W - 40 || r.top < 30 || r.bottom > H - 24) bad.push(`out of frame: ${name}`)
+    const side = FEATURES.some((f) => f.titleNode === d || f.valueNode === d)
+    if (side && r.left < CARD.x + CARD.w + 30) bad.push(`text over the screen: ${name} (${Math.round(r.left)})`)
   }
   return bad
 }
 
 Studio.define({ w: W, h: H, duration: DUR,
-  stages: [{ t: 2.6, label: 'name' }, { t: 6.6, label: 'sources' }, { t: 9.8, label: 'hub' }, { t: 13.4, label: 'collect 1' }, { t: 16.2, label: 'collect 2' }, { t: 19.4, label: 'collect 3' }, { t: 23.4, label: 'list' }, { t: 25.6, label: 'review' }, { t: 28, label: 'approved' }, { t: 32, label: 'ceo number' }, { t: 35, label: 'ceo companies' }, { t: 38.6, label: 'ceo chart' }, { t: 42.6, label: 'report period' }, { t: 45.4, label: 'report excel' }, { t: 48, label: 'report send' }, { t: 51.2, label: 'drive' }, { t: 53, label: 'folders' }, { t: 55, label: 'phone' }, { t: 60.4, label: 'end' }],
-  fonts: ['700 78px "Almoni"', '400 33px "Almoni"', '300 44px "Almoni"'], build, seek, check })
+  stages: [{ t: T.intro.t1 - 0.9, label: 'promise' }, { t: (T.problem.t0 + T.problem.t1) / 2, label: 'problem' }, { t: T.problem.t1 - 1.1, label: 'pains' }, { t: T.answer.t1 - 0.9, label: 'answer' },
+    ...FEATURES.flatMap((f, k) => [{ t: f.t0 + 0.5, label: `into ${k + 1}` }, { t: at(f, 0.5), label: `feature ${k + 1}` }, { t: at(f, 0.95), label: `feature ${k + 1} end` }]), { t: DUR - 1, label: 'name' }],
+  fonts: ['700 82px "Almoni"', '400 30px "Almoni"', '300 40px "Almoni"'], build, seek, check })
 </script>
 </body>
 </html>

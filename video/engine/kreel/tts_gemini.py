@@ -25,22 +25,14 @@ def tts(text, model, voice):
             if e.code not in (429, 500, 503) or i == int(os.environ.get('TTS_TRIES', 8)) - 1: raise
             print('retry', e.code, flush=True); time.sleep(int(os.environ.get('TTS_WAIT', 30)))
 def strip_noise_tail(pcm, sr=24000):
-    """The TTS answer ends with a burst of white noise (about 0.1 s, as loud as the speech) after the voice has gone
-    quiet. It was the hiss heard on every cut. Drop every trailing 10 ms frame that is noise (flat spectrum) or silence,
-    then fade the last 30 ms so the line never ends on a click."""
+    """The TTS answer ends with one or two bursts of white noise after the voice has gone quiet. They were the hiss
+    heard on every cut. vo_noise.py removes them (the old rule here missed them when the pause before was short)."""
     import numpy as np
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from vo_noise import strip_burst
     x = np.frombuffer(pcm[:len(pcm) // 2 * 2], dtype='<i2').astype(np.float32) / 32768
-    n = int(sr * .01); fr = [float(np.sqrt((x[i:i + n] ** 2).mean())) for i in range(0, len(x) // n * n, n)]
-    # the burst: the trailing run of loud frames, right after at least 100 ms of near silence
-    j = len(fr)
-    while j > 0 and (fr[j - 1] > .02 or j > len(fr) - 4): j -= 1
-    end = len(fr) * n
-    if j < len(fr) and j >= 10 and max(fr[j - 10:j]) < .01:
-        end = j * n
-        while end > n * 20 and fr[end // n - 1] < .003: end -= n
-    x = x[:min(len(x), end + int(sr * .12))].copy()
-    f = min(len(x), int(sr * .03)); x[-f:] *= np.linspace(1, 0, f)
-    return (np.clip(x, -1, 1) * 32767).astype('<i2').tobytes()
+    y, _ = strip_burst(x, sr)
+    return (np.clip(y, -1, 1) * 32767).astype('<i2').tobytes()
 model = sc.get('model', 'gemini-3.8-flash-tts'); voice = sc.get('voice', 'Charon'); style = sc.get('style', '')
 out = {}
 for ln in sc['lines']:
@@ -55,7 +47,14 @@ for ln in sc['lines']:
         subprocess.check_call(['ffmpeg', '-v', 'error', '-y', '-f', 's16le', '-ar', '24000', '-ac', '1', '-i', raw, '-af',
                                'silenceremove=start_periods=1:start_threshold=-42dB:start_silence=0.04,areverse,silenceremove=start_periods=1:start_threshold=-42dB:start_silence=0.12,areverse',
                                '-ar', '48000', wav])
-        os.remove(raw); open(tag, 'w').write(h); print('voice', ln['id'], round(dur(wav), 2), flush=True)
+        os.remove(raw)
+        # no white noise leaves this tool: a line that still has a burst is cleaned again, and refused if it stays
+        from vo_noise import load, save, strip_burst as _sb, noise_events
+        x = load(wav); y, cut = _sb(x, 48000)
+        if cut: save(wav, y)
+        ev = noise_events(load(wav), 48000)
+        if ev: os.remove(wav); sys.exit(f"white noise left in {ln['id']} at {ev}: line not written")
+        open(tag, 'w').write(h); print('voice', ln['id'], round(dur(wav), 2), flush=True)
     out[ln['id']] = round(dur(wav), 3)
 json.dump(out, open(os.path.join(VO, 'durations.json'), 'w'), indent=1)
 print('total', round(sum(out.values()), 2), 's of speech in', len(out), 'lines')

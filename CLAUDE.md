@@ -50,3 +50,11 @@ Sign-up is open, so a signed-in account is not an admin by itself. Only accounts
 change site tables, read leads, DMs and drafts, or upload and delete images. `supabase/site_staff.sql` adds RESTRICTIVE policies
 to every non-finance public table and to storage writes: re-run it after adding a site table. A new team member who edits the
 site needs one line: `insert into public.site_staff (user_id, email) select id, email from auth.users where email = '<email>';`
+
+## Videos: no white noise, ever
+
+The owner asked for this more than once (last on 2026-11-21): no white noise, static, hiss, TV noise or harsh sound between
+screens in any video we make, not for a fraction of a second. It came from Gemini TTS, which ends every voice line with a
+burst of noise. `video/engine/kreel/vo_noise.py` removes it and checks a track; `tts_gemini.py` refuses to write a line that
+still has one. Before any video with sound is delivered: `python3 video/engine/kreel/vo_noise.py check <the mixed wav>` must
+say "none". No whoosh, impact or other transition sound either, unless the owner asks for one; a quiet bed of music is fine.

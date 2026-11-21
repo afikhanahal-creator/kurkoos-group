@@ -5231,3 +5231,8 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
   .fin-tour__foot .fin-btn--primary { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .fin-tour__box { animation: none; } }
+.fin-tour__acts { display: flex; align-items: center; gap: 0.6rem; flex: none; }
+.fin-tour__sound { background: transparent; border-color: rgba(255, 255, 255, 0.4); color: #f7f8fa; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; }
+.fin-tour__sound:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); border-color: #f7f8fa; color: #f7f8fa; }
+.fin-tour__sound:focus-visible { outline: 3px solid #8fb6c8; outline-offset: 2px; }
+@media (max-width: 640px) { .fin-tour__acts { flex-direction: column; align-items: stretch; } .fin-tour__acts .fin-btn { width: 100%; justify-content: center; } }

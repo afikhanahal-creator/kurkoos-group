@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Kurkoos Finance explainer</title>
-<!-- The explainer shown in the finance system after sign-in and sign-out. 1920x1080, 88 seconds, no sound.
+<!-- The explainer shown in the finance system after sign-in and sign-out. 1920x1080, 62 seconds. Subtitles carry the narration script; a voice track can be laid over with --audio.
      Every position is a pure function of time (seek). The screens are screenshots of the local test system with
      demo data (scripts in docs/finance/EXPLAINER-VIDEO.md); a small label says so on every screen scene.
      Render: node engine/anim_render.cjs studio/finance-explainer/index.html --fps 30 --sub 2 -o out/finance-explainer.mp4 -->
@@ -24,12 +24,21 @@
   #view{position:absolute;left:0;top:44px;width:1140px;height:694px;overflow:hidden;background:#fff}
   #view .shot{position:absolute;left:0;top:0;width:1440px;transform-origin:0 0}
   #view .shot img{display:block;width:1440px;height:900px}
-  .ring{position:absolute;border:4px solid #a90b0c;border-radius:16px;box-shadow:0 0 0 6px rgba(169,11,12,.16);box-sizing:border-box}
-  #demo{font-weight:400;font-size:19px;color:#8fb6c8;white-space:nowrap}
+  .spot{position:absolute;border:4px solid #a90b0c;border-radius:14px;box-sizing:border-box;box-shadow:0 0 0 3000px rgba(7,41,58,.58),0 0 0 8px rgba(169,11,12,.18);z-index:3}
+  .ptr{position:absolute;left:0;top:0;width:44px;height:44px;transform-origin:0 0;z-index:4}
+  .ptr svg{position:absolute;left:0;top:0;width:44px;height:44px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35))}
+  .ptr i{position:absolute;left:-18px;top:-18px;width:44px;height:44px;border-radius:50%;border:5px solid #a90b0c;box-sizing:border-box}
+  .steps{display:flex;flex-direction:row-reverse;gap:14px}
+  .steps i{width:46px;height:46px;border-radius:50%;border:2px solid rgba(143,182,200,.55);box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-style:normal}
+  .steps b{font-weight:700;font-size:22px;color:#8fb6c8}
+  .steps i.done{background:rgba(143,182,200,.25);border-color:transparent}
+  .steps i.on{background:#f7f8fa;border-color:#f7f8fa}.steps i.on b{color:#07293a}
+  .say{font-weight:400;font-size:36px;line-height:1.2;white-space:nowrap;color:#fff;background:rgba(4,20,30,.72);padding:14px 30px;border-radius:14px}
+  #demo{font-weight:400;font-size:19px;color:#4d6170;white-space:nowrap;z-index:5}
   /* the text column */
   .step{font-weight:700;font-size:26px;color:#8fb6c8;white-space:nowrap}
   .h{font-weight:700;font-size:64px;line-height:1.08;white-space:nowrap}
-  .b{font-weight:400;font-size:33px;line-height:1.3;color:#dbe7ee;white-space:nowrap}
+  .b{font-weight:400;font-size:34px;line-height:1.3;color:#c2d6e0;white-space:nowrap}
   .b::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;background:#a90b0c;margin-inline-end:16px;vertical-align:middle}
   .big{font-weight:700;font-size:104px;line-height:1.05;white-space:nowrap}
   .sub{font-weight:300;font-size:44px;line-height:1.25;color:#dbe7ee;white-space:nowrap}
@@ -61,41 +70,48 @@
 <script src="../lib/studio.js"></script>
 <script>
 const { clamp, lerp, smooth, step, track } = Studio
-const W = 1920, H = 1080, DUR = 88
+const W = 1920, H = 1080, DUR = 62
 const $ = (id) => document.getElementById(id)
 const el = (parent, cls, html, tag = 'div') => { const d = document.createElement(tag); d.className = cls; if (html != null) d.innerHTML = html; parent.appendChild(d); return d }
 const put = (node, x, y, o = 1, s = 1) => { node.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) scale(${s.toFixed(4)})`; node.style.opacity = clamp(o).toFixed(3) }
-// in over 0.5 s from t0, out over 0.4 s before t1
-const vis = (t, t0, t1) => smooth((t - t0) / 0.5) * (1 - smooth((t - (t1 - 0.4)) / 0.4))
-const rise = (t, t0) => 26 * (1 - step(t - t0, { f: 1.6, z: 1 }))
+// in over 0.35 s from t0, out over 0.3 s before t1
+const vis = (t, t0, t1) => smooth((t - t0) / 0.35) * (1 - smooth((t - (t1 - 0.3)) / 0.3))
+const rise = (t, t0) => 22 * (1 - step(t - t0, { f: 2.2, z: 1 }))
 
 /* ---------- the screen scenes: text on the right, the screen on the left ----------
-   cam keys: [time, zoom, centre x, centre y] in the screenshot's own pixels (1440 x 900).
-   rings: [from, to, x, y, w, h] in the same pixels. */
+   Every line of text has its own place on the screen: while the line is the active one, the camera goes there,
+   the rest of the screen dims, a frame marks the place and the pointer clicks on it.
+   items: [text, what the narrator says, [x, y, w, h] of the place, [zoom, centre x, centre y]] in the screenshot's own pixels (1440 x 900). */
 const SCENES = [
-  { t0: 17, t1: 30, shot: 'today', step: 'שלב 1', h: 'אוספת וקוראת לבד',
-    b: ['סורקת את המייל ואת הוואטסאפ', 'קוראת ספק, סכום, מע״מ ותאריך', 'משייכת לחברה ולפרויקט'],
-    cam: [[17, 1, 720, 425], [20.2, 1.5, 690, 250], [25, 1.55, 760, 720]],
-    rings: [[20.8, 24.6, 30, 164, 1134, 92], [25.6, 29.4, 476, 596, 688, 304]] },
-  { t0: 30, t1: 42, shot: 'documents', step: 'שלב 2', h: 'בודקים ומאשרים',
-    b: ['כל המסמכים ברשימה אחת', 'מה שלא ברור מחכה לבדיקה', 'מסמך שאושר נכנס לדוחות'],
-    cam: [[30, 1, 720, 425], [33.2, 1.45, 800, 470]],
-    rings: [[33.8, 41.2, 690, 250, 92, 630]] },
-  { t0: 42, t1: 57, shot: 'home', step: 'שלב 3', h: 'המנכ״ל רואה הכול',
-    b: ['הוצאות החודש של כל הקבוצה', 'כל חברה בנפרד, בלחיצה', 'השוואה לחודשים קודמים'],
-    cam: [[42, 1, 720, 425], [45, 1.6, 900, 380], [49, 1.45, 700, 230], [52.6, 1.45, 760, 700]],
-    rings: [[45.6, 48.6, 762, 274, 400, 236], [49.6, 52.2, 174, 176, 990, 76], [53.2, 56.4, 376, 540, 786, 360]] },
-  { t0: 57, t1: 69, shot: 'report', step: 'שלב 4', h: 'דוח לרואה החשבון',
-    b: ['בוחרים תקופה וחברה', 'דוח Excel עם הקבצים המקוריים', 'נשלח במייל בלחיצה אחת'],
-    cam: [[57, 1, 720, 425], [60, 1.45, 780, 300], [64.2, 1.5, 760, 760]],
-    rings: [[60.6, 63.8, 50, 222, 1092, 216], [64.8, 68.4, 50, 778, 1092, 112]] },
-  { t0: 69, t1: 79, shot: 'drive', step: 'שלב 5', h: 'הכול שמור ומסודר',
-    b: ['ארכיון ב-Google Drive', 'תיקייה לכל חברה, שנה וחודש', 'עובדת גם מהטלפון'],
-    cam: [[69, 1, 720, 425], [71.6, 1.35, 560, 600]],
-    rings: [[72.2, 75.4, 46, 458, 862, 372]] },
+  { t0: 11, t1: 21, shot: 'today', step: 1, h: 'אוספת וקוראת לבד', items: [
+    ['סורקת את המייל ואת הוואטסאפ', 'המערכת סורקת את המייל ואת הוואטסאפ,', [30, 596, 432, 300], [1.5, 380, 740]],
+    ['קוראת ספק, סכום, מע״מ ותאריך', 'קוראת מכל מסמך ספק, סכום, מע״מ ותאריך,', [476, 596, 688, 300], [1.5, 800, 740]],
+    ['מראה מה מחכה לטיפול', 'ומראה במבט אחד מה מחכה לטיפול.', [30, 270, 1134, 120], [1.3, 640, 330]]] },
+  { t0: 21, t1: 29, shot: 'documents', step: 2, h: 'בודקים ומאשרים', items: [
+    ['כל המסמכים ברשימה אחת', 'כל המסמכים מרוכזים ברשימה אחת.', [30, 206, 1134, 380], [1.15, 640, 420]],
+    ['מה שלא ברור מחכה לבדיקה', 'מה שלא ברור מחכה לבדיקה,', [30, 462, 1134, 70], [1.5, 780, 500]],
+    ['מסמך שאושר נכנס לדוחות', 'ומסמך שאושר נכנס לדוחות.', [690, 250, 92, 330], [1.5, 780, 410]]] },
+  { t0: 29, t1: 40, shot: 'home', step: 3, h: 'המנכ״ל רואה הכול', items: [
+    ['הוצאות החודש של כל הקבוצה', 'המנכ״ל רואה את הוצאות החודש של כל הקבוצה,', [762, 274, 400, 236], [1.6, 900, 380]],
+    ['כל חברה בנפרד, בלחיצה', 'כל חברה בנפרד, בלחיצה אחת,', [174, 176, 990, 76], [1.45, 700, 230]],
+    ['השוואה לחודשים קודמים', 'והשוואה לחודשים קודמים.', [376, 540, 786, 360], [1.45, 760, 700]]] },
+  { t0: 40, t1: 49, shot: 'report', step: 4, h: 'דוח לרואה החשבון', items: [
+    ['בוחרים תקופה וחברה', 'בסוף התקופה בוחרים תקופה וחברה,', [50, 222, 1092, 216], [1.4, 760, 320]],
+    ['דוח Excel עם הקבצים המקוריים', 'מפיקים דוח Excel עם הקבצים המקוריים,', [874, 826, 256, 52], [1.6, 860, 780]],
+    ['נשלח במייל בלחיצה אחת', 'ושולחים לרואה החשבון בלחיצה אחת.', [700, 826, 170, 52], [1.6, 800, 780]]] },
+  { t0: 49, t1: 56, shot: 'drive', step: 5, h: 'הכול שמור ומסודר', items: [
+    ['ארכיון ב-Google Drive', 'הכול נשמר בארכיון ב-Google Drive,', [50, 276, 1092, 52], [1.3, 640, 360]],
+    ['תיקייה לכל חברה', 'בתיקייה מסודרת לכל חברה,', [46, 458, 862, 246], [1.35, 560, 600]],
+    ['עובדת גם מהטלפון', 'וזמין גם מהטלפון.', null, [1.35, 560, 620]]] },
 ]
-const CARD = { x: 84, y: 215, w: 1140, h: 694 }
-const TEXT = { right: 1836, top: 330 }
+for (const s of SCENES) { const span = (s.t1 - s.t0 - 1.5) / s.items.length; s.items = s.items.map(([text, say, box, cam], k) => ({ text, say, box, cam, a: s.t0 + 1.1 + k * span, b: s.t0 + 1.1 + (k + 1) * span })) }
+// what a narrator says, shown as subtitles (and the script for a voice track: docs/finance/EXPLAINER-VIDEO.md)
+const SAY = [
+  [4.2, 7.4, 'חשבוניות מגיעות מהמייל, מהוואטסאפ ומצילום בטלפון.'], [7.4, 10.9, 'קל לאבד אחת בדרך. כאן כולן נאספות למקום אחד.'],
+  ...SCENES.flatMap((s) => s.items.map((q, k) => [k === 0 ? s.t0 + 0.3 : q.a, q.b, q.say])),
+]
+const CARD = { x: 84, y: 170, w: 1140, h: 694 }
+const TEXT = { right: 1836, top: 250 }
 
 const ICON = {
   mail: '<svg viewBox="0 0 24 24" fill="none" stroke="#105572" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
@@ -112,92 +128,114 @@ async function build() {
   N.tag = el($('intro'), 'abs sub rtl', 'כל ההוצאות של הקבוצה במקום אחד')
   // the problem
   N.q = el($('flow'), 'abs h rtl', 'חשבוניות מגיעות מכל מקום')
-  N.q2 = el($('flow'), 'abs sub rtl', 'וקל לאבד אחת בדרך')
-  N.chips = [['mail', 'מהמייל'], ['chat', 'מהוואטסאפ'], ['cam', 'מצילום בטלפון']].map(([i, s]) => el($('flow'), 'abs chip', ICON[i] + `<span class="rtl">${s}</span>`))
+  N.chips = [['mail', 'מהמייל'], ['chat', 'מהוואטסאפ'], ['cam', 'מצילום בטלפון']].map(([i, x]) => el($('flow'), 'abs chip', ICON[i] + `<span class="rtl">${x}</span>`))
   N.hub = el($('flow'), 'abs', '<div id="hub"><b>Kurkoos Finance</b><span class="rtl">אוספת את כולן לבד</span></div>')
   // screens
   for (const s of SCENES) {
     s.node = el($('view'), 'shot', `<img src="shots/${s.shot}.jpg" alt="">`)
-    s.ringNodes = s.rings.map((r) => { const d = el(s.node, 'ring'); Object.assign(d.style, { left: r[2] + 'px', top: r[3] + 'px', width: r[4] + 'px', height: r[5] + 'px' }); return d })
-    s.stepNode = el($('text'), 'abs step rtl', s.step + ' מתוך 5')
+    s.dim = el(s.node, 'spot')
+    s.ptr = el(s.node, 'ptr', '<i></i><svg viewBox="0 0 24 24"><path d="M5 3l14 8-6.2 1.6L9.6 19z" fill="#07293a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>')
     s.hNode = el($('text'), 'abs h rtl', s.h)
-    s.bNodes = s.b.map((x) => el($('text'), 'abs b rtl', x))
+    s.bNodes = s.items.map((x) => el($('text'), 'abs b rtl', x.text))
   }
+  N.steps = el($('text'), 'abs steps', SCENES.map((s) => `<i><b>${s.step}</b></i>`).join(''))
+  N.say = SAY.map((x) => el($('stage'), 'abs say rtl', x[2]))
   // outro
   N.end = el($('outro'), 'abs big rtl', 'פחות ניירת, יותר שליטה')
-  N.ticks = ['כל המסמכים במקום אחד', 'דוחות מוכנים לרואה החשבון', 'תמונת מצב למנכ״ל בכל רגע'].map((s) => el($('outro'), 'abs tick', ICON.tick + `<span class="rtl">${s}</span>`))
-  N.endLogo = el($('outro'), 'abs', '<img src="../../assets/logo-white.png" style="display:block;width:190px" alt="">')
-  // measure once: right-aligned text is placed by its own width
+  N.ticks = ['כל המסמכים במקום אחד', 'דוחות מוכנים לרואה החשבון', 'תמונת מצב למנכ״ל בכל רגע'].map((x) => el($('outro'), 'abs tick', ICON.tick + `<span class="rtl">${x}</span>`))
+  N.endLogo = el($('outro'), 'abs', '<img src="../../assets/logo-white.png" style="display:block;width:170px" alt="">')
   await Promise.all([...document.images].map((i) => i.decode().catch(() => {})))
+  // measure once: right-aligned text is placed by its own width
   for (const d of document.querySelectorAll('#stage .abs')) { d.style.transform = 'none'; d._w = d.offsetWidth; d._h = d.offsetHeight }
 }
 const centre = (n, y, o, dy = 0, s = 1) => put(n, (W - n._w * s) / 2, y + dy, o, s)
 const right = (n, y, o, dy = 0) => put(n, TEXT.right - n._w, y + dy, o)
+const soft = { f: 0.9, z: 1 }
 
 function seek(t) {
-  // ---- 0 to 6: the name ----
-  { const o = vis(t, 0.2, 6)
-    const top = (H - (N.logo._h + 56 + N.title._h + 26 + N.tag._h)) / 2
-    centre(N.logo, top, o, rise(t, 0.2))
-    centre(N.title, top + N.logo._h + 56, vis(t, 0.9, 6), rise(t, 0.9))
-    centre(N.tag, top + N.logo._h + 56 + N.title._h + 26, vis(t, 1.7, 6), rise(t, 1.7)) }
-  // ---- 6 to 17: where invoices come from ----
-  { centre(N.q, 190, vis(t, 6.2, 17), rise(t, 6.2))
-    centre(N.q2, 286, vis(t, 7.2, 12.4), rise(t, 7.2))
-    const hubIn = step(t - 11.6, { f: 1.8, z: 0.8 })
-    put(N.hub, (W - 360) / 2, 640 + 30 * (1 - hubIn), vis(t, 11.6, 17))
-    const from = [[1300, 520], [800, 470], [300, 540]]
+  // ---- 0 to 4: the name ----
+  { const top = (H - (N.logo._h + 50 + N.title._h + 22 + N.tag._h)) / 2 - 40
+    centre(N.logo, top, vis(t, 0.1, 4), rise(t, 0.1))
+    centre(N.title, top + N.logo._h + 50, vis(t, 0.5, 4), rise(t, 0.5))
+    centre(N.tag, top + N.logo._h + 50 + N.title._h + 22, vis(t, 1, 4), rise(t, 1)) }
+  // ---- 4 to 11: where invoices come from, and where they all go ----
+  { centre(N.q, 170, vis(t, 4.1, 11), rise(t, 4.1))
+    const hubIn = step(t - 7.4, { f: 2, z: 0.8 })
+    put(N.hub, (W - 360) / 2, 600 + 30 * (1 - hubIn), vis(t, 7.4, 11), 1 + 0.05 * Math.max(0, Math.sin((t - 9.2) * 9)) * Math.exp(-(t - 9.2) * 3) * (t > 9.2))
+    const from = [[1300, 400], [800, 350], [300, 420]]
     N.chips.forEach((c, i) => {
-      const a = 8 + i * 0.7, pull = smooth((t - (12.6 + i * 0.5)) / 1.1)
-      const x = lerp(from[i][0], (W - c._w) / 2, pull), y = lerp(from[i][1] + 14 * Math.sin((t + i) * 1.1), 710, pull)
-      put(c, x, y + rise(t, a), vis(t, a, 17) * (1 - smooth((pull - 0.45) / 0.4)), lerp(1, 0.6, pull))
+      const a = 4.6 + i * 0.5, pull = smooth((t - (8 + i * 0.35)) / 0.8)
+      const x = lerp(from[i][0], (W - c._w) / 2, pull), y = lerp(from[i][1] + 12 * Math.sin((t + i) * 1.4), 660, pull)
+      put(c, x, y + rise(t, a), vis(t, a, 11) * (1 - smooth((pull - 0.5) / 0.4)), lerp(1, 0.6, pull))
     }) }
-  // ---- 17 to 79: the five screens ----
-  const live = SCENES.find((s) => t >= s.t0 - 0.01 && t < s.t1)
+  // ---- 11 to 56: the five screens ----
   const first = SCENES[0], last = SCENES[SCENES.length - 1]
-  const cardO = smooth((t - first.t0) / 0.6) * (1 - smooth((t - (last.t1 - 0.5)) / 0.5))
-  put($('card'), CARD.x, CARD.y - 44 + 40 * (1 - step(t - first.t0, { f: 1.4, z: 1 })), cardO)
-  put($('demo'), CARD.x + CARD.w - $('demo')._w, CARD.y + CARD.h + 22, cardO * 0.9)
-  for (const s of SCENES) {
-    const o = smooth((t - s.t0) / 0.45) * (s === last ? 1 : 1 - smooth((t - (s.t1 - 0.45)) / 0.45))
-    s.node.style.opacity = (t >= s.t0 - 0.5 && t < s.t1 + 0.5 ? clamp(s === first ? 1 : o + (t >= s.t1 ? 0 : 0)) : 0).toFixed(3)
-    if (s !== first && t < s.t0) s.node.style.opacity = 0
-    if (t >= s.t1) s.node.style.opacity = s === last ? 1 : 0
-    const k = s.cam, soft = { f: 0.55, z: 1 }
-    const z = track(t, k.map((c) => [c[0], c[1]]), soft), cx = track(t, k.map((c) => [c[0], c[2]]), soft), cy = track(t, k.map((c) => [c[0], c[3]]), soft)
+  const cardO = smooth((t - first.t0) / 0.4) * (1 - smooth((t - (last.t1 - 0.4)) / 0.4))
+  put($('card'), CARD.x, CARD.y - 44 + 36 * (1 - step(t - first.t0, { f: 1.8, z: 1 })), cardO)
+  put($('demo'), CARD.x + 110, CARD.y - 44 + 11, cardO)
+  SCENES.forEach((s, si) => {
+    const on = t >= s.t0 && t < s.t1
+    // the screen itself: cut in with a short cross-fade
+    s.node.style.opacity = (si === 0 ? (t < s.t1 ? 1 : 0) : (t >= s.t1 && s !== last ? 0 : smooth((t - s.t0) / 0.35))).toFixed(3)
+    s.node.style.zIndex = on ? 2 : 1
+    // camera: the whole screen first, then each line's own place
+    const keys = [[s.t0, 1, 720, 450]].concat(s.items.map((x) => [x.a - 0.15, x.cam[0], x.cam[1], x.cam[2]]))
+    const z = track(t, keys.map((c) => [c[0], c[1]]), soft), cx = track(t, keys.map((c) => [c[0], c[2]]), soft), cy = track(t, keys.map((c) => [c[0], c[3]]), soft)
     const sc = (CARD.w / 1440) * z
     const x = clamp(CARD.w / 2 - cx * sc, CARD.w - 1440 * sc, 0), y = clamp(CARD.h / 2 - cy * sc, CARD.h - 900 * sc, 0)
     s.node.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) scale(${sc.toFixed(4)})`
-    s.ringNodes.forEach((d, i) => { const r = s.rings[i]; d.style.opacity = (smooth((t - r[0]) / 0.35) * (1 - smooth((t - (r[1] - 0.35)) / 0.35))).toFixed(3) })
-    const a = s.t0 + 0.3
-    right(s.stepNode, TEXT.top, vis(t, a, s.t1), rise(t, a))
-    right(s.hNode, TEXT.top + 46, vis(t, a + 0.25, s.t1), rise(t, a + 0.25))
-    s.bNodes.forEach((d, i) => right(d, TEXT.top + 168 + i * 72, vis(t, a + 1.6 + i * 2.2, s.t1), rise(t, a + 1.6 + i * 2.2)))
-  }
-  void live
-  // the phone slides in over the last screen
-  { const p = step(t - 75.6, { f: 1.3, z: 0.85 }); put($('phone'), 960, 300 + 520 * (1 - p), smooth((t - 75.6) / 0.4) * (1 - smooth((t - 78.5) / 0.5))) }
-  // ---- 79 to 88: what it gives ----
-  { centre(N.end, 200, vis(t, 79.4, 89), rise(t, 79.4))
-    N.ticks.forEach((d, i) => centre(d, 410 + i * 92, vis(t, 80.8 + i * 1.1, 89), rise(t, 80.8 + i * 1.1)))
-    centre(N.endLogo, 720, vis(t, 84.6, 89), rise(t, 84.6)) }
+    // the active line and its place
+    const k = s.items.findIndex((it) => t >= it.a && t < it.b), it = s.items[k]
+    const boxed = s.items.filter((q) => q.box)
+    // the frame glides from place to place (a spring per edge), the dimming fades with it
+    const edge = (n) => track(t, boxed.map((q, qi) => [qi === 0 ? s.t0 : q.a - 0.1, q.box[n]]), { f: 1.3, z: 1 })
+    const [bx, by, bw, bh] = [0, 1, 2, 3].map(edge)
+    const lit = it && it.box ? smooth((t - it.a) / 0.35) * (1 - smooth((t - (it.b - 0.25)) / 0.25)) : 0
+    Object.assign(s.dim.style, { left: bx.toFixed(1) + 'px', top: by.toFixed(1) + 'px', width: bw.toFixed(1) + 'px', height: bh.toFixed(1) + 'px', opacity: (on ? lit : 0).toFixed(3) })
+    // the pointer: travels to the place, clicks once when the line starts
+    const px = track(t, [[s.t0, 1300, 0, soft]].concat(boxed.map((q) => [q.a - 0.35, q.box[0] + Math.min(q.box[2] * 0.3, 120)])), { f: 1.5, z: 0.9 })
+    const py = track(t, [[s.t0, 860, 0, soft]].concat(boxed.map((q) => [q.a - 0.35, q.box[1] + Math.min(q.box[3] * 0.6, 150)])), { f: 1.5, z: 0.9 })
+    const click = it && it.box ? clamp((t - it.a - 0.1) / 0.5) : 0
+    s.ptr.style.transform = `translate(${px.toFixed(1)}px,${py.toFixed(1)}px) scale(${(1 / z * (1 - 0.14 * Math.sin(Math.PI * clamp((t - (it ? it.a : 0)) / 0.25)) * (it && it.box ? 1 : 0))).toFixed(4)})`
+    s.ptr.style.opacity = (on ? smooth((t - s.t0 - 0.5) / 0.3) * (1 - smooth((t - (s.t1 - 0.3)) / 0.3)) : 0).toFixed(3)
+    s.ptr.firstChild.style.transform = `scale(${(0.3 + 2.2 * click).toFixed(3)})`; s.ptr.firstChild.style.opacity = (click > 0 && click < 1 ? 0.55 * (1 - click) : 0).toFixed(3)
+    // the text column
+    const a = s.t0 + 0.15
+    right(s.hNode, TEXT.top + 86, vis(t, a, s.t1), rise(t, a))
+    s.bNodes.forEach((d, i) => { const q = s.items[i], act = t >= q.a && t < q.b ? smooth((t - q.a) / 0.25) : t >= q.b ? 1 - smooth((t - q.b) / 0.25) : 0
+      right(d, TEXT.top + 210 + i * 76, vis(t, q.a - 0.5, s.t1) * lerp(0.5, 1, act), rise(t, q.a - 0.5)); d.style.color = act > 0.5 ? '#ffffff' : '#c2d6e0'; d.style.fontWeight = act > 0.5 ? 700 : 400 })
+  })
+  // the five steps, the current one filled
+  { right(N.steps, TEXT.top, cardO)
+    const cur = SCENES.findIndex((s) => t >= s.t0 && t < s.t1)
+    ;[...N.steps.children].forEach((d, i) => { d.className = i === cur ? 'on' : i < cur ? 'done' : '' }) }
+  // the phone slides in for its own line
+  { const q = last.items[2], p = step(t - q.a, { f: 1.6, z: 0.85 }); put($('phone'), 880, 240 + 560 * (1 - p), smooth((t - q.a) / 0.3) * (1 - smooth((t - (last.t1 - 0.4)) / 0.4))) }
+  // ---- 56 to 62: what it gives ----
+  { centre(N.end, 170, vis(t, 56.2, 63), rise(t, 56.2))
+    N.ticks.forEach((d, i) => centre(d, 380 + i * 88, vis(t, 57.1 + i * 0.7, 63), rise(t, 57.1 + i * 0.7)))
+    centre(N.endLogo, 670, vis(t, 59.4, 63), rise(t, 59.4)) }
+  // subtitles
+  SAY.forEach((x, i) => centre(N.say[i], 944, vis(t, x[0], x[1]), 0))
   $('prog').firstChild.style.transform = `scaleX(${clamp(t / DUR).toFixed(4)})`
 }
 
-// every text stays inside the frame and the text column never touches the screen card
+// every text stays inside the frame, the text column never touches the screen card, a subtitle never covers other text
 function check(t) {
   const bad = []
-  for (const d of document.querySelectorAll('#text .abs, #intro .abs, #outro .abs, #flow .abs')) {
-    if (+d.style.opacity < 0.05) continue
-    const r = d.getBoundingClientRect()
-    if (r.left < 40 || r.right > W - 40 || r.top < 30 || r.bottom > H - 30) bad.push(`out of frame: ${d.textContent.trim().slice(0, 24)}`)
-    if (d.parentNode.id === 'text' && r.left < CARD.x + CARD.w + 30) bad.push(`text over the screen: ${d.textContent.trim().slice(0, 24)} (${Math.round(r.left)})`)
+  const shown = [...document.querySelectorAll('#text .abs, #intro .abs, #outro .abs, #flow .abs, .say')].filter((d) => +d.style.opacity >= 0.05)
+  const says = shown.filter((d) => d.classList.contains('say')).map((d) => d.getBoundingClientRect())
+  for (const d of shown) {
+    const r = d.getBoundingClientRect(), name = d.textContent.trim().slice(0, 24)
+    if (r.left < 40 || r.right > W - 40 || r.top < 30 || r.bottom > H - 20) bad.push(`out of frame: ${name}`)
+    if (d.parentNode.id === 'text' && r.left < CARD.x + CARD.w + 30) bad.push(`text over the screen: ${name} (${Math.round(r.left)})`)
+    if (!d.classList.contains('say') && says.some((q) => r.bottom > q.top && r.top < q.bottom && r.right > q.left && r.left < q.right)) bad.push(`under a subtitle: ${name}`)
   }
   return bad
 }
 
 Studio.define({ w: W, h: H, duration: DUR,
-  stages: [{ t: 3.5, label: 'name' }, { t: 9.6, label: 'sources' }, { t: 14.2, label: 'hub' }, { t: 23, label: 'collect' }, { t: 28, label: 'collect 2' }, { t: 37, label: 'approve' }, { t: 47, label: 'ceo number' }, { t: 51, label: 'ceo companies' }, { t: 55, label: 'ceo chart' }, { t: 62, label: 'report' }, { t: 67, label: 'report send' }, { t: 74, label: 'drive' }, { t: 77.5, label: 'phone' }, { t: 86, label: 'end' }],
+  stages: [{ t: 2.6, label: 'name' }, { t: 6.6, label: 'sources' }, { t: 9.8, label: 'hub' }, { t: 13.4, label: 'collect 1' }, { t: 16.2, label: 'collect 2' }, { t: 19.4, label: 'collect 3' }, { t: 23.4, label: 'list' }, { t: 25.6, label: 'review' }, { t: 28, label: 'approved' }, { t: 32, label: 'ceo number' }, { t: 35, label: 'ceo companies' }, { t: 38.6, label: 'ceo chart' }, { t: 42.6, label: 'report period' }, { t: 45.4, label: 'report excel' }, { t: 48, label: 'report send' }, { t: 51.2, label: 'drive' }, { t: 53, label: 'folders' }, { t: 55, label: 'phone' }, { t: 60.4, label: 'end' }],
   fonts: ['700 78px "Almoni"', '400 33px "Almoni"', '300 44px "Almoni"'], build, seek, check })
 </script>
 </body>

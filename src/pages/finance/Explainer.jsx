@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from './ui.jsx'
 
-/* The explainer video: what the system does, in a minute and a half. Shown after a sign-in and after a sign-out
+/* The explainer video: what the system does, in one minute. Shown after a sign-in and after a sign-out
    (owner's request), always with a way out: "דילוג", Escape, or a click outside. The file is made by the video engine
    (video/studio/finance-explainer, docs/finance/EXPLAINER-VIDEO.md); it has no sound, the text is on the screen.
 
@@ -36,7 +36,7 @@ export default function Explainer({ when, onClose }) {
         <header className="fin-tour__head">
           <div>
             <h2 id="fin-tour-title">{out ? 'יצאתם מהמערכת' : 'היכרות עם המערכת'}</h2>
-            <p>{out ? 'תזכורת קצרה למה שהמערכת עושה בשבילכם, עד הפעם הבאה.' : 'דקה וחצי: מה המערכת עושה, ואיך רואים את כל ההוצאות במקום אחד.'}</p>
+            <p>{out ? 'תזכורת קצרה למה שהמערכת עושה בשבילכם, עד הפעם הבאה.' : 'דקה אחת: מה המערכת עושה, ואיך רואים את כל ההוצאות במקום אחד.'}</p>
           </div>
           <button type="button" ref={skip} className="fin-btn fin-tour__skip" onClick={onClose}>
             <Icon name="close" /><span>{ended ? 'סגירה' : 'דילוג'}</span>
@@ -47,12 +47,12 @@ export default function Explainer({ when, onClose }) {
             ? <p className="fin-tour__failed" role="alert">הסרטון לא נטען. אפשר להמשיך ולנסות שוב בכניסה הבאה.</p>
             : (
               <video ref={video} src={EXPLAINER_SRC} poster={POSTER} controls playsInline muted preload="auto"
-                aria-label="סרטון הסבר על מערכת הכספים, בלי קול, עם כיתוב על המסך"
+                aria-label="סרטון הסבר על מערכת הכספים, בלי קול, עם כתוביות"
                 onEnded={() => setEnded(true)} onError={() => setFailed(true)} />
             )}
         </div>
         <footer className="fin-tour__foot">
-          <span>הסרטון בלי קול. המספרים שמופיעים בו להדגמה בלבד.</span>
+          <span>הסרטון עם כתוביות, בלי קול. המספרים שמופיעים בו להדגמה בלבד.</span>
           <button type="button" className="fin-btn fin-btn--primary" onClick={onClose}>{out ? 'חזרה למסך הכניסה' : 'כניסה למערכת'}</button>
         </footer>
       </div>

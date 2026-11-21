@@ -1,6 +1,6 @@
 # The explainer video
 
-A minute and a half (88 seconds, no sound, the text is on the screen) that shows a new user what the system does:
+One minute (62 seconds, no sound, subtitles on the screen) that shows a new user what the system does:
 where invoices come from, how they are collected and read, checking and approving, the overview for the CEO, the
 report to the accountant, the archive in Google Drive and the phone.
 
@@ -33,18 +33,34 @@ scene ("המספרים במסכים להדגמה בלבד"), and the window in t
 bash scripts/finance-e2e/services.sh                       # the local system
 python3 video/studio/finance-explainer/demo-data.py        # writes demo-data.sql
 psql -h 127.0.0.1 -p 54329 -U postgres -f demo-data.sql    # only on the local test database
-# screenshots: 1440x900 at 2x of /admin/finance, /today, /documents, /report, /drive, and 390x844 at 3x of /admin/finance,
-# saved as shots/home.jpg, today.jpg, documents.jpg, report.jpg, drive.jpg (2400 px wide) and phone.jpg (780 px wide)
+node video/studio/finance-explainer/shots.mjs              # the six screenshots
 cd video && npm install
 node engine/anim_render.cjs studio/finance-explainer/index.html --stills -o out/finance-explainer.mp4   # one frame per stage
 node engine/anim_render.cjs studio/finance-explainer/index.html --check                                 # 0 issues
-node engine/anim_render.cjs studio/finance-explainer/index.html --fps 30 --sub 2 -o out/finance-explainer.mp4   # about 9 minutes
+node engine/anim_render.cjs studio/finance-explainer/index.html --fps 30 --sub 2 -o out/finance-explainer.mp4   # about 7 minutes
 ffmpeg -i out/finance-explainer.mp4 -vf "scale=1280:720:flags=lanczos,fps=24" -c:v libx264 -preset veryslow -crf 30 \
   -pix_fmt yuv420p -movflags +faststart -an ../public/finance/explainer.mp4
 ```
 A screen that changed: take its screenshot again and adjust the camera and ring numbers of its scene in `SCENES`
 (they are in the screenshot's own 1440x900 pixels).
 
+## How a screen scene works
+Each scene has a headline and three lines. Every line has its own place on the screen (`items` in `SCENES`): while
+the line is the active one the camera moves there, the rest of the screen dims, a red frame marks the place, the
+pointer travels to it and clicks, the line turns white and bold, and the subtitle says the narrator's sentence.
+The five numbered dots above the headline show which step is on.
+
+## Narration
+The subtitles are the narration script, one sentence per line of every scene (`say` in `items`, and `SAY` for the
+opening). A voice track is not in the file yet: no text-to-speech key exists in the cloud session, and the owner
+declined to add one there. To add a voice:
+1. Record (or generate) one audio file that follows the subtitle times. `node engine/anim_render.cjs ... --stills`
+   prints the stage times; the sentences and their windows are in the page (`SAY`).
+2. Render with `--audio voice.wav`, and encode the web copy with `-c:a aac -b:a 96k` instead of `-an`.
+3. In `Explainer.jsx` the video is muted so that it may start by itself; with a voice, start it unmuted after the
+   sign-in click and keep the mute button of the controls.
+
 ## Not done
-- No narration. The site's text-to-speech needs the OpenAI key, which exists only in Vercel.
+- No voice track yet (see Narration).
+
 - One 16:9 version. On a phone held upright the screens inside it are small; a 9:16 version would need its own layout.

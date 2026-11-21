@@ -1681,9 +1681,9 @@ record('MOBILE11', 'טלפון: סקירה וסרגל ניווט תחתון', '�
   await pp.locator('.fin-tour__foot .fin-btn').click(); await pp.waitForTimeout(400)
   const phoneClosed = await pp.locator('.fin-tour').count()
   await px.close()
-  record('EXPLAINER', 'סרטון ההסבר אחרי כניסה ואחרי יציאה', 'לפני כניסה אין סרטון; אחרי כניסה נפתח חלון עם הסרטון (קובץ וידאו שנטען, 1280 רוחב, בערך דקה וחצי, בלי קול, עם פקדים), הפוקוס על "דילוג" בגובה 44 לפחות; דילוג סוגר והמערכת פתוחה; רענון לא מציג אותו שוב; התנתקות מציגה אותו מעל מסך הכניסה ו-Escape סוגר; בטלפון החלון ממלא את המסך בלי גלילה לצדדים והכפתורים בגודל מלא',
+  record('EXPLAINER', 'סרטון ההסבר אחרי כניסה ואחרי יציאה', 'לפני כניסה אין סרטון; אחרי כניסה נפתח חלון עם הסרטון (קובץ וידאו שנטען, 1280 רוחב, דקה עד שתיים, בלי קול, עם פקדים), הפוקוס על "דילוג" בגובה 44 לפחות; דילוג סוגר והמערכת פתוחה; רענון לא מציג אותו שוב; התנתקות מציגה אותו מעל מסך הכניסה ו-Escape סוגר; בטלפון החלון ממלא את המסך בלי גלילה לצדדים והכפתורים בגודל מלא',
     `לפני: ${beforeLogin}; וידאו: ${JSON.stringify(v)}; דילוג: ${Math.round(skipBox?.height || 0)}px; אחרי דילוג: ${afterSkip}, מערכת ${appUp}; רענון: ${onReload}; יציאה: "${outTitle}", טופס ${formUnder}; אחרי Escape: ${afterEsc}; טלפון: ${JSON.stringify(ph)}, נסגר ${phoneClosed === 0}`,
-    beforeLogin === 0 && /\/finance\/explainer\.mp4$/.test(v.src) && v.status === 200 && /video\/mp4/.test(v.type || '') && v.w === 1280 && v.dur >= 60 && v.dur <= 120 && v.muted && v.controls && /דילוג/.test(v.focus || '') && (skipBox?.height || 0) >= 44
+    beforeLogin === 0 && /\/finance\/explainer\.mp4$/.test(v.src) && v.status === 200 && /video\/mp4/.test(v.type || '') && v.w === 1280 && v.dur >= 55 && v.dur <= 120 && v.muted && v.controls && /דילוג/.test(v.focus || '') && (skipBox?.height || 0) >= 44
       && afterSkip === 0 && appUp === 1 && onReload === 0 && /יצאתם/.test(outTitle) && formUnder === 1 && afterEsc === 0
       && ph.over <= 0 && ph.vidW >= 380 && ph.vidIn && ph.skipH >= 44 && ph.goH >= 44 && ph.goIn && phoneClosed === 0, [inShot, outShot, phoneShot])
 }

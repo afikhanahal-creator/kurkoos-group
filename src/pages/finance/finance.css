@@ -5203,7 +5203,7 @@ button.fin-trend2__col:focus-visible { outline: 2px solid var(--ocean); outline-
   .fin-tabbar, .fin .fin-bulk, .fin-dm__bulk, .fin-dpanel, .fin-dm__detail { translate: 0 calc(var(--fin-vv-fix, 0px) * -1); }
 }
 
-/* ---------- the explainer video (Explainer.jsx): after a sign-in and after a sign-out ---------- */
+/* ---------- the explainer video (Explainer.jsx): before a sign-in, over the sign-in screen ---------- */
 .fin-tour { position: fixed; inset: 0; z-index: 400; display: flex; align-items: center; justify-content: center; padding: 1.25rem; font-family: var(--font, 'Almoni', system-ui, sans-serif); }
 .fin-tour__scrim { position: absolute; inset: 0; border: 0; background: rgba(4, 20, 30, 0.78); cursor: default; }
 .fin-tour__box { position: relative; width: min(1040px, 100%); max-height: calc(100dvh - 2.5rem); display: flex; flex-direction: column; background: #07293a; color: #f7f8fa; border-radius: 20px; overflow: hidden; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5); animation: fin-rise 0.2s ease-out; }

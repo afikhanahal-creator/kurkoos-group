@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from './ui.jsx'
 
-/* The explainer video: what the system does, in one minute. Shown after a sign-in and after a sign-out
-   (owner's request), always with a way out: "דילוג", Escape, or a click outside. The file is made by the video engine
+/* The explainer video: what the system does, in one minute. Shown only before a sign-in, over the
+   sign-in screen: when the page opens signed out and after a sign-out, never after the sign-in itself
+   (owner's request). Always with a way out: "דילוג", Escape, or a click outside. The file is made by the video engine
    (video/studio/finance-explainer, docs/finance/EXPLAINER-VIDEO.md); it has no sound, the text is on the screen.
 
    Automated browsers (the test suite signs in dozens of times) do not get it unless a test asks for it with
@@ -44,7 +45,7 @@ export default function Explainer({ when, onClose }) {
         </header>
         <div className="fin-tour__frame">
           {failed
-            ? <p className="fin-tour__failed" role="alert">הסרטון לא נטען. אפשר להמשיך ולנסות שוב בכניסה הבאה.</p>
+            ? <p className="fin-tour__failed" role="alert">הסרטון לא נטען. אפשר להמשיך לכניסה ולנסות שוב בפעם הבאה.</p>
             : (
               <video ref={video} src={EXPLAINER_SRC} poster={POSTER} controls playsInline muted preload="auto"
                 aria-label="סרטון הסבר על מערכת הכספים, בלי קול, עם כתוביות"
@@ -53,7 +54,7 @@ export default function Explainer({ when, onClose }) {
         </div>
         <footer className="fin-tour__foot">
           <span>הסרטון עם כתוביות, בלי קול. המספרים שמופיעים בו להדגמה בלבד.</span>
-          <button type="button" className="fin-btn fin-btn--primary" onClick={onClose}>{out ? 'חזרה למסך הכניסה' : 'כניסה למערכת'}</button>
+          <button type="button" className="fin-btn fin-btn--primary" onClick={onClose}>{out ? 'חזרה למסך הכניסה' : 'המשך לכניסה'}</button>
         </footer>
       </div>
     </div>

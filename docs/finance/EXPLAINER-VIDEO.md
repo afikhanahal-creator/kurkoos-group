@@ -6,9 +6,10 @@ report to the accountant, the archive in Google Drive and the phone.
 
 ## Where it shows
 `src/pages/finance/Explainer.jsx`, opened by `FinanceApp.jsx`:
-- after a sign-in made on this page, over the system;
-- after a sign-out, over the sign-in screen.
-A page that opens already signed in (a refresh, a second tab) shows nothing. "דילוג", Escape or a click outside close it.
+only before a sign-in, over the sign-in screen (owner's decision, 2026-11-22):
+- when the page opens signed out;
+- after a sign-out.
+Nothing shows after the sign-in itself, and a page that opens already signed in (a refresh, a second tab) shows nothing. "דילוג", Escape or a click outside close it.
 Automated browsers do not get it unless a test sets `window.__finExplainer = true` (scenario EXPLAINER in the suite).
 
 ## The files

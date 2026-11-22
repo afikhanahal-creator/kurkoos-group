@@ -380,14 +380,15 @@ export default function FinanceApp() {
     try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1') } catch { /* noop */ }
     api.callServer('auth-event', { kind: 'signed_in', device_id: deviceId() }).catch(() => {})
   }, [ready, session?.access_token])
-  // the explainer video: after a sign-in and after a sign-out made on this page. A page that opens already signed in
-  // (a refresh, a second tab) is neither, so it shows nothing.
-  const [tour, setTour] = useState(null)       // 'in' | 'out'
+  // the explainer video: only before a sign-in, over the sign-in screen (when the page opens signed out, and after a
+  // sign-out). Nothing shows after the sign-in itself: whoever signed in has just seen it (owner's request).
+  const [tour, setTour] = useState(null)       // 'before' | 'out'
   const phase = useRef(null)
   useEffect(() => {
     const now = session === undefined ? null : !session ? 'login' : ready ? 'app' : null
     if (!now) return
-    if (phase.current && phase.current !== now && explainerOn()) setTour(now === 'app' ? 'in' : 'out')
+    if (now === 'login' && phase.current !== 'login' && explainerOn()) setTour(phase.current === 'app' ? 'out' : 'before')
+    if (now === 'app') setTour(null)
     phase.current = now
   }, [session, ready])
   const closeTour = useCallback(() => setTour(null), [])
@@ -504,7 +505,7 @@ export default function FinanceApp() {
   }, [data.documents, data.suppliers])
 
   if (!hasSupabase) return <p className="fin-msg">Supabase לא מוגדר בסביבה הזו.</p>
-  if (!session && session !== undefined) return <><Login />{tour === 'out' && tourEl}</>
+  if (!session && session !== undefined) return <><Login />{tourEl}</>
   if (session === undefined || (session && sec === null)) return <BrandLoader />
   if (welcome && session) return <InviteWelcome email={session.user?.email || ''} onDone={() => setWelcome(false)} />
   if (mfaPending) return <SecondStep mfaRequired onDone={() => supabase.auth.refreshSession().then(() => setSec((x) => ({ ...x, aal: 'aal2' })))} />
@@ -520,7 +521,6 @@ export default function FinanceApp() {
     <Ctx.Provider value={ctx}>
       <div className={`fin ${collapsed ? 'is-collapsed' : ''} ${scrolled ? 'is-scrolled' : ''}`} dir="rtl" data-theme={theme}>
         <a href="#fin-main" className="fin-skip">דילוג לתוכן</a>
-        {tour === 'in' && tourEl}
         <aside className={`fin__side ${navOpen ? 'is-open' : ''}`} id="fin-side" aria-label="תפריט המערכת">
           <div className="fin__drawer-head">
             <span className="fin__avatar fin__avatar--lg" aria-hidden="true">{(myName || email).trim().slice(0, 1).toUpperCase()}</span>

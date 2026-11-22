@@ -136,6 +136,32 @@ fs.rmSync(dir, { recursive: true, force: true })
     by[1] && by[2] && by[3] && !by[4] && !by[5] && by[6] && !by[7] && !by[8] && by[9] && o.kpi.spend === want && row[4] === `₪${want.toLocaleString('en-US')}.00`)
 }
 
+// X20: comparisons only against months the system was already collecting (owner, 2026-11-22: "+37950% from the previous period")
+{
+  const { collectingSince, comparable } = await import('../src/pages/finance/format.js')
+  const { overview, periodOf } = await import('../src/pages/finance/insights.js')
+  const { markLedger } = await import('../src/pages/finance/ledger.js')
+  const { buildModel } = await import('../server/finance/reports.js')
+  const mk = (id, day, total, created) => ({ id, status: 'approved', doc_type: 'invoice', total_amount: total, currency: 'ILS', issue_date: day, created_at: `${created}T08:00:00Z`, business_id: 'b1', supplier_name: `ספק ${id}`, doc_number: String(id) })
+  const P = periodOf('custom', new Date('2026-11-22'), { from: '2026-11-01', to: '2026-11-30' })
+  const R = { template: 'expenses', period: 'custom', from: '2026-11-01', to: '2026-11-30' }
+  // a new system: started in November; October's documents were picked up from the mailboxes' history
+  const fresh = [mk(1, '2026-10-12', 3826, '2026-11-09'), mk(2, '2026-11-05', 1455781, '2026-11-10')]
+  const a = overview(markLedger(fresh.map((d) => ({ ...d }))), { businesses: [{ id: 'b1', name: 'חברה' }] }, P, { now: new Date('2026-11-22') })
+  const ma = buildModel(R, { docs: fresh.map((d) => ({ ...d })), businesses: [{ id: 'b1', name: 'חברה' }], today: '2026-11-22' })
+  // a system collecting since September: November against October is fair
+  const old = [mk(1, '2026-10-12', 1000, '2026-09-03'), mk(2, '2026-11-05', 1500, '2026-11-10')]
+  const b = overview(markLedger(old.map((d) => ({ ...d }))), { businesses: [{ id: 'b1', name: 'חברה' }] }, P, { now: new Date('2026-11-22') })
+  const mb = buildModel(R, { docs: old.map((d) => ({ ...d })), businesses: [{ id: 'b1', name: 'חברה' }], today: '2026-11-22' })
+  const labels = (m) => m.cards.map((c) => c.label).join(',')
+  check('X20', 'השוואה רק לחודשים שהמערכת כבר אספה בהם', 'מערכת שהתחילה בנובמבר: אין אחוז מול אוקטובר ולא מול השנה שעברה, בלי עמודות שנה קודמת, ובדוח המתוזמן אין כרטיס "שינוי" ולא טבלת שינוי; מערכת שאוספת מספטמבר: נובמבר מול אוקטובר +50%, והשנה שעברה עדיין לא',
+    `התחלה: ${collectingSince(fresh)}; חדשה: שינוי ${a.kpi.spendChange}, שנה ${a.kpi.ytdChange}, עמודות שנה קודמת ${a.trend.filter((t) => t.lastYear).length}, כרטיסים ${labels(ma)}, טבלאות ${ma.tables.map((t) => t.title).join('/')}; ותיקה: שינוי ${b.kpi.spendChange}, שנה ${b.kpi.ytdChange}, כרטיסים ${labels(mb)}`,
+    collectingSince(fresh) === '2026-11-01' && !comparable('2026-10-01', '2026-11-01') && comparable('2026-11-01', '2026-11-01')
+      && a.kpi.spendChange === null && a.kpi.ytdChange === null && a.trend.every((t) => !t.lastYear) && !a.kpi.compare.prev
+      && !/שינוי/.test(labels(ma)) && !ma.tables.some((t) => /מול התקופה הקודמת/.test(t.title))
+      && Math.round(b.kpi.spendChange) === 50 && b.kpi.ytdChange === null && /שינוי/.test(labels(mb)))
+}
+
 const failed = results.filter((r) => !r.pass)
 console.log(`\n${results.length - failed.length}/${results.length} passed`)
 if (failed.length) { console.log('failed:', failed.map((r) => r.id).join(', ')); process.exit(1) }

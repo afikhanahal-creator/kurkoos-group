@@ -1,7 +1,7 @@
 // Management figures for the group, computed from stored documents only. Used by the executive overview in the
 // browser and by the finance assistant on the server, so a number on the screen and in an answer is the same number.
 // Pure: no DOM, no network. Documents must have gone through markLedger (ledger.js) first.
-import { HE_MONTHS, israelDay, counts, INVOICE_TYPES } from './format.js'
+import { collectingSince, comparable, HE_MONTHS, israelDay, counts, INVOICE_TYPES } from './format.js'
 import { markLedger, payState } from './ledger.js'
 
 export { markLedger }
@@ -68,11 +68,14 @@ function group(list, keyOf, val = total) {
 export function overview(documents, { businesses = [], projects = [], categories = [], allocations = [] }, period, { businessId = null, now = new Date() } = {}) {
   const scope = businessId ? documents.filter((d) => d.business_id === businessId) : documents
   const live = scope.filter((d) => !['rejected', 'archived'].includes(d.status))
+  // comparisons only against months the system was already collecting (format.js comparable)
+  const since = collectingSince(documents)
   const books = live.filter(booked)
   const cur = books.filter((d) => within(d, period.from, period.to))
   const prev = books.filter((d) => within(d, period.prevFrom, period.prevTo))
   const today = israelDay(now)
   const year = today.slice(0, 4)
+  const prevOk = comparable(period.prevFrom, since), yearOk = comparable(`${Number(year) - 1}-01-01`, since)
   const ytd = books.filter((d) => within(d, `${year}-01-01`, today))
   const pytd = books.filter((d) => within(d, `${Number(year) - 1}-01-01`, `${Number(year) - 1}-${today.slice(5)}`))
   const thisMonth = today.slice(0, 7)
@@ -86,11 +89,11 @@ export function overview(documents, { businesses = [], projects = [], categories
   const [cy, cm] = period.to.slice(0, 7).split('-').map(Number)
   const months = Array.from({ length: 12 }, (_, i) => { const t = new Date(Date.UTC(cy, cm - 12 + i, 1)); return `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}` })
   const byMonth = group(ils(books), (d) => dayOf(d).slice(0, 7))
-  const trend = months.map((k) => { const [yy, mm] = k.split('-'); const ly = `${Number(yy) - 1}-${mm}`; return { key: k, total: byMonth.get(k)?.total || 0, count: byMonth.get(k)?.count || 0, ids: byMonth.get(k)?.ids || [], lastYear: byMonth.get(ly)?.total || 0 } })
+  const trend = months.map((k) => { const [yy, mm] = k.split('-'); const ly = `${Number(yy) - 1}-${mm}`; return { key: k, total: byMonth.get(k)?.total || 0, count: byMonth.get(k)?.count || 0, ids: byMonth.get(k)?.ids || [], lastYear: !comparable(`${ly}-01`, since) ? 0 : byMonth.get(ly)?.total || 0 } })
 
   const comp = (keyOf) => {
     const a = group(ils(cur), keyOf); const b = group(ils(prev), keyOf)
-    return rank(a).map((r) => ({ ...r, prev: b.get(r.key)?.total || 0, change: pct(r.total, b.get(r.key)?.total || 0) }))
+    return rank(a).map((r) => ({ ...r, prev: prevOk ? b.get(r.key)?.total || 0 : 0, change: prevOk ? pct(r.total, b.get(r.key)?.total || 0) : null }))
   }
   const byCompany = comp((d) => d.business_id || '').map((r) => ({ ...r, name: businesses.find((b) => b.id === r.key)?.name || 'ממתין לשיוך', projects: projects.filter((p) => p.business_id === r.key && ['active', 'planning'].includes(p.status) && !p.archived_at).length }))
   for (const b of businesses) if (b.active !== false && !businessId && !byCompany.some((r) => r.key === b.id)) byCompany.push({ key: b.id, name: b.name, total: 0, count: 0, ids: [], prev: 0, change: null, projects: projects.filter((p) => p.business_id === b.id && ['active', 'planning'].includes(p.status) && !p.archived_at).length })
@@ -150,13 +153,14 @@ export function overview(documents, { businesses = [], projects = [], categories
   return {
     period,
     kpi: {
-      spend: curTotal, spendPrev: sum(ils(prev)), spendChange: pct(curTotal, sum(ils(prev))),
-      month: sum(ils(month)), ytd: sum(ils(ytd)), ytdPrev: sum(ils(pytd)), ytdChange: pct(sum(ils(ytd)), sum(ils(pytd))),
+      spend: curTotal, spendPrev: prevOk ? sum(ils(prev)) : 0, spendChange: prevOk ? pct(curTotal, sum(ils(prev))) : null,
+      month: sum(ils(month)), ytd: sum(ils(ytd)), ytdPrev: yearOk ? sum(ils(pytd)) : 0, ytdChange: yearOk ? pct(sum(ils(ytd)), sum(ils(pytd))) : null,
+      compare: { since, prev: prevOk, year: yearOk },
       invoices: docsIn.filter((d) => INVOICE.includes(d.doc_type) && booked(d)).length,
-      invoicesPrev: live.filter((d) => within(d, period.prevFrom, period.prevTo) && INVOICE.includes(d.doc_type) && booked(d)).length,
+      invoicesPrev: !prevOk ? 0 : live.filter((d) => within(d, period.prevFrom, period.prevTo) && INVOICE.includes(d.doc_type) && booked(d)).length,
       receipts: docsIn.filter((d) => RECEIPT.includes(d.doc_type)).length,
       receiptsAsProof: docsIn.filter((d) => d._proofFor).length,
-      receiptsPrev: live.filter((d) => within(d, period.prevFrom, period.prevTo) && RECEIPT.includes(d.doc_type)).length,
+      receiptsPrev: !prevOk ? 0 : live.filter((d) => within(d, period.prevFrom, period.prevTo) && RECEIPT.includes(d.doc_type)).length,
       openNoProof: sum(open), openCount: open.length,
       reviewing: live.filter((d) => d.status === 'review').length, processing: live.filter((d) => ['processing', 'failed'].includes(d.status)).length,
       vat: sum(ils(cur), vatOf), vatClaimable: sum(ils(cur).filter((d) => ['invoice', 'invoice_receipt', 'credit'].includes(d.doc_type)), claimable),

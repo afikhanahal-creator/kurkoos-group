@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useFinance } from './FinanceApp.jsx'
 import * as api from './api.js'
-import { AGENTS, FIELD_LABEL, ago, claimableVat, counts, money, monthLabel, period, shiftMonth, signedTotal, thisMonth } from './format.js'
+import { AGENTS, FIELD_LABEL, ago, claimableVat, collectingSince, comparable, counts, money, monthLabel, period, shiftMonth, signedTotal, thisMonth } from './format.js'
 import { docsFor, summarize } from './stats.js'
 import { Empty, Icon, Pill, UploadZone, useAsync, Skeleton } from './ui.jsx'
 
@@ -111,7 +111,7 @@ export default function Overview() {
   const liveBoxes = mailboxes.filter((x) => x.status !== 'revoked')
   const lastScan = liveBoxes.map((x) => x.last_success_at).filter(Boolean).sort().pop()
   const failedRuns = (runs.data || []).filter((r) => Date.now() - new Date(r.started_at).getTime() < 7 * 86400_000 && r.errors > 0)
-  const delta = m.prev ? (m.total - m.prev) / Math.abs(m.prev) : null
+  const delta = m.prev && comparable(`${shiftMonth(month, -1)}-01`, collectingSince(documents)) ? (m.total - m.prev) / Math.abs(m.prev) : null
   const pct = (v) => (v === null ? '—' : `${Math.round(v * 100)}%`)
 
   return (

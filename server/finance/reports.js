@@ -9,7 +9,7 @@ import { nis } from './format-server.js'
 import { sb, one, insert, patch, agentRun } from './db.js'
 import { env, costOf } from './env.js'
 import { claudePost, claudeText } from './http.js'
-import { DOC_TYPE, docDate, HE_MONTHS, escHtml as esc, INVOICE_TYPES, NOT_COUNTED, counts } from '../../src/pages/finance/format.js'
+import { DOC_TYPE, docDate, HE_MONTHS, escHtml as esc, INVOICE_TYPES, NOT_COUNTED, counts, collectingSince, comparable } from '../../src/pages/finance/format.js'
 import { markLedger } from '../../src/pages/finance/ledger.js'
 
 export const TEMPLATES = {
@@ -80,7 +80,7 @@ const pct = (cur, prev) => (prev ? Math.round(((cur - prev) / Math.abs(prev)) * 
 const change = (cur, prev) => { const p = pct(cur, prev); return p === null ? (cur ? 'חדש' : '—') : `${p > 0 ? '+' : ''}${p}%` }
 
 /* everything a report can say, from the documents themselves. Pure: (report, { docs, businesses, today }) → model */
-export function buildModel(report, { docs, businesses, today }) {
+export function buildModel(report, { docs, businesses, today, since = collectingSince(docs) }) {
   const tpl = TEMPLATES[report.template] ? report.template : 'daily'
   const p = periodOf(report, today)
   const chosen = Array.isArray(report.companies) && report.companies.length ? new Set(report.companies) : null
@@ -103,6 +103,8 @@ export function buildModel(report, { docs, businesses, today }) {
   const failed = mine.filter((d) => d.status === 'failed')
   const sum = (list) => r2(list.reduce((a, d) => a + ils(d), 0))
   const total = sum(cur); const totalPrev = sum(prev)
+  // a previous period from before the system was collecting is not a fair base: no comparison then (format.js comparable)
+  const prevOk = comparable(p.prevFrom, since)
   const foreign = cur.filter((d) => (d.currency || 'ILS') !== 'ILS').length
 
   const companyKey = (d) => (d.business_id && names.has(d.business_id) ? d.business_id : 'none')
@@ -139,16 +141,16 @@ export function buildModel(report, { docs, businesses, today }) {
   if (lacking.length) alerts.push(`${lacking.length === 1 ? 'למסמך אחד חסרים פרטים' : `ל-${int(lacking.length)} מסמכים חסרים פרטים`} (חברה, סכום, תאריך או מספר)`)
   const unassigned = waiting.filter((d) => !d.business_id).length
   if (unassigned && !chosen) alerts.push((unassigned === 1 ? 'מסמך אחד ממתין בלי שיוך לחברה' : `${int(unassigned)} מסמכים ממתינים בלי שיוך לחברה`))
-  for (const c of perCompany) if (c.id !== 'none' && c.prev >= 1000 && c.total >= c.prev * 1.3 && c.total - c.prev >= 1000) alerts.push(`ההוצאות של ${c.name} עלו ב-${pct(c.total, c.prev)}% מול התקופה הקודמת (${nis(c.prev)} ← ${nis(c.total)})`)
+  for (const c of perCompany) if (prevOk && c.id !== 'none' && c.prev >= 1000 && c.total >= c.prev * 1.3 && c.total - c.prev >= 1000) alerts.push(`ההוצאות של ${c.name} עלו ב-${pct(c.total, c.prev)}% מול התקופה הקודמת (${nis(c.prev)} ← ${nis(c.total)})`)
   if (suspicious.length) alerts.push(`${suspicious.length === 1 ? 'מסמך אחד חריג או חשוד ככפול' : `${int(suspicious.length)} מסמכים חריגים או חשודים ככפולים`} בתקופה`)
   if (foreign) alerts.push(`${foreign === 1 ? 'מסמך אחד במטבע זר' : `${int(foreign)} מסמכים במטבע זר`} מופיעים בספירה ואינם בסכומים בשקלים`)
 
-  const card = { total_expenses: { label: 'סך ההוצאות', value: nis(total), sub: `מול ${nis(totalPrev)} בתקופה הקודמת (${change(total, totalPrev)})`, tone: 'navy' }, docs_count: { label: 'מסמכים בתקופה', value: int(cur.length), sub: `${int(received.length)} התקבלו בתקופה`, tone: 'blue' }, invoices_count: { label: 'חשבוניות', value: int(cur.filter((d) => INVOICE.includes(d.doc_type)).length), sub: `${int(cur.filter((d) => !INVOICE.includes(d.doc_type)).length)} קבלות ומסמכים אחרים`, tone: 'blue' }, pending_count: { label: 'ממתינים לבדיקה', value: int(waiting.length), sub: waiting.length ? `${int(lacking.length)} מהם חסרי פרטים` : 'אין מה לאשר', tone: waiting.length ? 'warn' : 'ok' },
+  const card = { total_expenses: { label: 'סך ההוצאות', value: nis(total), sub: prevOk ? `מול ${nis(totalPrev)} בתקופה הקודמת (${change(total, totalPrev)})` : 'בשקלים, לפי התאריך שעל המסמך', tone: 'navy' }, docs_count: { label: 'מסמכים בתקופה', value: int(cur.length), sub: `${int(received.length)} התקבלו בתקופה`, tone: 'blue' }, invoices_count: { label: 'חשבוניות', value: int(cur.filter((d) => INVOICE.includes(d.doc_type)).length), sub: `${int(cur.filter((d) => !INVOICE.includes(d.doc_type)).length)} קבלות ומסמכים אחרים`, tone: 'blue' }, pending_count: { label: 'ממתינים לבדיקה', value: int(waiting.length), sub: waiting.length ? `${int(lacking.length)} מהם חסרי פרטים` : 'אין מה לאשר', tone: waiting.length ? 'warn' : 'ok' },
     received: { label: 'התקבלו', value: int(received.length), sub: 'מסמכים שנכנסו בתקופה', tone: 'blue' }, processed: { label: 'נקראו בהצלחה', value: int(received.filter((d) => !['failed', 'processing'].includes(d.status)).length), sub: 'מתוך מה שהתקבל', tone: 'ok' }, failed: { label: 'הקריאה נכשלה', value: int(failed.length), sub: failed.length ? 'דורשים טיפול' : 'אין תקלות', tone: failed.length ? 'bad' : 'ok' }, alerts: { label: 'דורש תשומת לב', value: int(alerts.length), sub: alerts.length ? 'מפורט למטה' : 'הכול תקין', tone: alerts.length ? 'warn' : 'ok' },
     top: { label: 'ההוצאה הגבוהה', value: top[0] ? nis(ils(top[0])) : '—', sub: top[0] ? String(top[0].supplier_name || '').slice(0, 40) : 'אין הוצאות בתקופה', tone: 'navy' }, change: { label: 'שינוי מהתקופה הקודמת', value: change(total, totalPrev), sub: `${nis(totalPrev)} ← ${nis(total)}`, tone: 'blue' } }
   const table = {
     by_company_fin: perCompany.length && { title: 'לפי חברה', head: ['חברה', 'מסמכים', 'חשבוניות', 'מסמכי הוצאה אחרים', 'סך ההוצאות'], rows: perCompany.map((c) => [c.name, int(c.docs), int(c.invoices), int(c.other), nis(c.total)]), foot: ['סה״כ', int(cur.length), '', '', nis(total)] },
-    by_company_change: perCompany.length && { title: 'הוצאות לפי חברה, מול התקופה הקודמת', head: ['חברה', 'התקופה', 'התקופה הקודמת', 'שינוי'], rows: perCompany.map((c) => [c.name, nis(c.total), nis(c.prev), change(c.total, c.prev)]), foot: ['סה״כ', nis(total), nis(totalPrev), change(total, totalPrev)] },
+    by_company_change: prevOk && perCompany.length && { title: 'הוצאות לפי חברה, מול התקופה הקודמת', head: ['חברה', 'התקופה', 'התקופה הקודמת', 'שינוי'], rows: perCompany.map((c) => [c.name, nis(c.total), nis(c.prev), change(c.total, c.prev)]), foot: ['סה״כ', nis(total), nis(totalPrev), change(total, totalPrev)] },
     by_company_docs: perCompany.length && { title: 'מסמכים לפי חברה', head: ['חברה', 'התקבלו', 'ממתינים לבדיקה', 'חסרי פרטים', 'נכשלו'], rows: perCompany.map((c) => [c.name, int(c.received), int(c.waiting), int(c.lacking), int(c.failed)]) },
     by_category: byCategory.length && { title: 'הוצאות לפי קטגוריה', head: ['קטגוריה', 'מסמכים', 'סכום', 'חלק מההוצאות'], rows: byCategory.slice(0, 10).map((g) => [g.name, int(g.docs), nis(g.total), total ? `${Math.round((g.total / total) * 100)}%` : '—']) },
     top_expenses: top.length && { title: 'ההוצאות הגבוהות בתקופה', head: ['ספק', 'חברה', 'תאריך', 'סכום'], rows: top.map((d) => [d.supplier_name || 'לא ידוע', names.get(d.business_id) || NONE, dmy(day(d)), nis(ils(d))]) },
@@ -159,7 +161,7 @@ export function buildModel(report, { docs, businesses, today }) {
   }
   const CARDS = { daily: ['received', 'invoices_count', 'total_expenses', 'pending_count'], expenses: ['total_expenses', 'docs_count', 'top', 'change'], documents: ['received', 'processed', 'pending_count', 'failed'], executive: ['total_expenses', 'docs_count', 'pending_count', 'alerts'] }
   const fields = tpl === 'custom' ? (Array.isArray(report.fields) ? report.fields : []).filter((f) => FIELDS[f]) : null
-  const cards = (fields ? fields.filter((f) => card[f]) : CARDS[tpl] || CARDS.daily).slice(0, 4).map((k) => card[k])
+  const cards = (fields ? fields.filter((f) => card[f]) : CARDS[tpl] || CARDS.daily).filter((k) => prevOk || k !== 'change').slice(0, 4).map((k) => card[k])
   const blocks = fields ? fields.filter((f) => f in table || f === 'alerts') : TEMPLATES[tpl].blocks || []
   return {
     template: tpl, title: report.name || TEMPLATES[tpl].name, period: p, companies: chosen ? perCompany.filter((c) => c.id !== 'none').map((c) => c.name) : null,
@@ -295,7 +297,8 @@ async function modelOf(report, { origin = '', now = new Date() } = {}) {
   const ledgerFrom = new Date(`${p.from}T00:00:00Z`); ledgerFrom.setUTCDate(ledgerFrom.getUTCDate() - 185)
   const since = [p.prevFrom, back.toISOString().slice(0, 10), ledgerFrom.toISOString().slice(0, 10)].sort()[0]
   const docs = (await sb(`fin_documents?or=(issue_date.gte.${since},created_at.gte.${since})&select=id,business_id,supplier_id,supplier_name,supplier_vat_id,doc_type,doc_number,issue_date,email_date,created_at,status,total_amount,currency,category,duplicate_state&limit=20000`)) || []
-  const model = buildModel(report, { docs, businesses: w.businesses, today })
+  const first = await sb('fin_documents?select=created_at&order=created_at.asc&limit=1').catch(() => null)
+  const model = buildModel(report, { docs, businesses: w.businesses, today, since: collectingSince(first || docs) })
   if (report.ai) model.insights = await aiInsights(model)
   return { model, html: reportHtml(model, origin, now), text: reportText(model, origin), subject: `${model.title} · ${model.period.label}` }
 }

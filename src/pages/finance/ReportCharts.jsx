@@ -119,7 +119,7 @@ export function StatementHero({ label, period, total, prev, prevLabel, stats, ch
       <div className="fin-stmt__main">
         <p className="fin-stmt__label"><b>{label}</b><span>{period}</span></p>
         <p className="fin-stmt__total"><bdi>{money(total)}</bdi></p>
-        {diff == null && total !== 0 && <p className="fin-stmt__delta is-none"><span>אין נתונים מהתקופה הקודמת ({prevLabel}) להשוואה.</span></p>}
+        {/* no comparison when the previous period was before the system was collecting (format.js comparable) */}
         {diff != null && (prev === 0
           ? (total !== 0 && <p className="fin-stmt__delta"><span>בתקופה הקודמת ({prevLabel}) לא נרשמו הוצאות.</span></p>)
           : diff === 0 ? <p className="fin-stmt__delta"><span>בדיוק כמו בתקופה הקודמת ({prevLabel}).</span></p> : (

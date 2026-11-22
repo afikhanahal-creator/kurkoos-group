@@ -4,7 +4,7 @@ import CaptureReceipt from './CaptureReceipt.jsx'
 import { useFinance } from './FinanceApp.jsx'
 import { useSession } from './session.js'
 import * as api from './api.js'
-import { byDocDate, ago, date, docDate, hasError, money, monthLabel, shiftMonth, signedTotal, thisMonth, byArrival, reportPeriod, periodKindOf, readyNow, NOT_COUNTED } from './format.js'
+import { byDocDate, ago, date, docDate, hasError, money, monthLabel, shiftMonth, signedTotal, thisMonth, byArrival, reportPeriod, periodKindOf, readyNow, NOT_COUNTED, collectingSince, comparable } from './format.js'
 import { ProviderLogo } from './logos.jsx'
 import Thumbnail from './Thumbnail.jsx'
 import { unsureNumbers } from './Documents.jsx'
@@ -63,7 +63,7 @@ export default function Dashboard() {
       months, max: Math.max(1, ...months.map((x) => Math.abs(x.total))), topSupplier: top(cur, (d) => d.supplier_name), topCategory: top(cur, (d) => d.category), yearLabel: year,
     }
   }, [documents])
-  const delta = spend.prev ? Math.round(((spend.month - spend.prev) / Math.abs(spend.prev)) * 100) : null
+  const delta = spend.prev && comparable(`${shiftMonth(thisMonth(), -1)}-01`, collectingSince(documents)) ? Math.round(((spend.month - spend.prev) / Math.abs(spend.prev)) * 100) : null
 
   const boxes = mailboxes.filter((x) => x.status !== 'revoked')
   const lastScan = boxes.map((x) => x.last_success_at).filter(Boolean).sort().pop()

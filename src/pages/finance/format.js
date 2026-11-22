@@ -111,6 +111,18 @@ export const INVOICE_TYPES = ['invoice', 'invoice_receipt', 'supplier_bill', 'cr
    out is the same money twice: a receipt that pays an invoice already counted, a proforma replaced by its tax invoice. */
 export const APPROVED = ['approved', 'sent']
 const TYPE_NOT_COUNTED = ['quote', 'proforma', 'payment_confirmation']
+/* Comparisons only against months the system was already collecting (owner's decision, 2026-11-22).
+   Documents dated before the system started were picked up partly, from the mailboxes' history, so a "previous period"
+   or "last year" from before then is not a fair base: it made figures like "+37,950% from the previous period".
+   collectingSince(docs) = the first day of the month in which the first document entered the system (its created_at);
+   comparable(from, since) = a window that starts on or after it. A month is compared with the month before it as soon as
+   that month is covered; a year with the year before it only after a full year of collecting. */
+export function collectingSince(docs) {
+  let first = ''
+  for (const d of docs || []) { const c = String(d.created_at || '').slice(0, 10); if (c && (!first || c < first)) first = c }
+  return first ? `${first.slice(0, 7)}-01` : null
+}
+export const comparable = (from, since) => !!since && !!from && String(from).slice(0, 10) >= since
 export const counts = (d) => !NOT_COUNTED.includes(d.status) && !d._proofFor   // a receipt that pays an invoice already counted (ledger.js)
   && (APPROVED.includes(d.status) ? !d._replacedBy : !TYPE_NOT_COUNTED.includes(d.doc_type))
 export const issuesOf = (d) => (Array.isArray(d.issues) ? d.issues : [])

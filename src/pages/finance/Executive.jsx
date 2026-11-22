@@ -11,7 +11,7 @@ import { payState } from './ledger.js'
 import { unsureNumbers } from './Documents.jsx'
 import { useSession } from './session.js'
 import { ProviderLogo } from './logos.jsx'
-import { docDate, signedTotal } from './format.js'
+import { docDate, signedTotal, comparable } from './format.js'
 import { openDocs } from './links.js'
 import { Donut, Sparkline, TipRows, TrendLines, categoryColor, companyColor, extraInsights, gransFor, trendSeries, useTip } from './execKit.jsx'
 
@@ -28,10 +28,12 @@ const GRAN = { day: 'יומי', week: 'שבועי', month: 'חודשי' }
 const stored = (k, d) => { try { return JSON.parse(sessionStorage.getItem(k)) ?? d } catch { return d } }
 const keep = (k, v) => { try { sessionStorage.setItem(k, JSON.stringify(v)) } catch { /* noop */ } }
 const isoDay = (t) => new Date(t).toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' })
+const nextMonth = (m) => { const [y, mm] = m.split('-').map(Number); return mm === 12 ? `${y + 1}-01` : `${y}-${String(mm + 1).padStart(2, '0')}` }
 const short = (v) => { const a = Math.abs(v); return a >= 1e6 ? `${(v / 1e6).toFixed(a >= 1e7 ? 1 : 2)}M ₪` : a >= 1e5 ? `${Math.round(v / 1e3)}K ₪` : `${Math.round(v).toLocaleString('he-IL')} ₪` }
 
 function Delta({ value, invert = false, label = 'מהתקופה הקודמת' }) {
-  if (value === null || value === undefined || !Number.isFinite(value)) return <span className="fin-x-delta is-none">אין בסיס להשוואה</span>
+  // no fair base (a month before the system was collecting, or nothing in it): nothing is shown, not "no basis"
+  if (value === null || value === undefined || !Number.isFinite(value)) return null
   const up = value > 0.5; const down = value < -0.5
   // for spending, up is the direction to watch; the colour says "look", not "good" or "bad"
   return <span className={`fin-x-delta ${up ? (invert ? 'is-good' : 'is-watch') : down ? (invert ? 'is-watch' : 'is-good') : ''}`}>{up ? '▲' : down ? '▼' : '•'} {Math.abs(Math.round(value))}% {label}</span>
@@ -133,7 +135,7 @@ export default function Executive() {
   const grans = gransFor(period.from, trendTo)
   const g = grans.includes(gran) ? gran : grans.includes('day') && grans.length === 1 ? 'day' : grans.includes('week') && !grans.includes('month') ? (grans.includes('day') && new Date(trendTo) - new Date(period.from) < 32 * 86400000 ? 'day' : 'week') : grans.includes('month') ? 'month' : grans[0] || 'day'
   const trend = useMemo(() => trendSeries(scopeDocs, { from: period.from, to: trendTo, gran: g, by: trendBy, nameOf: (key) => (trendBy === 'company' ? businesses.find((b) => b.id === key)?.name || 'ממתין לשיוך' : key || 'ללא קטגוריה'), colorOf: (key) => (trendBy === 'company' ? companyColor(businesses, key) : categoryColor(key)) }), [scopeDocs, period.from, trendTo, g, trendBy, businesses])
-  const trendPrev = useMemo(() => { if (trendBy !== 'total') return null; const p = trendSeries(scopeDocs, { from: period.prevFrom, to: period.prevTo, gran: g }); const v = p.series[0]?.values; return v && v.some(Boolean) ? trend.buckets.map((_, i) => v[i] || 0) : null }, [scopeDocs, period.prevFrom, period.prevTo, g, trendBy, trend.buckets])
+  const trendPrev = useMemo(() => { if (trendBy !== 'total' || !k.compare.prev) return null; const p = trendSeries(scopeDocs, { from: period.prevFrom, to: period.prevTo, gran: g }); const v = p.series[0]?.values; return v && v.some(Boolean) ? trend.buckets.map((_, i) => v[i] || 0) : null }, [scopeDocs, period.prevFrom, period.prevTo, g, trendBy, trend.buckets, k.compare.prev])
   // what the numbers say: the alerts the overview already raises, and the changes worth a look
   const enoughHistory = k.spendPrev !== 0 || o.byCompany.some((c) => c.prev)
   const insights = useMemo(() => {
@@ -215,12 +217,14 @@ export default function Executive() {
       {/* the headline: one number, then the five that explain it */}
       <section className="fin-x-hero" aria-label="מדדים מרכזיים">
         <button type="button" className="fin-x-hero__main" onClick={() => open(o.ids.spend, `הוצאות ${period.label}`)}
-          {...tip.on(() => <TipRows title={`הוצאות ${period.label}`} sub="סכום המסמכים שנספרים, בשקלים, לפי התאריך שעל המסמך" rows={[['התקופה', `${date(period.from)} עד ${date(period.to)}`], ['בתקופה הקודמת', k.spendPrev ? money(k.spendPrev) : 'אין נתונים'], ['מסמכים', o.ids.spend.length], ['הושלמה בדיקה', completion === null ? '—' : `${completion}%`]]} note="לחיצה פותחת את המסמכים שמאחורי הסכום" />)}>
+          {...tip.on(() => <TipRows title={`הוצאות ${period.label}`} sub="סכום המסמכים שנספרים, בשקלים, לפי התאריך שעל המסמך" rows={[['התקופה', `${date(period.from)} עד ${date(period.to)}`], ...(k.compare.prev ? [['בתקופה הקודמת', k.spendPrev ? money(k.spendPrev) : 'אין נתונים']] : []), ['מסמכים', o.ids.spend.length], ['הושלמה בדיקה', completion === null ? '—' : `${completion}%`]]} note="לחיצה פותחת את המסמכים שמאחורי הסכום" />)}>
           <span className="fin-x-hero__spark"><Sparkline values={base.trend.slice(-6).map((t) => t.total)} label="ההוצאות בששת החודשים האחרונים" /></span>
           <span className="fin-x-label">הוצאות {period.label}{company ? ` · ${company.name}` : ''}</span>
           <strong className="fin-x-big">{money(k.spend)}</strong>
-          <Delta value={k.spendChange} />
-          <span className="fin-x-hero__foot">מתחילת השנה {money(k.ytd)} · <Delta value={k.ytdChange} label="מהשנה שעברה" /></span>
+          {k.spendChange !== null
+            ? <Delta value={k.spendChange} label={/^\d{4}-\d{2}-01$/.test(period.prevFrom) && period.prevFrom.slice(0, 7) === period.prevTo.slice(0, 7) ? `מ${monthName(period.prevFrom.slice(0, 7)).split(' ')[0]}` : 'מהתקופה הקודמת'} />
+            : k.compare.since && <span className="fin-x-delta is-none">השוואה לחודש הקודם תוצג מ{monthName(nextMonth(k.compare.since.slice(0, 7)))}</span>}
+          <span className="fin-x-hero__foot">מתחילת השנה {money(k.ytd)}{k.ytdChange !== null && <> · <Delta value={k.ytdChange} label="מהשנה שעברה" /></>}</span>
         </button>
         <div className="fin-x-kpis">
           <button type="button" onClick={() => go(`/documents?from=${period.from}&to=${period.to}${biz ? `&company=${biz}` : ''}`)}><span className="fin-x-label">מסמכים שנאספו</span><strong className="fin-x-kpi">{o.quality.total}</strong><small>{o.quality.total ? `${Math.round((o.quality.read / o.quality.total) * 100)}% נקראו בהצלחה` : 'בתקופה'}</small></button>
@@ -253,7 +257,7 @@ export default function Executive() {
             {(() => {
               const f = months.find((t) => t.key === focus) || months[months.length - 1]
               const i = base.trend.findIndex((t) => t.key === f.key); const before = i > 0 ? base.trend[i - 1] : null
-              const change = before && before.total ? ((f.total - before.total) / Math.abs(before.total)) * 100 : null
+              const change = before && before.total && comparable(`${before.key}-01`, k.compare.since) ? ((f.total - before.total) / Math.abs(before.total)) * 100 : null
               return (
                 <div className="fin-x-monthsum" aria-live="polite">
                   <div>
@@ -263,7 +267,7 @@ export default function Executive() {
                   </div>
                   <dl>
                     <div><dt>מסמכים</dt><dd>{f.count ? <button type="button" className="fin-x-monthsum__docs" onClick={() => openDocs(go, (f.ids || []).map((id) => ({ id })), `מסמכים של ${monthName(f.key)}`)} aria-label={`${f.count} מסמכים ב${monthName(f.key)}: פתיחת הרשימה`}>{f.count}</button> : 0}</dd></div>
-                    <div><dt>שנה קודמת</dt><dd>{f.lastYear ? short(f.lastYear) : '—'}</dd></div>
+                    {k.compare.year && <div><dt>שנה קודמת</dt><dd>{f.lastYear ? short(f.lastYear) : '—'}</dd></div>}
                     <div><dt>ממוצע חודשי</dt><dd>{avg ? short(avg) : '—'}</dd></div>
                   </dl>
                 </div>
@@ -296,7 +300,7 @@ export default function Executive() {
               </div>
               </div>
             </div>
-            <p className="fin-x-hint">לחיצה על חודש מציגה את כל הסקירה לאותו חודש. <span className="fin-x-legend"><i className="is-now" /> בפועל <i className="is-ly" /> שנה קודמת</span></p>
+            <p className="fin-x-hint">לחיצה על חודש מציגה את כל הסקירה לאותו חודש. {months.some((t) => t.lastYear) && <span className="fin-x-legend"><i className="is-now" /> בפועל <i className="is-ly" /> שנה קודמת</span>}</p>
           </section>
 
       {(() => {
@@ -337,7 +341,7 @@ export default function Executive() {
                 {coRows.map((c) => (
                   <li key={c.key || 'none'}>
                     <button type="button" onClick={() => (c.key ? setBiz(c.key) : go('/documents?status=unassigned'))} className={!c.key ? 'is-attn' : ''}
-                      {...tip.on(() => <TipRows title={c.name} rows={[['הוצאות בתקופה', money(c.total)], ['מסמכים', c.count], ['מהוצאות הקבוצה', `${(c.share * 100).toFixed(1)}%`], ['בתקופה הקודמת', c.prev ? money(c.prev) : 'אין נתונים'], ['שינוי', c.prev ? `${c.diff > 0 ? '+' : ''}${money(c.diff)} (${c.change > 0 ? '+' : ''}${Math.round(c.change)}%)` : 'אין בסיס להשוואה'], c.mainCat && ['הקטגוריה המרכזית', c.mainCat], c.lastAt && ['מסמך אחרון', ago(c.lastAt)]]} note={c.key ? 'לחיצה מציגה את הסקירה של החברה' : 'מסמכים שעוד לא שויכו לחברה'} />)}>
+                      {...tip.on(() => <TipRows title={c.name} rows={[['הוצאות בתקופה', money(c.total)], ['מסמכים', c.count], ['מהוצאות הקבוצה', `${(c.share * 100).toFixed(1)}%`], ...(k.compare.prev ? [['בתקופה הקודמת', c.prev ? money(c.prev) : 'אין נתונים']] : []), ...(k.compare.prev && c.prev ? [['שינוי', `${c.diff > 0 ? '+' : ''}${money(c.diff)} (${c.change > 0 ? '+' : ''}${Math.round(c.change)}%)`]] : []), c.mainCat && ['הקטגוריה המרכזית', c.mainCat], c.lastAt && ['מסמך אחרון', ago(c.lastAt)]]} note={c.key ? 'לחיצה מציגה את הסקירה של החברה' : 'מסמכים שעוד לא שויכו לחברה'} />)}>
                       <span className="fin-x-rows__name"><strong>{c.name}</strong><small>{c.count} מסמכים{c.key ? ` · ${c.projects} פרויקטים פעילים` : ''}</small></span>
                       <span className="fin-x-rows__bar"><i style={{ width: `${(Math.max(0, c.total) / maxCo) * 100}%`, background: c.key ? companyColor(businesses, c.key) : undefined }} /></span>
                       <span className="fin-x-rows__share">{Math.round(c.share * 100)}%</span>
@@ -356,7 +360,6 @@ export default function Executive() {
               {grans.length > 1 && <div className="fin-seg" role="group" aria-label="רזולוציה">{grans.map((v) => <button key={v} type="button" className={g === v ? 'is-on' : ''} aria-pressed={g === v} onClick={() => setGran(v)}>{GRAN[v]}</button>)}</div>}
             </header>
             {!trend.series.length ? <p className="fin-muted">אין הוצאות בתקופה.</p> : <TrendLines buckets={trend.buckets} series={trend.series} prev={trendPrev} tip={tip} />}
-            {trendBy === 'total' && !trendPrev && trend.series.length > 0 && <p className="fin-x-hint">אין נתונים מהתקופה הקודמת, ולכן אין קו השוואה.</p>}
           </section>
 
           <div className="fin-x-pair">
@@ -370,7 +373,7 @@ export default function Executive() {
                   <ul className="fin-x-list">
                     {catRows.map((c) => (
                       <li key={c.key || 'none'} className={catHover && catHover !== c.key ? 'is-dim' : ''}><button type="button" onClick={() => (c.id ? go(`/categories/${c.id}`) : open(c.ids, c.name))} onMouseEnter={() => setCatHover(c.key)} onMouseLeave={() => setCatHover(null)}
-                        {...tip.on(() => <TipRows title={c.name} rows={[['סכום', money(c.total)], ['חלק מההוצאות', `${(c.share * 100).toFixed(1)}%`], ['מסמכים', c.count], c.prev !== undefined && ['בתקופה הקודמת', c.prev ? money(c.prev) : 'אין נתונים']]} />)}>
+                        {...tip.on(() => <TipRows title={c.name} rows={[['סכום', money(c.total)], ['חלק מההוצאות', `${(c.share * 100).toFixed(1)}%`], ['מסמכים', c.count], ...(c.prev !== undefined && k.compare.prev ? [['בתקופה הקודמת', c.prev ? money(c.prev) : 'אין נתונים']] : [])].filter(Boolean)} />)}>
                         <i style={{ background: c.color }} /><span>{c.name}</span><strong>{catMode === 'pct' ? `${(c.share * 100).toFixed(1)}%` : short(c.total)}</strong><b>{catMode === 'pct' ? short(c.total) : `${Math.round(c.share * 100)}%`}</b></button></li>
                     ))}
                   </ul>
@@ -383,7 +386,7 @@ export default function Executive() {
                 <ul className="fin-x-bars">
                   {supRows.slice(0, 6).map((s2, n) => (
                     <li key={s2.key}><button type="button" onClick={() => (s2.id ? go(`/suppliers/${s2.id}`) : open(s2.ids, s2.name))}
-                      {...tip.on(() => { const docs = filtered.filter((d) => s2.ids.includes(d.id)); const cat = docs.map((d) => d.category).filter(Boolean)[0]; const lastAt = docs.map((d) => docDate(d)).sort().pop(); return <TipRows title={s2.name} rows={[['הוצאות בתקופה', money(s2.total)], ['מסמכים', s2.count], ['חלק מההוצאות', `${(s2.share * 100).toFixed(1)}%`], ['בתקופה הקודמת', s2.prev ? money(s2.prev) : 'אין נתונים'], cat && ['קטגוריה', cat], lastAt && ['מסמך אחרון', date(lastAt)]]} note="לחיצה פותחת את המסמכים של הספק" /> })}>
+                      {...tip.on(() => { const docs = filtered.filter((d) => s2.ids.includes(d.id)); const cat = docs.map((d) => d.category).filter(Boolean)[0]; const lastAt = docs.map((d) => docDate(d)).sort().pop(); return <TipRows title={s2.name} rows={[['הוצאות בתקופה', money(s2.total)], ['מסמכים', s2.count], ['חלק מההוצאות', `${(s2.share * 100).toFixed(1)}%`], ...(k.compare.prev ? [['בתקופה הקודמת', s2.prev ? money(s2.prev) : 'אין נתונים']] : []), cat && ['קטגוריה', cat], lastAt && ['מסמך אחרון', date(lastAt)]]} note="לחיצה פותחת את המסמכים של הספק" /> })}>
                       <span className="fin-x-bars__rank">{n + 1}</span>
                       <span className="fin-x-bars__name">{s2.name}<small>{s2.count === 1 ? 'מסמך אחד' : `${s2.count} מסמכים`} · {Math.round(s2.share * 100)}% · <Delta value={s2.prev ? s2.change : null} label="" /></small></span><strong>{short(s2.total)}</strong>
                       <span className="fin-x-bars__bar"><i style={{ width: `${Math.max(2, (Math.max(0, s2.total) / Math.max(1, ...supRows.map((x) => x.total))) * 100)}%` }} /></span>

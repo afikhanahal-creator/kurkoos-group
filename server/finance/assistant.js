@@ -31,6 +31,9 @@ const money = (v) => `${(Math.round(v * 100) / 100).toLocaleString('he-IL', { mi
 const sign = (d) => (d.doc_type === 'credit' ? -1 : 1)
 const tot = (d) => sign(d) * Math.abs(Number(d.total_amount) || 0)
 const ils = (d) => !d.currency || d.currency === 'ILS'
+// a comparison with a period from before the system was collecting is not a fair one (format.js comparable)
+const noBase = (since) => (since ? `אין עדיין נתונים להשוואה: המערכת אוספת מסמכים מ${monthName(since.slice(0, 7))}, ולכן התקופה הקודמת חסרה.` : 'אין עדיין נתונים להשוואה.')
+const noBaseWhy = (period) => `התקופה הקודמת (${period.prevFrom} עד ${period.prevTo}) היא מלפני שהמערכת התחילה לאסוף מסמכים, ולכן הנתונים בה חלקיים.`
 
 async function plan(question, names, history = []) {
   if (!env.anthropicKey()) { const e = new Error('העוזר דורש ANTHROPIC_API_KEY בשרת'); e.status = 503; throw e }
@@ -109,6 +112,7 @@ export async function ask({ question, history, user }) {
     case 'top_suppliers': out.rows = groupRows(inScope, (d) => d.supplier_name || 'ספק לא מזוהה').slice(0, n); out.value = out.rows[0]?.value ?? 0; out.answer = out.rows.length ? `${out.rows.length} הספקים עם ההוצאות הגבוהות` : 'אין הוצאות בתקופה'; out.explain = 'לפי סכום המסמכים של כל ספק בתקופה.'; break
     case 'top_categories': out.rows = groupRows(inScope, (d) => d.category || 'ללא קטגוריה').slice(0, n); out.value = out.rows[0]?.value ?? 0; out.answer = out.rows[0] ? `${out.rows[0].label}: ${money(out.rows[0].value)}` : 'אין הוצאות בתקופה'; out.explain = 'לפי סכום המסמכים בכל קטגוריה בתקופה.'; break
     case 'category_growth': {
+      if (!o.kpi.compare.prev) { out.rows = []; out.value = 0; out.answer = noBase(o.kpi.compare.since); out.explain = noBaseWhy(period); break }
       const rows = o.byCategory.filter((c) => c.prev > 0 || c.total > 0).map((c) => ({ label: c.name, value: c.total - c.prev, now: c.total, before: c.prev, ids: c.ids })).sort((a, b) => b.value - a.value).slice(0, n)
       out.rows = rows; out.value = rows[0]?.value ?? 0
       out.answer = rows[0] && rows[0].value > 0 ? `${rows[0].label}: עלייה של ${money(rows[0].value)}` : 'לא נרשמה עלייה באף קטגוריה'
@@ -132,6 +136,7 @@ export async function ask({ question, history, user }) {
       Object.assign(out, { value: v, ids: inScope.map((d) => d.id), answer: money(v), explain: `סכום המע״מ שמודפס על ${inScope.length} המסמכים. זה לא חישוב של מע״מ לקיזוז: את זה קובע רו״ח.` }); break
     }
     case 'period_compare': {
+      if (!o.kpi.compare.prev) { out.rows = []; out.value = 0; out.answer = noBase(o.kpi.compare.since); out.explain = noBaseWhy(period); break }
       const prev = docs.filter((d) => booked(d) && ils(d) && within(d, period.prevFrom, period.prevTo) && (!company || d.business_id === company.id))
       const a = sum(inScope); const b = sum(prev)
       out.rows = [{ label: period.label, value: a, count: inScope.length }, { label: `${period.prevFrom} – ${period.prevTo}`, value: b, count: prev.length }]

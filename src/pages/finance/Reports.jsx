@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useFinance } from './FinanceApp.jsx'
 import { openDocs } from './links.js'
-import { SOURCE, STATUS, claimableVat, counts, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedNet, signedTotal, thisMonth, toCsv, recentMonths } from './format.js'
+import { SOURCE, STATUS, claimableVat, collectingSince, comparable, counts, date, docDate, money, monthLabel, nameOf, period, shiftMonth, signedNet, signedTotal, thisMonth, toCsv, recentMonths } from './format.js'
 import { saveBlob } from './zip.js'
 import { buildXlsx, XLSX_MIME } from './xlsx.js'
 import * as api from './api.js'
@@ -124,7 +124,7 @@ export default function Reports() {
     const pFrom = shiftMonth(from, -span); const pTo = shiftMonth(to, -span)
     const before = scoped.filter((d) => mine(d) && period(d) >= pFrom && period(d) <= pTo)
     // nothing at all before this period (a new system): there is no "previous period" to compare with
-    const any = scoped.some((d) => mine(d) && period(d) <= pTo)
+    const any = scoped.some((d) => mine(d) && period(d) <= pTo) && comparable(`${pFrom}-01`, collectingSince(documents))
     const claim = booked.reduce((a, d) => a + claimableVat(d, categories), 0)
     // the strip: twelve months that end this month (or on the chosen month, when it is older than that)
     const end = to >= shiftMonth(thisMonth(), -11) ? thisMonth() : to

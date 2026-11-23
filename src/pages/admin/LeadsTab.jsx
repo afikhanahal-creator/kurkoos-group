@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { listLeads, updateLead, deleteLead, createLead, reorderRows, restoreLead, useSettings } from '../../lib/cms.js'
 import { reviewWaLink } from '../../lib/reviewRequest.js'
+import { channelLabel, channelColor } from '../../lib/attribution.js'
+import UtmLinks from './UtmLinks.jsx'
 
 /* ── SVG Icon components ── */
 const IcPhone    = (p) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
@@ -101,6 +103,8 @@ function exportCsv(leads) {
     ['name','שם'],['phone','טלפון'],['email','אימייל'],['project','פרויקט'],
     ['source','מקור'],['status','שלב'],['contacted','נוצר קשר'],['message','הודעה'],
     ['notes','הערות'],['created_at','תאריך'],
+    ['channel','ערוץ שיווקי'],['utm_campaign','קמפיין'],['utm_source','utm_source'],['utm_medium','utm_medium'],
+    ['utm_content','גרסת מודעה'],['first_channel','ערוץ ראשון'],['landing_page','עמוד נחיתה'],['lead_page','עמוד הטופס'],['device','מכשיר'],
   ]
   const esc = (v) => `"${String(v??'').replace(/"/g,'""')}"`
   const head = cols.map((c) => esc(c[1])).join(',')
@@ -110,6 +114,7 @@ function exportCsv(leads) {
     if (k === 'source')     return esc(SOURCE_LABEL[l.source] || l.source || '')
     if (k === 'created_at') return esc(fmtDate(l.created_at))
     if (k === 'project')    return esc(extractProject(l.project))
+    if ((k === 'channel' || k === 'first_channel') && l[k]) return esc(channelLabel(l[k]))
     return esc(l[k])
   }).join(','))
   const csv = '﻿' + [head,...rows].join('\r\n')
@@ -549,8 +554,17 @@ export default function LeadsTab() {
 }
 
 /* ============================ סקירת CRM ============================ */
+/* the sources table can group by the form, the marketing channel or the campaign */
+const SRC_DIMS = [
+  { id: 'channel', label: 'ערוץ שיווקי', key: (l) => (l.source === 'manual' ? 'נוסף ידנית' : l.channel ? channelLabel(l.channel) : 'לפני המעקב') },
+  { id: 'campaign', label: 'קמפיין', key: (l) => l.utm_campaign || (l.channel ? 'ללא קמפיין' : 'לפני המעקב') },
+  { id: 'form', label: 'טופס', key: (l) => SOURCE_LABEL[l.source] || l.source || 'לא ידוע' },
+]
+
 function LeadsOverview({ leads, stageFilter, setStageFilter }) {
   const [showSources, setShowSources] = useState(false)
+  const [dim, setDim] = useState('channel')
+  const [showUtm, setShowUtm] = useState(false)
   const s = useMemo(() => {
     const now30 = daysAgo(30), prev60 = daysAgo(60)
     const in30 = leads.filter((l) => isAfter(l.created_at, now30)).length
@@ -569,15 +583,16 @@ function LeadsOverview({ leads, stageFilter, setStageFilter }) {
     }
     // איכות לפי מקור: כמות מול שיעור סגירה
     const srcMap = new Map()
+    const keyOf = (SRC_DIMS.find((d) => d.id === dim) || SRC_DIMS[0]).key
     for (const l of leads) {
-      const k = SOURCE_LABEL[l.source] || l.source || 'לא ידוע'
+      const k = keyOf(l)
       const e = srcMap.get(k) || { n: 0, won: 0 }
       e.n++; if (l.status === 'won') e.won++
       srcMap.set(k, e)
     }
     const sources = [...srcMap.entries()].map(([k, v]) => ({ k, ...v, conv: v.n ? v.won / v.n : 0 })).sort((a, b) => b.n - a.n)
     return { total, in30, inPrev, byStage, inWork, attention, won, conv, days, sources }
-  }, [leads])
+  }, [leads, dim])
 
   const delta = s.inPrev ? ((s.in30 - s.inPrev) / s.inPrev) * 100 : null
   const maxDay = Math.max(1, ...s.days)
@@ -643,7 +658,19 @@ function LeadsOverview({ leads, stageFilter, setStageFilter }) {
         <button type="button" className="ldov__src-toggle" onClick={() => setShowSources((v) => !v)}>
           ניתוח מקורות {showSources ? '▴' : '▾'}
         </button>
+        <button type="button" className="ldov__src-toggle" onClick={() => setShowUtm((v) => !v)}>
+          קישורי מעקב (UTM) {showUtm ? '▴' : '▾'}
+        </button>
       </div>
+      {showUtm && <UtmLinks/>}
+      {showSources && (
+        <div className="ldov__dims" role="tablist" aria-label="קיבוץ המקורות">
+          {SRC_DIMS.map((d) => (
+            <button key={d.id} type="button" role="tab" aria-selected={dim === d.id}
+              className={`adm-filter-pill ${dim === d.id ? 'is-active' : ''}`} onClick={() => setDim(d.id)}>לפי {d.label}</button>
+          ))}
+        </div>
+      )}
       {showSources && (
         <table className="ldov__src">
           <thead><tr><th>מקור</th><th>לידים</th><th>נתח</th><th>נסגרו</th><th>שיעור סגירה</th></tr></thead>
@@ -701,6 +728,12 @@ function LeadCard({ lead, onStage, onContacted, onRemove, onEdit, cardDrag, revi
               <span className="adm-lead__sub">
                 {lead.source === 'project' ? <IcPin width={9} height={9}/> : null}
                 {sourceTxt}
+              </span>
+            )}
+            {lead.channel && (
+              <span className="adm-lead__chan" style={{ '--c': channelColor(lead.channel) }}
+                title={['הגיע מ: ' + channelLabel(lead.channel), lead.utm_campaign && 'קמפיין: ' + lead.utm_campaign, lead.device].filter(Boolean).join(' · ')}>
+                {channelLabel(lead.channel)}{lead.utm_campaign ? ` · ${lead.utm_campaign}` : ''}
               </span>
             )}
           </div>
@@ -1061,6 +1094,24 @@ function LeadEditor({ lead, onClose, onAutoSave, onCreate }) {
                   </span>
                 ))}
               </div>
+            </div>
+          )}
+
+          {f.channel && (
+            <div className="adm-attr">
+              <span className="adm-attr__lbl">מאיפה הגיע</span>
+              <dl className="adm-attr__grid">
+                <dt>ערוץ</dt><dd><i style={{ background: channelColor(f.channel) }}/>{channelLabel(f.channel)}</dd>
+                {f.utm_campaign && <><dt>קמפיין</dt><dd dir="ltr">{f.utm_campaign}</dd></>}
+                {f.utm_content && <><dt>גרסת מודעה</dt><dd dir="ltr">{f.utm_content}</dd></>}
+                {(f.utm_source || f.utm_medium) && <><dt>UTM</dt><dd dir="ltr">{[f.utm_source, f.utm_medium].filter(Boolean).join(' / ')}</dd></>}
+                {f.utm_term && <><dt>מילת חיפוש</dt><dd>{f.utm_term}</dd></>}
+                {f.referrer && <><dt>אתר מפנה</dt><dd dir="ltr">{f.referrer}</dd></>}
+                {f.landing_page && <><dt>עמוד נחיתה</dt><dd dir="ltr">{f.landing_page}</dd></>}
+                {f.lead_page && <><dt>נשלח מעמוד</dt><dd dir="ltr">{f.lead_page}</dd></>}
+                {f.first_channel && f.first_channel !== f.channel && <><dt>ביקור ראשון</dt><dd>{channelLabel(f.first_channel)}</dd></>}
+                {f.device && <><dt>מכשיר</dt><dd>{f.device}</dd></>}
+              </dl>
             </div>
           )}
 

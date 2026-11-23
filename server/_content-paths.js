@@ -21,6 +21,11 @@ export default [
     "date": "2026-06-28"
   },
   {
+    "path": "/construction-supervision/defective-concrete-structure-inspection",
+    "lastmod": "2026-11-22",
+    "date": "2026-11-22"
+  },
+  {
     "path": "/construction-supervision/divuach-pikuach-bniya-lebait-prati",
     "lastmod": "2026-10-04",
     "date": "2026-10-04"
@@ -216,6 +221,11 @@ export default [
     "date": "2026-11-17"
   },
   {
+    "path": "/constructions/service-after-handover",
+    "lastmod": "2026-11-22",
+    "date": "2026-11-22"
+  },
+  {
     "path": "/constructions/sherut-achrei-mesira",
     "lastmod": "2026-11-17",
     "date": "2026-09-27"
@@ -249,6 +259,11 @@ export default [
     "path": "/constructions/tosefet-bniya-bayit-prati",
     "lastmod": "2026-10-18",
     "date": "2026-10-18"
+  },
+  {
+    "path": "/madrich-yazamim/arvut-chok-mecher",
+    "lastmod": "2026-11-22",
+    "date": "2026-11-22"
   },
   {
     "path": "/madrich-yazamim/bdikat-hetkenut-karka",
@@ -391,6 +406,11 @@ export default [
     "date": "2026-11-15"
   },
   {
+    "path": "/real-estate-guide/price-negotiation-real-estate",
+    "lastmod": "2026-11-22",
+    "date": "2026-11-22"
+  },
+  {
     "path": "/real-estate-guide/real-return-real-estate-investment",
     "lastmod": "2026-08-23",
     "date": "2026-08-23"
@@ -474,6 +494,11 @@ export default [
     "path": "/yazamut-nadlan/no-mamad-price-gap-developer",
     "lastmod": "2026-08-23",
     "date": "2026-08-23"
+  },
+  {
+    "path": "/yazamut-nadlan/price-to-income-gap-israel",
+    "lastmod": "2026-11-22",
+    "date": "2026-11-22"
   },
   {
     "path": "/yazamut-nadlan/rami-tender-land-floor-price",

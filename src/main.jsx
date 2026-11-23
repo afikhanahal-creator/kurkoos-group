@@ -10,6 +10,10 @@ import './styles/polish.css'
 import './styles/a11y.css'
 import './styles/glow.css'
 import { initGlowCards } from './lib/glowCards.js'
+import { capture as captureAttribution } from './lib/attribution.js'
+
+// where this visitor came from (UTM, ad click, referring site), saved with any lead they send
+captureAttribution()
 
 // iOS Safari applies :active (the press feedback) only when the page listens to touchstart
 if (typeof document !== 'undefined') document.addEventListener('touchstart', () => {}, { passive: true })

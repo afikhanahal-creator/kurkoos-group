@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { ATTR_MAX } from './attribution.js'
 import { trimUniformBorders } from './imageTrim.js'
 import { supabase } from './supabase.js'
 import { srcOfResponsive } from './responsiveImage.js'
@@ -450,7 +451,7 @@ export async function deleteLogo(id, imageUrl) {
 }
 
 // ---------- Leads (CRM) ----------
-const _LEAD_MAX = { name: 200, phone: 30, email: 200, message: 2000, notes: 2000, project: 200 }
+const _LEAD_MAX = { name: 200, phone: 30, email: 200, message: 2000, notes: 2000, project: 200, ...ATTR_MAX }
 const _VALID_SOURCES = new Set(['project', 'contact', 'home', 'manual'])
 
 function sanitizeLead(row) {

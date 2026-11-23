@@ -1,6 +1,36 @@
 /* קובץ שנוצר אוטומטית ע"י scripts/generate-sitemap-paths.mjs — אל תערכו ידנית */
 export default [
   {
+    "path": "/construction-supervision/defective-concrete-structure-inspection",
+    "date": "2026-11-22",
+    "title": "ליקויי שלד בבית חדש: מה בודקים לפני היציקה, כשעוד אפשר לתקן",
+    "column": "supervision"
+  },
+  {
+    "path": "/constructions/service-after-handover",
+    "date": "2026-11-22",
+    "title": "שירות אחרי מסירה: מה הקבלן חייב לתקן, ואיך גורמים לו לטפל",
+    "column": "constructions"
+  },
+  {
+    "path": "/madrich-yazamim/arvut-chok-mecher",
+    "date": "2026-11-22",
+    "title": "ערבות חוק מכר: מה היא מחייבת ולמה יזמים צעירים מפספסים את המשמעות",
+    "column": "mentorguide"
+  },
+  {
+    "path": "/real-estate-guide/price-negotiation-real-estate",
+    "date": "2026-11-22",
+    "title": "משא ומתן על מחיר נכס: איך סוגרים פער בלי שהעסקה נופלת",
+    "column": "brokerage"
+  },
+  {
+    "path": "/yazamut-nadlan/price-to-income-gap-israel",
+    "date": "2026-11-22",
+    "title": "15 שנות שכר לדירה: למה הפער הזה הוא בעיה של יזמים, לא רק של קונים",
+    "column": "yazamut"
+  },
+  {
     "path": "/construction-supervision/pikuach-elyon-o-tzamud",
     "date": "2026-11-17",
     "title": "פיקוח עליון או פיקוח צמוד: מה ההבדל, ומה בית פרטי באמת צריך",
@@ -41,35 +71,5 @@ export default [
     "date": "2026-11-15",
     "title": "נסח טאבו: מה באמת כתוב בו, ואיך שורה אחת מבטלת עסקה",
     "column": "brokerage"
-  },
-  {
-    "path": "/yazamut-nadlan/esg-green-building-developer",
-    "date": "2026-11-15",
-    "title": "בנייה ירוקה בפרויקט: עלות של היום או נכס שנמכר מחר",
-    "column": "yazamut"
-  },
-  {
-    "path": "/constructions/mashkanta-livniyat-bayit-prati",
-    "date": "2026-11-14",
-    "title": "משכנתא לבניית בית פרטי: איך זה עובד כשבונים על המגרש שלכם",
-    "column": "constructions"
-  },
-  {
-    "path": "/real-estate-guide/karka-chaklait-mul-karka-livniya",
-    "date": "2026-11-14",
-    "title": "קרקע חקלאית או קרקע לבנייה: מה ההבדל, ולמה זה קובע אם אפשר לבנות",
-    "column": "brokerage"
-  },
-  {
-    "path": "/construction-supervision/bdikat-cheshbonot-kablan",
-    "date": "2026-10-18",
-    "title": "בדיקת חשבונות קבלן: איך מאשרים חשבון חלקי לפני שמשלמים, ומה מפקח בודק בו",
-    "column": "supervision"
-  },
-  {
-    "path": "/construction-supervision/nihul-proyekt-bniyat-bayit",
-    "date": "2026-10-18",
-    "title": "ליווי מלא בבניית בית פרטי: מה עושה מנהל פרויקט מטעמכם, מהקרקע ועד המפתח",
-    "column": "supervision"
   }
 ]

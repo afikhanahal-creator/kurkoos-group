@@ -133,6 +133,19 @@ function mdToHtml(md) {
 /* הפרויקטים המפורסמים ב-CMS, נשלפים פעם אחת ל-build: לעמודי הפרויקטים ולסטטוס
    שבסקשן "הפרויקטים בפירוט" ב-/projects. בלי משתני סביבה או בלי גישה, רשימה
    ריקה: עמודי הפרויקטים מדולגים, וב-/projects מוצג הסטטוס מ-villasPage.js. */
+/* A list of project pages (name, place, status), linking each one. `skip` leaves out the page it appears on. */
+function allProjectsHtml(projects, heading, skip) {
+  const t = (v) => (v && typeof v === 'object' ? (v.he || v.en || '') : String(v || '')).trim()
+  const items = (projects || [])
+    .filter((p) => p && p.slug && p.slug !== skip && /^[A-Za-z0-9\u0590-\u05FF_-]+$/.test(String(p.slug)) && t(p.name))
+    .map((p) => {
+      const where = t(p.location)
+      const st = FACTS.PROJECT_STATUS_HE?.[p.status]
+      return `<li><a href="/projects/${esc(p.slug)}">${esc(t(p.name))}${where ? `, ${esc(where)}` : ''}</a>${st ? `: ${esc(st)}` : ''}</li>`
+    })
+  return items.length ? `<h2>${esc(heading)}</h2><ul>${items.join('')}</ul>` : ''
+}
+
 let cmsProjectsP = null
 function loadCmsProjects() {
   if (cmsProjectsP) return cmsProjectsP
@@ -608,6 +621,9 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
       `<li><a href="/villas-sharon">יורדי הים 3, שכונת גרינברג</a>: שתי וילות פרטיות על מגרשים של למעלה מחצי דונם, עם בריכת שחייה 4x9 מטר. בתכנון.</li>` +
       `</ul>` +
       factsHtml(FACTS.PROJECTS_FACTS, projectStatus) +
+      /* every project page, linked from here. Without this list four project pages had no internal link at all
+         in the static site, and Google found them only through the sitemap. */
+      allProjectsHtml(await loadCmsProjects(), 'כל הפרויקטים של הקבוצה') +
       `<h2>מדריכים לבניית בית פרטי</h2><ul>` +
       PRIVATE_HOUSE_GUIDES.map((g) => `<li><a href="${esc(g.to)}">${esc(g.label)}</a></li>`).join('') + `</ul>` +
       `<h2>תחומי הפעילות</h2>` +
@@ -727,6 +743,7 @@ for (const [dirName, col] of Object.entries(COLUMNS)) {
             (am.length ? `<h2>מה כולל</h2><ul>` + am.map((x) => `<li>${esc(x)}</li>`).join('') + `</ul>` : '') +
             (txt(env.text) ? `<h2>${esc(txt(env.title) || 'הסביבה')}</h2><p>${esc(txt(env.text))}</p>` : '')
         })() +
+        allProjectsHtml(cmsProjects, 'פרויקטים נוספים של הקבוצה', slug) +
         `<ul><li><a href="/projects">כל הפרויקטים</a></li>` +
         /* עמוד הנחיתה של העיר, כשיש כזה: קישור הקשרי בין הפרויקט לבין "בניית בית פרטי ב..." */
         (CITY_PAGE[city] ? `<li><a href="${CITY_PAGE[city].path}">${esc(CITY_PAGE[city].label)}</a></li>` : '') +

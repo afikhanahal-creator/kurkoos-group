@@ -56,7 +56,7 @@ const AI_HOSTS = /(^|\.)(chatgpt\.com|chat\.openai\.com|openai\.com|perplexity\.
 function fromUtm(src, med) {
   const paid = PAID.test(med)
   if (/^(google|adwords|googleads|google_ads)$/.test(src)) return paid ? 'google_ads' : 'google_organic'
-  if (/^(facebook|fb|instagram|ig|meta|messenger)$/.test(src)) return paid ? 'meta_ads' : (/^(instagram|ig)$/.test(src) ? 'instagram' : 'facebook')
+  if (/^(facebook|fb|instagram|ig|meta|messenger|msg|an|audience_network)$/.test(src)) return paid ? 'meta_ads' : (/^(instagram|ig)$/.test(src) ? 'instagram' : 'facebook')
   if (/^(whatsapp|wa)$/.test(src) || med === 'whatsapp') return 'whatsapp'
   if (/^(bing|microsoft)$/.test(src)) return 'bing'
   if (/^(chatgpt|openai|gemini|perplexity|copilot|ai)$/.test(src)) return 'ai'

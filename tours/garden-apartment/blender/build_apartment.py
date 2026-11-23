@@ -265,6 +265,7 @@ def prism(bk, pts, h1, h2, mat, top=None):
 
 
 # ------------------------------------------------------------------ קירות ופתחים
+WALLBOX = []
 def wall(lvl, x1, x2, z1, z2, ops=(), faces=None, h1=None, h2=None):
     fl = BY if lvl == 'B' else GY
     h1 = h1 if h1 is not None else (BY if lvl == 'B' else -SLAB)
@@ -276,10 +277,14 @@ def wall(lvl, x1, x2, z1, z2, ops=(), faces=None, h1=None, h2=None):
     L1, L2 = (x1, x2) if axis == 'x' else (z1, z2)
 
     def seg(a, b, ha, hb):
+        if b - a < 1e-5 or hb - ha < 1e-5:
+            return
         if axis == 'x':
             box(bk, a, b, z1, z2, ha, hb, 'paint', fc)
+            WALLBOX.append((lvl, a, b, z1, z2, ha, hb))
         else:
             box(bk, x1, x2, a, b, ha, hb, 'paint', fc)
+            WALLBOX.append((lvl, x1, x2, a, b, ha, hb))
     cur = L1
     for op in sorted(ops, key=lambda o: o['a']):
         seg(cur, op['a'], h1, h2)
@@ -769,12 +774,13 @@ def washer(bk, x, z, h, rot):
 
 
 GFN, BFN, OFN = 'G_furn', 'B_furn', 'OUT_furn'
+GFX, BFX = 'G_fixed', 'B_fixed'
 # --- מטבח (לפי התוכנית: ארונות גבוהים לאורך 2.87 בצפון, קו עבודה במערב עם כיריים וכיור, אי באמצע)
-tall_unit(GFN, 1.435, 11.69, GY, 0, 2.87, NET)
-counter(GFN, 0.31, 13.95, GY, R90, 3.3, sink=-0.65, cook=0.6)
-box(GFN, 0.0, 0.02, 12.3, 15.6, 0.92, 1.6, 'quartz')
-box(GFN, 0.0, 0.55, 13.0, 13.7, 2.2, 2.32, 'black')                          # מנדף מעל הכיריים
-island(GFN, 2.30, 14.10, GY, R90, 2.1, 0.9)
+tall_unit(GFX, 1.435, 11.69, GY, 0, 2.87, NET)
+counter(GFX, 0.31, 13.95, GY, R90, 3.3, sink=-0.65, cook=0.6)
+box(GFX, 0.0, 0.02, 12.3, 15.6, 0.92, 1.6, 'quartz')
+box(GFX, 0.0, 0.55, 13.0, 13.7, 2.2, 2.32, 'black')                          # מנדף מעל הכיריים
+island(GFX, 2.30, 14.10, GY, R90, 2.1, 0.9)
 for z in (13.4, 14.1, 14.8):
     stool(GFN, 3.05, z, GY)
 dining(GFN, 4.55, 14.15, GY, 0, 2.4, 1.0)
@@ -805,40 +811,40 @@ bn.box(1.4, 0.45, 0.42, 0, 0.225, 0, 'headboard')
 sofa(GFN, 5.45, 3.35, GY, -R90 - 0.4, 0.85, 0.85, 'sage')
 rug(GFN, 4.0, 5.8, 0.5, 3.3, GY, 'rug_dark')
 desk(GFN, 3.1, 5.33, GY, math.pi, 1.0, 0.6)                                 # שולחן איפור ליד הקיר הדרומי
-wardrobe(GFN, 3.26, 6.95, GY, math.pi, 2.72, NET - 0.02, 0.60, 'oak')       # ארונות לאורך הקיר הדרומי של המעבר
-wardrobe(GFN, 0.30, 6.50, GY, R90, 1.50, NET - 0.02, 0.60, 'oak')           # ארון בקצה המערבי
+wardrobe(GFX, 3.26, 6.95, GY, math.pi, 2.72, NET - 0.02, 0.60, 'oak')       # ארונות לאורך הקיר הדרומי של המעבר
+wardrobe(GFX, 0.30, 6.50, GY, R90, 1.50, NET - 0.02, 0.60, 'oak')           # ארון בקצה המערבי
 # חדר רחצה הורים (לפי התוכנית: אסלה ליד הפיר בצפון-מערב, מקלחון בדרום-מערב, שני כיורים במזרח)
-box(GFN, 0.0, 0.25, 3.47, 4.05, GY, NET, 'p_bathwall')                       # פיר ונטה
-toilet(GFN, 0.50, 3.80, GY, R90)
-shower('G_furn', 0.0, 1.05, 4.37, 5.65, GY, [(0.25, 1.05, 4.36, 4.38), (1.04, 1.06, 4.37, 5.05)])
-box(GFN, 0.0, 0.12, 4.70, 5.40, 1.10, 1.13, 'quartz')
-vanity(GFN, 2.22, 4.45, GY, -R90, 1.70, 2)
+box(GFX, 0.0, 0.25, 3.47, 4.05, GY, NET, 'p_bathwall')                       # פיר ונטה
+toilet(GFX, 0.50, 3.80, GY, R90)
+shower(GFX, 0.0, 1.05, 4.37, 5.65, GY, [(0.25, 1.05, 4.36, 4.38), (1.04, 1.06, 4.37, 5.05)])
+box(GFX, 0.0, 0.12, 4.70, 5.40, 1.10, 1.13, 'quartz')
+vanity(GFX, 2.22, 4.45, GY, -R90, 1.70, 2)
 for y in [0.85 + 0.12 * i for i in range(7)]:
-    box(GFN, 0.95, 1.45, 3.48, 3.52, y, y + 0.02, 'chrome')
+    box(GFX, 0.95, 1.45, 3.48, 3.52, y, y + 0.02, 'chrome')
 # שירותי אורחים
-toilet(GFN, 3.97, 7.62, GY, 0)
-vanity(GFN, 3.57, 8.6, GY, R90, 0.45, 1, mirror=False)
+toilet(GFX, 3.97, 7.62, GY, 0)
+vanity(GFX, 3.57, 8.6, GY, R90, 0.45, 1, mirror=False)
 # ממ"ד
 desk(GFN, 7.8, 3.77, GY, 0, 1.5, 0.65)
 office_chair(GFN, 7.8, 4.35, GY, math.pi)
 sofa(GFN, 6.71, 4.9, GY, R90, 1.9, 0.9, 'headboard')
 shelf(GFN, 9.6, 3.63, GY, 0, 1.0, 2.0, 0.35)
 # חדר רחצה כללי (מקלחון בצפון-מערב, כיור כפול בדרום, אסלה בדרום-מזרח, מכונת כביסה בצפון-מזרח)
-shower(GFN, 7.27, 8.47, 6.40, 7.55, GY, [(7.27, 7.97, 7.54, 7.56)])
-vanity(GFN, 8.65, 8.50, GY, math.pi, 1.6, 2)
-toilet(GFN, 10.18, 8.30, GY, -R90)
-washer(GFN, 10.13, 6.73, GY, -R90)
+shower(GFX, 7.27, 8.47, 6.40, 7.55, GY, [(7.27, 7.97, 7.54, 7.56)])
+vanity(GFX, 8.65, 8.50, GY, math.pi, 1.6, 2)
+toilet(GFX, 10.18, 8.30, GY, -R90)
+washer(GFX, 10.13, 6.73, GY, -R90)
 # חדר שינה 2
 bed(GFN, 7.21, 10.5, GY, R90, 1.6, 2.0)
 nightstand(GFN, 6.37, 11.5, GY, R90)
-wardrobe(GFN, 9.3, 11.44, GY, math.pi, 2.0, 2.6, 0.6)
+wardrobe(GFX, 9.3, 11.44, GY, math.pi, 2.0, 2.6, 0.6)
 desk(GFN, 10.16, 9.8, GY, -R90, 1.2, 0.6)
 office_chair(GFN, 9.6, 9.8, GY, R90)
 
 # --- מרתף
-counter(BFN, 0.31, 2.20, BY, R90, 1.8, sink=0.4)                              # מיני בר
-box(BFN, 0, 0.35, 2.2 - 0.9, 2.2 + 0.9, BY + 1.5, BY + 1.53, 'oak')
-box(BFN, 0, 0.35, 2.2 - 0.9, 2.2 + 0.9, BY + 1.9, BY + 1.93, 'oak')
+counter(BFX, 0.31, 2.20, BY, R90, 1.8, sink=0.4)                              # מיני בר
+box(BFX, 0, 0.35, 2.2 - 0.9, 2.2 + 0.9, BY + 1.5, BY + 1.53, 'oak')
+box(BFX, 0, 0.35, 2.2 - 0.9, 2.2 + 0.9, BY + 1.9, BY + 1.93, 'oak')
 stool(BFN, 0.95, 1.8, BY)
 stool(BFN, 0.95, 2.6, BY)
 rug(BFN, 1.4, 4.6, 3.9, 6.8, BY, 'rug_dark')
@@ -860,12 +866,12 @@ shelf(BFN, 2.76, 1.4, BY, R90, 2.4, 1.2, 0.35)
 Local(BFN, 5.4, -0.0, BY).sphere(0.4, 0, 0.22, 0, 'kids2', sy=0.55, n=14)
 Local(BFN, 5.5, 2.5, BY).sphere(0.4, 0, 0.22, 0, 'kids3', sy=0.55, n=14)
 # חדרי רחצה במרתף
-shower(BFN, 6.25, 7.85, 3.35, 4.45, BY, [(6.95, 7.85, 4.44, 4.46)])
-vanity(BFN, 6.49, 4.95, BY, R90, 0.7, 1)
-toilet(BFN, 7.60, 5.0, BY, -R90)
-vanity(BFN, 9.10, 5.40, BY, R90, 0.8, 1)
-toilet(BFN, 10.18, 4.95, BY, -R90)
-shower(BFN, 8.86, 10.46, 3.35, 4.45, BY, [(9.40, 10.46, 4.44, 4.46)])
+shower(BFX, 6.25, 7.85, 3.35, 4.45, BY, [(6.95, 7.85, 4.44, 4.46)])
+vanity(BFX, 6.49, 4.95, BY, R90, 0.7, 1)
+toilet(BFX, 7.60, 5.0, BY, -R90)
+vanity(BFX, 9.10, 5.40, BY, R90, 0.8, 1)
+toilet(BFX, 10.18, 4.95, BY, -R90)
+shower(BFX, 8.86, 10.46, 3.35, 4.45, BY, [(9.40, 10.46, 4.44, 4.46)])
 # סטודיו
 rug(BFN, 7.0, 9.6, 7.3, 9.6, BY)
 sofa(BFN, 8.4, 6.7, BY, 0, 2.1, 0.9)
@@ -875,9 +881,9 @@ office_chair(BFN, 9.4, 8.3, BY, R90)
 shelf(BFN, 7.8, 10.18, BY, math.pi, 2.4, 2.3, 0.35)
 plant(BFN, 6.6, 9.9, BY, 1.4)
 # חדר שירות ומחסן
-washer(BFN, 3.1, 11.36, BY, math.pi)
-washer(BFN, 3.75, 11.36, BY, math.pi)
-counter(BFN, 4.4, 11.35, BY, math.pi, 0.6, sink=0)
+washer(BFX, 3.1, 11.36, BY, math.pi)
+washer(BFX, 3.75, 11.36, BY, math.pi)
+counter(BFX, 4.4, 11.35, BY, math.pi, 0.6, sink=0)
 shelf(BFN, 5.29, 10.2, BY, -R90, 1.2, 2.0, 0.4, 'steel')
 shelf(BFN, 1.2, 11.52, BY, math.pi, 2.2, 2.2, 0.45, 'steel')
 shelf(BFN, 0.25, 10.2, BY, R90, 1.4, 2.2, 0.45, 'steel')
@@ -909,6 +915,65 @@ for x in (4.6, 5.6):
 tree(OFN, 1.5, 21.0, GY, 4.6, 'leaf', 1.6)
 tree(OFN, 12.5, 20.6, GY, 4.2, 'olive', 1.3)
 tree(OFN, 12.9, 13.0, GY, 3.6, 'leaf', 1.2)
+
+# ------------------------------------------------------------------ פאנלים (שיפולים) בתחתית הקירות: רק איפה שיש קיר בפועל
+def wall_at(lvl, x, z, h):
+    for L, a, b, c, d, h1, h2 in WALLBOX:
+        if L == lvl and a - 1e-3 <= x <= b + 1e-3 and c - 1e-3 <= z <= d + 1e-3 and h1 <= h <= h2:
+            return True
+    return False
+
+
+def skirting(lvl, x1, x2, z1, z2):
+    fl = BY if lvl == 'B' else GY
+    t, hh, st = 0.012, 0.08, 0.05
+    for edge in ('n', 's', 'w', 'e'):
+        if edge in ('n', 's'):
+            zz = z1 if edge == 'n' else z2
+            probe = zz - 0.03 if edge == 'n' else zz + 0.03
+            n = max(1, int((x2 - x1) / st))
+            run = None
+            for i in range(n + 1):
+                x = x1 + (x2 - x1) * i / n
+                ok = wall_at(lvl, x, probe, fl + 0.04) and i < n
+                if ok and run is None:
+                    run = x
+                if (not ok or i == n) and run is not None:
+                    xe = x if not ok else x2
+                    if xe - run > 0.04:
+                        box(lvl + '_fixed', run, xe, zz if edge == 'n' else zz - t, zz + t if edge == 'n' else zz, fl, fl + hh, 'trim')
+                    run = None
+        else:
+            xx = x1 if edge == 'w' else x2
+            probe = xx - 0.03 if edge == 'w' else xx + 0.03
+            n = max(1, int((z2 - z1) / st))
+            run = None
+            for i in range(n + 1):
+                z = z1 + (z2 - z1) * i / n
+                ok = wall_at(lvl, probe, z, fl + 0.04) and i < n
+                if ok and run is None:
+                    run = z
+                if (not ok or i == n) and run is not None:
+                    ze = z if not ok else z2
+                    if ze - run > 0.04:
+                        box(lvl + '_fixed', xx if edge == 'w' else xx - t, xx + t if edge == 'w' else xx, run, ze, fl, fl + hh, 'trim')
+                    run = None
+
+
+for x1, x2, z1, z2, m in GF:
+    if m != 'p_bath':
+        skirting('G', x1, x2, z1, z2)
+for x1, x2, z1, z2, m in BF:
+    if m != 'p_bath':
+        skirting('B', x1, x2, z1, z2)
+
+# תקרת הבטון מעל קומת הכניסה ושתי קומות מעליה (צל אמיתי על הגינה, ותאורה רק דרך החלונות)
+for x1, x2, z1, z2 in [(-0.25, 6.26, -0.25, 7.35), (6.26, 10.71, 3.15, 7.35), (-0.25, 10.71, 7.35, 16.69)]:
+    box('ROOFSLAB', x1, x2, z1, z2, GROSS, GROSS + SLAB, 'concrete')
+    box('UPPER', x1, x2, z1, z2, GROSS + SLAB, GROSS + SLAB + 6.2, 'facade')
+for hh in (5.0, 8.1):                                                                # מרפסות הקומות שמעל
+    box('UPPER', -0.25, 10.71, 16.69, 18.10, hh - 0.75, hh - 0.6, 'concrete')
+    box('UPPER_glass', -0.25, 10.71, 18.08, 18.10, hh - 0.6, hh + 0.45, 'glass')
 
 # ------------------------------------------------------------------ יצירת האובייקטים
 OBJ = {}
@@ -1049,14 +1114,14 @@ def render_top(fname, x1, x2, z1, z2, px_per_m=60):
 
 views = {}
 if os.environ.get('RENDER', '1') == '1':
-    show(['G_walls', 'G_open', 'G_floor', 'G_furn', 'G_glass', 'OUT', 'SLAB', 'B_stair'])
+    show(['G_walls', 'G_open', 'G_floor', 'G_furn', 'G_fixed', 'G_glass', 'OUT', 'SLAB', 'B_stair'])
     views['ground'] = render_top('top_ground.png', -1.6, 14.6, -2.2, 22.9, 80)
-    show(['B_walls', 'B_open', 'B_floor', 'B_furn', 'B_glass', 'B_stair'])
+    show(['B_walls', 'B_open', 'B_floor', 'B_furn', 'B_fixed', 'B_glass', 'B_stair'])
     world.node_tree.nodes['Background'].inputs['Color'].default_value = (0.30, 0.30, 0.31, 1)
     views['basement'] = render_top('top_basement.png', -1.6, 12.6, -2.2, 12.9, 80)
     # מבט אלכסוני מלמעלה על קומת הכניסה, בלי תקרה
     world.node_tree.nodes['Background'].inputs['Color'].default_value = (0.75, 0.82, 0.92, 1)
-    show(['G_walls', 'G_open', 'G_floor', 'G_furn', 'G_glass', 'OUT', 'SLAB', 'B_stair'])
+    show(['G_walls', 'G_open', 'G_floor', 'G_furn', 'G_fixed', 'G_glass', 'OUT', 'SLAB', 'B_stair'])
     cam.type = 'PERSP'
     cam.lens = 32
     cam.sensor_fit = 'AUTO'

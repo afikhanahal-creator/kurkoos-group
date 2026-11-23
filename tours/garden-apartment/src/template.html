@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>דירת גן 250 מ״ר · סיור תלת-ממדי</title>
+<style>
+  :root { --ink:#1e2226; --muted:#5d646c; --card:rgba(255,255,255,0.92); --line:rgba(30,34,38,0.12); --accent:#1f4f46; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; overflow:hidden; background:#cfd8df; font-family:"Segoe UI","Heebo",Arial,sans-serif; color:var(--ink); }
+  #c { position:fixed; inset:0; width:100vw; height:100vh; display:block; touch-action:none; }
+  .card { position:fixed; background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:0 8px 28px rgba(0,0,0,0.14); backdrop-filter:blur(6px); }
+  #panel { top:16px; right:16px; width:292px; padding:14px 16px 16px; }
+  #panel h1 { margin:0; font-size:18px; line-height:1.25; }
+  #panel .sub { color:var(--muted); font-size:13px; margin:2px 0 12px; }
+  .row { display:flex; gap:8px; margin-top:8px; }
+  .row button { flex:1; }
+  button { font:inherit; font-size:14px; padding:9px 10px; border-radius:10px; border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; }
+  button.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline:2px solid #2b7bd6; outline-offset:2px; }
+  label.f { display:block; margin-top:12px; font-size:13px; color:var(--muted); }
+  label.f span.v { float:left; color:var(--ink); font-weight:600; }
+  select, input[type=range] { width:100%; margin-top:6px; font:inherit; font-size:14px; }
+  select { padding:7px 8px; border-radius:9px; border:1px solid var(--line); background:#fff; }
+  .chk { display:flex; align-items:center; gap:8px; margin-top:12px; font-size:14px; }
+  #room { top:16px; left:16px; min-width:230px; padding:12px 16px; }
+  #room .lvl { font-size:12px; color:var(--muted); }
+  #room .name { font-size:20px; font-weight:700; margin-top:2px; }
+  #room .area { font-size:15px; color:var(--accent); font-weight:600; margin-top:2px; }
+  #compass { position:fixed; left:16px; bottom:16px; width:64px; height:64px; }
+  #help { bottom:16px; left:50%; transform:translateX(-50%); padding:8px 14px; font-size:13px; color:var(--muted); white-space:nowrap; }
+  #start { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(20,26,30,0.35); cursor:pointer; }
+  #start .box { background:#fff; border-radius:18px; padding:26px 30px; max-width:440px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.25); }
+  #start h2 { margin:0 0 8px; font-size:22px; }
+  #start p { margin:6px 0; color:var(--muted); font-size:15px; line-height:1.5; }
+  #start .go { margin-top:14px; display:inline-block; background:var(--accent); color:#fff; padding:11px 22px; border-radius:12px; font-weight:600; }
+  .hidden { display:none !important; }
+  @media (max-width:720px) {
+    #panel { width:auto; left:16px; right:16px; top:auto; bottom:16px; padding:10px 12px; }
+    #panel .opt { display:none; }
+    #room { top:16px; left:16px; right:16px; }
+    #help, #compass { display:none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="סיור תלת-ממדי בדירה"></canvas>
+
+<div id="panel" class="card">
+  <h1>דירת גן · 250 מ״ר</h1>
+  <div class="sub">קומת כניסה 151 מ״ר + מרתף 99 מ״ר + גינה 122 מ״ר</div>
+  <div class="row">
+    <button id="bWalk" class="on">סיור בגוף ראשון</button>
+    <button id="bDoll">מבט מלמעלה</button>
+  </div>
+  <div class="row hidden" id="floors">
+    <button data-l="G" class="on">קומת כניסה</button>
+    <button data-l="B">מרתף</button>
+  </div>
+  <div class="opt">
+    <label class="f">שעה ביום <span class="v" id="hv">10:00</span>
+      <input type="range" id="hour" min="6" max="18" step="0.25" value="10">
+    </label>
+    <label class="f">תאריך
+      <select id="date">
+        <option value="today">היום (סוף נובמבר)</option>
+        <option value="dec">21 בדצמבר (חורף)</option>
+        <option value="mar">21 במרץ (אביב)</option>
+        <option value="jun">21 ביוני (קיץ)</option>
+      </select>
+    </label>
+    <label class="chk"><input type="checkbox" id="lights" checked> תאורה פנימית</label>
+  </div>
+  <label class="f">קפיצה לחדר
+    <select id="jump"><option value="">בחרו חדר…</option></select>
+  </label>
+</div>
+
+<div id="room" class="card hidden" aria-live="polite">
+  <div class="lvl"></div>
+  <div class="name"></div>
+  <div class="area"></div>
+</div>
+
+<svg id="compass" viewBox="-32 -32 64 64" aria-label="מצפן">
+  <circle r="30" fill="rgba(255,255,255,0.9)" stroke="rgba(0,0,0,0.15)"/>
+  <g id="needle">
+    <path d="M0,-24 L7,2 L0,-3 L-7,2 Z" fill="#c0392b"/>
+    <path d="M0,24 L7,-2 L0,3 L-7,-2 Z" fill="#9aa1a8"/>
+    <text y="-26" x="0" text-anchor="middle" font-size="8" font-weight="700" fill="#c0392b">N</text>
+  </g>
+</svg>
+
+<div id="help" class="card">W A S D או החצים להליכה · עכבר לסיבוב המבט · Shift להליכה מהירה · Esc לשחרור העכבר</div>
+
+<div id="start">
+  <div class="box">
+    <h2>ברוכים הבאים לדירת הגן</h2>
+    <p>מתחילים בלובי הבניין, מול דלת הכניסה.</p>
+    <p>הולכים עם W A S D או החצים ומסובבים את המבט עם העכבר. במגע: גוררים כדי להסתכל.</p>
+    <span class="go">לחצו כדי להתחיל</span>
+  </div>
+</div>
+
+<script>/*__BUNDLE__*/</script>
+<script>
+(function () {
+  var api = window.__startTour();
+  var $ = function (s) { return document.querySelector(s); };
+  var start = $('#start'), bWalk = $('#bWalk'), bDoll = $('#bDoll'), floors = $('#floors');
+  var room = $('#room'), help = $('#help');
+  var touch = matchMedia('(pointer: coarse)').matches;
+  function lock() { if (!touch) { try { api.plc.lock(); } catch (e) {} } }
+  start.addEventListener('click', function () { start.classList.add('hidden'); lock(); });
+  $('#c').addEventListener('click', function () { if (bWalk.classList.contains('on')) lock(); });
+  bWalk.addEventListener('click', function () { api.setMode('walk'); });
+  bDoll.addEventListener('click', function () { api.setMode('doll'); start.classList.add('hidden'); });
+  floors.querySelectorAll('button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      floors.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      api.setDollLevel(b.dataset.l);
+    });
+  });
+  document.addEventListener('tourmode', function (e) {
+    var walk = e.detail === 'walk';
+    bWalk.classList.toggle('on', walk); bDoll.classList.toggle('on', !walk);
+    floors.classList.toggle('hidden', walk);
+    room.classList.toggle('hidden', !walk || !room.dataset.has);
+    help.textContent = walk ? 'W A S D או החצים להליכה · עכבר לסיבוב המבט · Shift להליכה מהירה · Esc לשחרור העכבר'
+                            : 'גררו לסיבוב · גלגלת או צביטה להתקרבות · קליק ימני לגרירת המבט';
+  });
+  document.addEventListener('tourroom', function (e) {
+    var r = e.detail;
+    room.dataset.has = r ? '1' : '';
+    room.classList.toggle('hidden', !r);
+    if (r) {
+      room.querySelector('.lvl').textContent = r.level;
+      room.querySelector('.name').textContent = r.name;
+      room.querySelector('.area').textContent = r.area;
+    }
+  });
+  var needle = $('#needle');
+  document.addEventListener('tourheading', function (e) {
+    needle.setAttribute('transform', 'rotate(' + (e.detail * 180 / Math.PI).toFixed(1) + ')');
+  });
+  var hour = $('#hour'), hv = $('#hv'), date = $('#date');
+  function sun() {
+    var h = +hour.value, hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+    hv.textContent = hh + ':' + (mm < 10 ? '0' : '') + mm;
+    api.setSun(date.value, h);
+  }
+  hour.addEventListener('input', sun); date.addEventListener('change', sun); sun();
+  $('#lights').addEventListener('change', function (e) { api.setLights(e.target.checked); });
+  var jump = $('#jump');
+  var seen = {};
+  api.ROOMS.forEach(function (r) {
+    if (r.id === 'stairs' || r.id === 'passage' || seen[r.name + r.lvl]) return; seen[r.name + r.lvl] = 1;
+    var o = document.createElement('option');
+    o.value = r.id; o.textContent = (r.lvl === 'B' ? 'מרתף · ' : '') + r.name;
+    jump.appendChild(o);
+  });
+  jump.addEventListener('change', function () {
+    if (!jump.value) return;
+    api.teleport(jump.value); start.classList.add('hidden'); jump.value = ''; jump.blur();
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "name": "garden-apartment-tour",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "node src/build.mjs" },
+  "devDependencies": { "three": "0.170.0", "esbuild": "0.24.0" }
+}

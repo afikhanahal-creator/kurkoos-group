@@ -261,7 +261,10 @@ function renderPage({ path, title, description, ogType = 'website', jsonLd = [],
        התוכן הסטטי במלואו, בדיוק כמו קודם. גוגל, שכן מריץ, רואה את העמוד
        האמיתי של React, וגם זה כמו קודם. */
     const staticBlock =
-      `<style>.ssr{max-width:760px;margin:0 auto;padding:24px 20px;font-family:system-ui,sans-serif;line-height:1.75;color:#16202e}.ssr h1{font-size:1.7rem;line-height:1.3}.ssr h2{font-size:1.25rem;margin-top:1.6em}.ssr h3{font-size:1.05rem}.ssr a{color:#16688c}.ssr-hold{font-family:inherit;font-size:1.05rem;color:#07293a}.ssr-hold h1{color:#07293a;font-size:1.9rem}.ssr-hold nav{display:none}</style>` +
+      `<style>.ssr{display:none;max-width:760px;margin:0 auto;padding:24px 20px;font-family:system-ui,sans-serif;line-height:1.75;color:#16202e}.ssr h1{font-size:1.7rem;line-height:1.3}.ssr h2{font-size:1.25rem;margin-top:1.6em}.ssr h3{font-size:1.05rem}.ssr a{color:#16688c}.ssr-hold{font-family:inherit;font-size:1.05rem;color:#07293a}.ssr-hold h1{color:#07293a;font-size:1.9rem}.ssr-hold nav{display:none}.ssr.ssr-show{display:block}</style>` +
+      /* the static copy is for crawlers and for a browser without JavaScript. A browser that runs the site never paints it
+         (that was the flash: the plain copy for a tenth of a second, then the real page), except on a very slow load (main.jsx). */
+      `<noscript><style>.ssr{display:block!important}</style></noscript>` +
       `<div class="ssr" dir="rtl">${bodyHtml}${SITE_LINKS}</div>` +
       ''
     html = html.replace(/(<div id="root">)[\s\S]*?(<\/div>\s*<\/body>)/, `$1${staticBlock}$2`)

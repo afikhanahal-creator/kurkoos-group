@@ -266,11 +266,13 @@ def prism(bk, pts, h1, h2, mat, top=None):
 
 # ------------------------------------------------------------------ קירות ופתחים
 WALLBOX = []
+LAYOUT = {'walls': [], 'rails': []}
 def wall(lvl, x1, x2, z1, z2, ops=(), faces=None, h1=None, h2=None):
     fl = BY if lvl == 'B' else GY
     h1 = h1 if h1 is not None else (BY if lvl == 'B' else -SLAB)
     h2 = h2 if h2 is not None else (-SLAB if lvl == 'B' else GROSS)
     bk = lvl + '_walls'
+    LAYOUT['walls'].append({'lvl': lvl, 'r': [x1, x2, z1, z2], 'ops': [dict(o) for o in ops], 'faces': dict(faces or {}), 'h1': h1, 'h2': h2})
     fc = dict(faces or {})
     fc.setdefault('top', 'cut')
     axis = 'x' if (x2 - x1) >= (z2 - z1) else 'z'
@@ -357,6 +359,7 @@ def opening(lvl, o, axis, x1, x2, z1, z2, fl):
 
 
 def rail(bk, x1, x2, z1, z2, h, height=1.05):
+    LAYOUT['rails'].append({'bk': bk, 'r': [x1, x2, z1, z2], 'h': h})
     box(bk + '_glass', x1, x2, z1, z2, h, h + height - 0.04, 'glass')
     box(bk, x1 - 0.005, x2 + 0.005, z1 - 0.015, z2 + 0.015, h + height - 0.04, h + height, 'black')
     box(bk, x1 - 0.005, x2 + 0.005, z1 - 0.02, z2 + 0.02, h, h + 0.05, 'black')
@@ -392,7 +395,7 @@ wall(G, 2.31, 2.56, -0.25, 3.22, faces={'w': 'facade'})                         
 wall(G, -0.25, 2.56, 3.22, 3.47, faces={'n': 'facade', 's': 'p_bathwall'})            # צפון חדר הרחצה
 wall(G, 2.46, 2.56, 3.47, 5.65, faces={'w': 'p_bathwall'})                            # רחצה | שינה
 wall(G, 6.01, 6.26, -0.25, 6.40, ops=[win(0.60, 2.60, 0.45, 2.60)], faces={'e': 'facade'})  # מזרח חדר ההורים, מול החצר האנגלית
-wall(G, -0.25, 0.00, 3.22, 11.13, faces={'w': 'facade', 'e': 'p_bathwall'})           # מערב: רחצה, מעבר, מדרגות
+wall(G, -0.25, 0.00, 3.22, 9.45, faces={'w': 'facade', 'e': 'p_bathwall'})            # מערב: רחצה, מעבר, מדרגות (נעצר בכיס הלובי)
 wall(G, 0.00, 2.46, 5.65, 5.75, ops=[door(0.95, 1.75, 'b', -1, floor_mat='p_bath')], faces={'n': 'p_bathwall'})
 wall(G, 2.46, 6.01, 5.65, 5.75, ops=[door(3.70, 4.50, 'a', -1, floor_mat='p_bedroom')])
 wall(G, 4.62, 4.72, 5.75, 7.25, ops=[door(5.80, 6.60, 'a', 1)])                       # דלת יחידת ההורים
@@ -414,7 +417,7 @@ wall(G, 7.22, 10.71, 6.20, 6.40, faces={'s': 'p_bathwall'})
 # חדר רחצה כללי
 wall(G, 7.17, 7.27, 6.40, 8.74, ops=[door(7.75, 8.55, 'a', 1, floor_mat='p_bath')], faces={'e': 'p_bathwall'})
 wall(G, 10.46, 10.71, 6.40, 8.94, ops=[win(6.70, 7.30, 1.5, 2.2)], faces={'e': 'facade', 'w': 'p_bathwall'})
-wall(G, 5.87, 7.22, 8.74, 8.94, ops=[door(6.25, 7.05, 'b', 1, floor_mat='p_bedroom')])
+wall(G, 5.87, 7.22, 8.74, 8.94, ops=[door(6.25, 7.05, 'a', 1, floor_mat='p_bedroom')])   # הכנף נפתחת אל הקיר המערבי
 wall(G, 7.22, 10.46, 8.74, 8.94, faces={'n': 'p_bathwall'})
 # חדר שינה 2
 wall(G, 5.87, 6.12, 8.94, 11.74)
@@ -453,7 +456,7 @@ wall(B, -0.25, 2.56, 0.95, 1.20)                                    # צפון �
 wall(B, 2.46, 2.56, -0.62, 3.18)
 wall(B, 2.46, 6.26, -0.62, -0.37)                                   # צפון חדר המשחקים
 wall(B, 6.01, 6.26, -1.35, 3.35, h2=0.0, faces={'e': 'facade'})     # חדר משחקים | חצר אנגלית
-wall(B, 2.46, 6.26, 3.18, 3.28, ops=[door(4.55, 5.35, 'a', -1)])
+wall(B, 2.46, 6.26, 3.18, 3.28, ops=[door(4.55, 5.35, 'b', -1)])
 wall(B, 5.49, 6.25, 3.28, 11.91, ops=[door(7.60, 8.40, 'a', 1)])    # קיר עבה, דלת לסטודיו
 wall(B, 6.01, 10.90, -1.35, -1.10, h2=0.0, faces={'s': 'facade'})
 wall(B, 10.65, 10.90, -1.10, 3.15, h2=0.0, faces={'w': 'facade'})
@@ -915,6 +918,10 @@ for x in (4.6, 5.6):
 tree(OFN, 1.5, 21.0, GY, 4.6, 'leaf', 1.6)
 tree(OFN, 12.5, 20.6, GY, 4.2, 'olive', 1.3)
 tree(OFN, 12.9, 13.0, GY, 3.6, 'leaf', 1.2)
+
+LAYOUT['floors'] = {'G': GF, 'B': BF}
+with open(os.path.join(OUT, 'layout.json'), 'w') as _f:
+    json.dump(LAYOUT, _f)
 
 # ------------------------------------------------------------------ פאנלים (שיפולים) בתחתית הקירות: רק איפה שיש קיר בפועל
 def wall_at(lvl, x, z, h):

@@ -1,1193 +1,976 @@
-// סיור תלת-ממדי בדירת גן 250 מ"ר (קומת כניסה 151 + מרתף 99).
-// יחידות: מטרים. x = מזרח, z = דרום (צפון = -z), y = למעלה.
-// רצפת קומת הכניסה y=0, רצפת המרתף y=-4.10.
+// סיור תלת-ממדי בדירת גן 250 מ"ר: גרסה 2 (תוכנית מתוקנת, 3 סגנונות, שעות ביום, סיור מודרך).
+// יחידות: מטרים. x = מזרח, z = דרום (צפון = -z), y = למעלה. רצפת הכניסה y=0, רצפת המרתף y=-4.10.
+// הקירות, הפתחים והרצפות נקראים מ-layout.json, שנוצר מסקריפט ה-Blender (מקור אחד לתוכנית).
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import LAYOUT from './layout.json';
+import IMG_OAK from './assets/oak.jpg';
+import IMG_HERRING from './assets/herringbone.jpg';
+import IMG_PLASTER from './assets/plaster.jpg';
+import IMG_STONE from './assets/stone.jpg';
+import IMG_GRANITE from './assets/granite.jpg';
+import IMG_WALLTILES from './assets/walltiles.jpg';
+import IMG_LINEN from './assets/linen.jpg';
+import IMG_VELVET from './assets/velvet.jpg';
+import IMG_DECK from './assets/deck.jpg';
+import IMG_PAVERS from './assets/pavers.jpg';
+import IMG_WALNUT from './assets/walnut.jpg';
+import IMG_RUG from './assets/rug.jpg';
+import IMG_TERRAZZO from './assets/terrazzo.jpg';
+import PANO_NOON from './assets/pano_noon.jpg';
+import PANO_SUNSET from './assets/pano_day.jpg';
+import PANO_NIGHT from './assets/pano_night.jpg';
+import PH1 from './assets/photo_venice_sunset.jpg';
+import PH2 from './assets/photo_misty_pines.jpg';
+import PH3 from './assets/photo_kloofendal_48d_partly_cloudy.jpg';
+import PH4 from './assets/photo_lake_pier.jpg';
+import PH5 from './assets/photo_spaichingen_hill.jpg';
+import PH6 from './assets/photo_rosendal_plains_2.jpg';
+import PH7 from './assets/photo_golden_bay.jpg';
+import PH8 from './assets/photo_cape_hill.jpg';
 
-// ---------------------------------------------------------------- קבועים
-const GY = 0;            // רצפת קומת כניסה
-const BY = -4.10;        // רצפת מרתף
-const NET = 3.40;        // גובה מתחת להנמכות הגבס
-const GROSS = 3.80;      // גובה עד התקרה הקונסטרוקטיבית
-const SLAB = 0.30;       // עובי תקרה
-const SPAN = 2.4;        // טקסטורה אחת = 2x2 אריחים של 120 ס"מ
+const GY = 0, BY = -4.10, NET = 3.40, GROSS = 3.80, SLAB = 0.30, SPAN = 2.4;
 const RISER = (GY - BY) / 22;
+const R90 = Math.PI / 2;
+const MOBILE = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 700;
 
-// ---------------------------------------------------------------- רנדרר
+// ---------------------------------------------------------------- רנדרר (מהירות קודמת לאפקט)
 const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: !MOBILE || devicePixelRatio < 2, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, MOBILE ? 1.5 : 2));
+renderer.setSize(innerWidth, innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.95;
+renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
+renderer.shadowMap.autoUpdate = false;           // הצללים מחושבים מחדש רק כשהשמש זזה
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.05, 400);
-const MAXANI = renderer.capabilities.getMaxAnisotropy();
+const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 500);
+camera.rotation.order = 'YXZ';
+const MAXANI = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
-// ---------------------------------------------------------------- טקסטורות פרוצדורליות
-function rng(seed) {
-  let s = seed >>> 0;
-  return () => {
-    s = (s + 0x6D2B79F5) >>> 0;
-    let t = s;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-function canvasTex(size, draw, srgb = true) {
-  const c = document.createElement('canvas');
-  c.width = c.height = size;
-  const ctx = c.getContext('2d');
-  draw(ctx, size);
+// ---------------------------------------------------------------- תמונות וטקסטורות
+function loadImg(src) { return new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.src = src; }); }
+const IMG = {};
+function texFromCanvas(c, srgb = true) {
   const t = new THREE.CanvasTexture(c);
   if (srgb) t.colorSpace = THREE.SRGBColorSpace;
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.anisotropy = MAXANI;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = MAXANI;
   return t;
 }
-function addNoise(ctx, size, amt, r) {
-  const img = ctx.getImageData(0, 0, size, size);
-  const d = img.data;
-  for (let i = 0; i < d.length; i += 4) {
-    const n = (r() - 0.5) * amt;
-    d[i] += n; d[i + 1] += n; d[i + 2] += n;
+function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+// אריחי פורצלן 120x120 (2x2 בטקסטורה של 2.4 מ') מתמונת אבן/טיח אמיתית, בגוון הסגנון
+function porcelainTex(img, tint, grout, seed, contrast = 1) {
+  const n = 1024, T = n / 2, c = document.createElement('canvas'); c.width = c.height = n;
+  const x = c.getContext('2d'), r = rng(seed);
+  for (let ty = 0; ty < 2; ty++) for (let tx = 0; tx < 2; tx++) {
+    x.save(); x.beginPath(); x.rect(tx * T, ty * T, T, T); x.clip();
+    const sx = r() * (img.width * 0.5), sy = r() * (img.height * 0.5);
+    x.fillStyle = tint; x.fillRect(tx * T, ty * T, T, T);
+    x.globalCompositeOperation = 'overlay'; x.globalAlpha = Math.min(1, 0.45 * contrast);
+    x.drawImage(img, sx, sy, img.width * 0.5, img.height * 0.5, tx * T, ty * T, T, T);
+    x.globalAlpha = 1; x.globalCompositeOperation = 'source-over';
+    x.fillStyle = `rgba(${r() < 0.5 ? '255,255,255' : '0,0,0'},${0.03 + r() * 0.03})`; x.fillRect(tx * T, ty * T, T, T);
+    x.restore();
   }
-  ctx.putImageData(img, 0, 0);
+  x.fillStyle = grout;
+  [0, T - 1, n - 1].forEach((p) => { x.fillRect(0, p, n, 2); x.fillRect(p, 0, 2, n); });
+  return texFromCanvas(c);
 }
-function hexRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
-
-// פורצלן 120x120: ארבעה אריחים שונים בכל טקסטורה, עם עורקים, עננות ופוגה דקה.
-function porcelain({ base, vein = null, veins = 0, veinW = 2, veinA = 0.35, cloud = 0.08, grain = 8, grout = '#cfc9bf', seed = 1, speck = 0 }) {
-  return canvasTex(1024, (ctx, n) => {
-    const r = rng(seed);
-    const T = n / 2;
-    for (let ty = 0; ty < 2; ty++) for (let tx = 0; tx < 2; tx++) {
-      ctx.save();
-      ctx.beginPath(); ctx.rect(tx * T, ty * T, T, T); ctx.clip();
-      ctx.fillStyle = base; ctx.fillRect(tx * T, ty * T, T, T);
-      for (let k = 0; k < 26; k++) {
-        const x = tx * T + r() * T, y = ty * T + r() * T, rad = 30 + r() * 160;
-        const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
-        const light = r() < 0.5;
-        g.addColorStop(0, light ? `rgba(255,255,255,${cloud * r()})` : `rgba(60,50,40,${cloud * r()})`);
-        g.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = g; ctx.fillRect(x - rad, y - rad, rad * 2, rad * 2);
-      }
-      if (vein && veins) {
-        const [vr, vg, vb] = hexRgb(vein);
-        ctx.filter = 'blur(1.1px)';
-        for (let v = 0; v < veins; v++) {
-          let x = tx * T + r() * T, y = ty * T + r() * T;
-          let a = -0.6 + r() * 1.2 + (r() < 0.5 ? 0 : Math.PI);
-          const steps = 60 + r() * 90;
-          const w0 = 0.6 + r() * veinW;
-          ctx.strokeStyle = `rgba(${vr},${vg},${vb},${veinA * (0.45 + r() * 0.55)})`;
-          ctx.lineWidth = w0; ctx.lineCap = 'round';
-          ctx.beginPath(); ctx.moveTo(x, y);
-          for (let s = 0; s < steps; s++) {
-            a += (r() - 0.5) * 0.5;
-            x += Math.cos(a) * (5 + r() * 6); y += Math.sin(a) * (5 + r() * 6);
-            ctx.lineTo(x, y);
-            if (r() < 0.025) { ctx.stroke(); ctx.lineWidth = Math.max(0.4, w0 * (0.3 + r())); ctx.beginPath(); ctx.moveTo(x, y); }
-          }
-          ctx.stroke();
-        }
-        ctx.filter = 'none';
-      }
-      if (speck) {
-        for (let k = 0; k < speck; k++) {
-          ctx.fillStyle = `rgba(${r() < 0.5 ? '255,255,255' : '40,40,40'},${0.15 + r() * 0.25})`;
-          ctx.fillRect(tx * T + r() * T, ty * T + r() * T, 1 + r() * 2, 1 + r() * 2);
-        }
-      }
-      ctx.restore();
-    }
-    addNoise(ctx, n, grain, r);
-    ctx.fillStyle = grout;
-    ctx.fillRect(0, 0, n, 2); ctx.fillRect(0, T - 1, n, 2); ctx.fillRect(0, n - 1, n, 1);
-    ctx.fillRect(0, 0, 2, n); ctx.fillRect(T - 1, 0, 2, n); ctx.fillRect(n - 1, 0, 1, n);
-  });
-}
-const TX = {
-  living: porcelain({ base: '#ebe7e0', vein: '#8c8378', veins: 7, veinW: 2.2, veinA: 0.42, cloud: 0.07, grout: '#d9d3c9', seed: 11 }),
-  bedroom: porcelain({ base: '#d6c8b2', vein: '#a8957a', veins: 3, veinW: 1.2, veinA: 0.25, cloud: 0.10, grain: 10, grout: '#c2b49e', seed: 21, speck: 900 }),
-  bath: porcelain({ base: '#6a6660', vein: '#d8d2c8', veins: 6, veinW: 1.6, veinA: 0.45, cloud: 0.09, grain: 8, grout: '#5a5752', seed: 31 }),
-  bathWall: porcelain({ base: '#e4e0da', vein: '#9a9187', veins: 5, veinW: 1.6, veinA: 0.35, cloud: 0.06, grout: '#d2ccc3', seed: 41 }),
-  basement: porcelain({ base: '#b8b4ad', cloud: 0.16, grain: 14, grout: '#a6a199', seed: 51, speck: 2500 }),
-  outdoor: porcelain({ base: '#a9a49a', cloud: 0.12, grain: 18, grout: '#8f8a80', seed: 61, speck: 4000 }),
-};
-TX.grass = canvasTex(512, (ctx, n) => {
-  const r = rng(7);
-  ctx.fillStyle = '#58783a'; ctx.fillRect(0, 0, n, n);
-  for (let i = 0; i < 14000; i++) {
-    const g = 90 + r() * 70;
-    ctx.strokeStyle = `rgba(${40 + r() * 40},${g},${30 + r() * 25},0.8)`;
-    ctx.lineWidth = 1;
-    const x = r() * n, y = r() * n;
-    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + (r() - 0.5) * 3, y - 2 - r() * 4); ctx.stroke();
-  }
-});
-TX.deck = canvasTex(1024, (ctx, n) => {
-  const r = rng(9);
-  const pw = n / SPAN * 0.145;
+// פרקט קרשים (רוחב 19 ס"מ) מתמונת עץ אמיתית
+function plankTex(img, tint, seed, plankW = 0.19, plankL = 1.8) {
+  const n = 1024, ppm = n / SPAN, c = document.createElement('canvas'); c.width = c.height = n;
+  const x = c.getContext('2d'), r = rng(seed), pw = plankW * ppm;
   for (let row = 0; row * pw < n; row++) {
-    const y = row * pw;
-    let x = -r() * n * 0.5;
-    while (x < n) {
-      const len = n * (0.35 + r() * 0.5);
-      const c = 110 + r() * 30;
-      ctx.fillStyle = `rgb(${c + 20},${c * 0.68},${c * 0.45})`;
-      ctx.fillRect(x, y, len, pw);
-      for (let k = 0; k < 7; k++) {
-        ctx.strokeStyle = `rgba(60,35,20,${0.08 + r() * 0.12})`;
-        ctx.beginPath(); const yy = y + r() * pw; ctx.moveTo(x, yy); ctx.lineTo(x + len, yy + (r() - 0.5) * 4); ctx.stroke();
-      }
-      ctx.fillStyle = 'rgba(30,18,10,0.9)'; ctx.fillRect(x + len - 2, y, 2, pw);
-      x += len;
+    let px = -r() * plankL * ppm;
+    while (px < n) {
+      const L = plankL * ppm * (0.6 + r() * 0.4);
+      const sx = r() * (img.width * 0.6), sy = r() * (img.height * 0.94);
+      x.drawImage(img, sx, sy, img.width * 0.4, img.height * 0.06, px, row * pw, L, pw);
+      x.fillStyle = `rgba(${r() < 0.5 ? '255,240,220' : '40,20,5'},${0.04 + r() * 0.07})`; x.fillRect(px, row * pw, L, pw);
+      x.fillStyle = 'rgba(20,12,6,0.55)'; x.fillRect(px + L - 1.5, row * pw, 1.5, pw);
+      px += L;
     }
-    ctx.fillStyle = 'rgba(25,15,8,0.95)'; ctx.fillRect(0, y + pw - 3, n, 3);
+    x.fillStyle = 'rgba(20,12,6,0.6)'; x.fillRect(0, row * pw + pw - 1.5, n, 1.5);
   }
-});
-TX.oak = canvasTex(512, (ctx, n) => {
-  const r = rng(13);
-  ctx.fillStyle = '#b89268'; ctx.fillRect(0, 0, n, n);
-  for (let i = 0; i < 260; i++) {
-    ctx.strokeStyle = `rgba(${90 + r() * 40},${60 + r() * 30},${30 + r() * 20},${0.10 + r() * 0.15})`;
-    ctx.lineWidth = 0.5 + r() * 2;
-    const y = r() * n; ctx.beginPath(); ctx.moveTo(0, y);
-    for (let x = 0; x <= n; x += 32) ctx.lineTo(x, y + Math.sin(x * 0.01 + i) * 3 + (r() - 0.5) * 2);
-    ctx.stroke();
-  }
-});
-TX.stone = canvasTex(1024, (ctx, n) => {
-  const r = rng(17);
-  const bw = n / SPAN * 1.2, bh = n / SPAN * 0.6;
-  for (let y = 0; y < n; y += bh) for (let x = (Math.round(y / bh) % 2) * bw / 2 - bw; x < n; x += bw) {
-    const c = 205 + r() * 18;
-    ctx.fillStyle = `rgb(${c},${c - 8},${c - 22})`; ctx.fillRect(x, y, bw, bh);
-  }
-  addNoise(ctx, n, 18, r);
-  ctx.fillStyle = 'rgba(120,110,95,0.6)';
-  for (let y = 0; y < n; y += bh) {
-    ctx.fillRect(0, y, n, 2);
-    for (let x = (Math.round(y / bh) % 2) * bw / 2 - bw; x < n; x += bw) ctx.fillRect(x, y, 2, bh);
-  }
-});
-TX.gravel = canvasTex(512, (ctx, n) => {
-  const r = rng(19);
-  ctx.fillStyle = '#8f8a82'; ctx.fillRect(0, 0, n, n);
-  for (let i = 0; i < 9000; i++) {
-    const c = 110 + r() * 110;
-    ctx.fillStyle = `rgb(${c},${c - 4},${c - 10})`;
-    ctx.beginPath(); ctx.arc(r() * n, r() * n, 1 + r() * 2.5, 0, Math.PI * 2); ctx.fill();
-  }
-});
-TX.grate = canvasTex(256, (ctx, n) => {
-  ctx.clearRect(0, 0, n, n);
-  ctx.fillStyle = '#3a3c3e';
-  const step = n / 24;
-  for (let i = 0; i < 24; i++) ctx.fillRect(i * step, 0, step * 0.28, n);
-  for (let j = 0; j < 6; j++) ctx.fillRect(0, j * n / 6, n, step * 0.4);
-});
+  x.globalCompositeOperation = 'color'; x.globalAlpha = 0.65; x.fillStyle = tint; x.fillRect(0, 0, n, n);
+  x.globalCompositeOperation = 'soft-light'; x.globalAlpha = 0.5; x.fillRect(0, 0, n, n);
+  return texFromCanvas(c);
+}
+function tintTex(img, tint, strength = 0.55) {
+  // צבע הסגנון + המרקם של התמונה האמיתית (overlay): בלי להחשיך
+  const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+  const x = c.getContext('2d'); x.fillStyle = tint; x.fillRect(0, 0, c.width, c.height);
+  x.globalCompositeOperation = 'overlay'; x.globalAlpha = strength; x.drawImage(img, 0, 0);
+  return texFromCanvas(c);
+}
+function imgTex(img) { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; c.getContext('2d').drawImage(img, 0, 0); return texFromCanvas(c); }
 
-// ---------------------------------------------------------------- חומרים
+// ---------------------------------------------------------------- סגנונות
+const STYLES = {
+  modern: {
+    name: 'מודרני בהיר', wall: '#efebe4', ceiling: '#f6f4f0', trim: '#f2f0eb', livingFloor: ['plaster', '#e8e3db', '#c9c2b6', 1], bedFloor: ['oak', '#e9cfac'],
+    basementFloor: '#f0dcc0', wood: '#d8b791', woodDark: '#6b4c35', cabinet: '#ece9e3', counter: '#f1efea', sofa: '#cfc8bc',
+    sofaDark: '#6e6a64', bedding: '#f4f1eb', throw: '#9a8a73', accent: '#8f9b82', accent2: '#c98e6a', rug: '#d9d0c1', metal: '#1c1c1e',
+    metalRough: 0.35, metalMetal: 0.7, headboard: '#cbbfae', lampShade: '#f3ede2',
+  },
+  med: {
+    name: 'ים-תיכוני חם', wall: '#ece0cd', ceiling: '#f4ece0', trim: '#e9dcc8', livingFloor: ['stone', '#e7d6bb', '#b9a688', 1.1], bedFloor: ['herring', '#e0b47e'],
+    basementFloor: '#dcae7a', wood: '#b8875a', woodDark: '#5a3b24', cabinet: '#7f8f78', counter: '#efe7da', sofa: '#e2d6c3',
+    sofaDark: '#8a6a4f', bedding: '#f3ece0', throw: '#b5643f', accent: '#5f7b6e', accent2: '#c2603d', rug: '#c9a77f', metal: '#a8864f',
+    metalRough: 0.3, metalMetal: 0.9, headboard: '#c4ab8c', lampShade: '#efe2cc',
+  },
+  lux: {
+    name: 'יוקרה כהה', wall: '#5c5650', ceiling: '#e9e5df', trim: '#4a4540', livingFloor: ['granite', '#5b5753', '#2e2c2a', 1.2], bedFloor: ['walnut', '#9c7a5c'],
+    basementFloor: '#8a6446', wood: '#5d4230', woodDark: '#2e221a', cabinet: '#2d2b29', counter: '#ece9e4', sofa: '#3b4a45',
+    sofaDark: '#2a2a2c', bedding: '#ebe6dd', throw: '#7a5c3a', accent: '#1f3b36', accent2: '#b08a4a', rug: '#6f665c', metal: '#b8955a',
+    metalRough: 0.25, metalMetal: 1.0, headboard: '#3e4846', lampShade: '#e8dcc6',
+  },
+};
+let styleKey = 'modern';
+
+// ---------------------------------------------------------------- חומרים (משותפים, מתעדכנים לפי סגנון ושעה)
 const std = (o) => new THREE.MeshStandardMaterial(o);
 const M = {
-  paint: std({ color: 0xf1eee8, roughness: 0.92 }),
-  cut: std({ color: 0x3b3b3d, roughness: 0.9 }),
-  facade: std({ map: TX.stone, roughness: 0.85 }),
-  concrete: std({ color: 0xb9b4aa, roughness: 0.9 }),
-  paving: std({ map: TX.outdoor, roughness: 0.8 }),
-  gypsum: std({ color: 0xf7f6f3, roughness: 0.95 }),
-  living: std({ map: TX.living, roughness: 0.16, envMapIntensity: 1.2 }),
-  bedroom: std({ map: TX.bedroom, roughness: 0.5 }),
-  bath: std({ map: TX.bath, roughness: 0.28, envMapIntensity: 1.1 }),
-  bathWall: std({ map: TX.bathWall, roughness: 0.22, envMapIntensity: 1.1 }),
-  basement: std({ map: TX.basement, roughness: 0.45 }),
-  outdoor: std({ map: TX.outdoor, roughness: 0.8 }),
-  grass: std({ map: TX.grass, roughness: 1 }),
-  deck: std({ map: TX.deck, roughness: 0.75 }),
-  gravel: std({ map: TX.gravel, roughness: 1 }),
-  glass: std({ color: 0xcfe2e3, roughness: 0.03, metalness: 0.1, transparent: true, opacity: 0.16, depthWrite: false, envMapIntensity: 1.6, side: THREE.DoubleSide }),
-  frame: std({ color: 0x2b2d30, roughness: 0.38, metalness: 0.65 }),
-  trim: std({ color: 0xf4f3ef, roughness: 0.45 }),
-  doorLeaf: std({ color: 0xefece6, roughness: 0.42 }),
-  entryDoor: std({ color: 0x3a2f28, roughness: 0.55 }),
-  steel: std({ color: 0x8d9296, roughness: 0.45, metalness: 0.7 }),
-  oak: std({ map: TX.oak, roughness: 0.6 }),
-  walnut: std({ color: 0x5b412f, roughness: 0.55 }),
-  lacquer: std({ color: 0xf2f1ed, roughness: 0.35 }),
-  quartz: std({ color: 0xedebe6, roughness: 0.18, envMapIntensity: 1.2 }),
-  darkStone: std({ color: 0x2f2f30, roughness: 0.25 }),
-  blackSteel: std({ color: 0x1c1c1e, roughness: 0.35, metalness: 0.7 }),
-  chrome: std({ color: 0xdedede, roughness: 0.12, metalness: 1 }),
-  ceramic: std({ color: 0xf8f8f6, roughness: 0.12 }),
-  mirror: std({ color: 0xd5dade, roughness: 0.02, metalness: 1, envMapIntensity: 2 }),
-  linen: std({ color: 0xf3f0ea, roughness: 1 }),
-  duvet: std({ color: 0xe4ddd1, roughness: 1 }),
-  pillow: std({ color: 0xf7f5f0, roughness: 1 }),
-  fabricHead: std({ color: 0xb9ab97, roughness: 1 }),
-  fabric: std({ color: 0xd4cec4, roughness: 1 }),
-  fabricDark: std({ color: 0x5f6166, roughness: 1 }),
-  sage: std({ color: 0x95a08a, roughness: 1 }),
-  terracotta: std({ color: 0xb5715a, roughness: 1 }),
-  rug: std({ color: 0xcfc5b5, roughness: 1 }),
-  rugDark: std({ color: 0x8a8478, roughness: 1 }),
-  leaf: std({ color: 0x55743f, roughness: 0.9, flatShading: true }),
-  leafDark: std({ color: 0x3f5a32, roughness: 0.9, flatShading: true }),
-  olive: std({ color: 0x8a9a6e, roughness: 0.9, flatShading: true }),
-  trunk: std({ color: 0x6b5038, roughness: 1 }),
-  pot: std({ color: 0xcfc7ba, roughness: 0.8 }),
-  screen: std({ color: 0x0c0c0e, roughness: 0.15, metalness: 0.3 }),
-  teak: std({ color: 0x9a6a43, roughness: 0.7 }),
-  cushion: std({ color: 0xe8e2d6, roughness: 1 }),
-  light: std({ color: 0xfff6e6, emissive: 0xfff1d8, emissiveIntensity: 2.2 }),
-  slot: std({ color: 0x2a2a2a, roughness: 0.8 }),
-  kids1: std({ color: 0xe7b85c, roughness: 0.8 }),
-  kids2: std({ color: 0x7fb0c9, roughness: 0.8 }),
-  kids3: std({ color: 0xd98a7c, roughness: 0.8 }),
-  grateMat: std({ map: TX.grate, transparent: false, alphaTest: 0.5, roughness: 0.5, metalness: 0.6, side: THREE.DoubleSide }),
-  soil: std({ color: 0x6d5a45, roughness: 1 }),
-  earth: std({ color: 0x7a7468, roughness: 1 }),
+  wall: std({ roughness: 0.9 }), ceiling: std({ roughness: 0.95 }), trim: std({ roughness: 0.45 }), cut: std({ color: 0x2b2b2d, roughness: 0.9 }),
+  floorLiving: std({ roughness: 0.2, envMapIntensity: 1.0 }), floorBed: std({ roughness: 0.45 }), floorBasement: std({ roughness: 0.45 }),
+  bathFloor: std({ roughness: 0.3 }), bathWall: std({ roughness: 0.25 }), facade: std({ roughness: 0.85 }), concrete: std({ color: 0xa9a49b, roughness: 0.9 }),
+  pavers: std({ roughness: 0.85 }), deck: std({ roughness: 0.7 }), grass: std({ color: 0x5f8a3e, roughness: 1 }), gravel: std({ color: 0x8c877e, roughness: 1 }),
+  wood: std({ roughness: 0.55 }), woodDark: std({ roughness: 0.5 }), cabinet: std({ roughness: 0.35 }), counter: std({ roughness: 0.15 }),
+  sofa: std({ roughness: 1 }), sofaDark: std({ roughness: 1 }), bedding: std({ roughness: 1 }), throw: std({ roughness: 1 }), accent: std({ roughness: 1 }),
+  accent2: std({ roughness: 1 }), rug: std({ roughness: 1 }), headboard: std({ roughness: 1 }), metal: std({}), chrome: std({ color: 0xdedede, roughness: 0.1, metalness: 1 }),
+  ceramic: std({ color: 0xf6f5f2, roughness: 0.12 }), mirror: std({ color: 0xdfe4e8, roughness: 0.02, metalness: 1, envMapIntensity: 1.6 }),
+  glass: std({ color: 0xe3eeef, roughness: 0.02, metalness: 0.15, transparent: true, opacity: 0.12, depthWrite: false, envMapIntensity: 1.8, side: THREE.DoubleSide }),
+  drinkGlass: std({ color: 0xffffff, roughness: 0.03, metalness: 0.2, transparent: true, opacity: 0.25, depthWrite: false, envMapIntensity: 2 }),
+  frame: std({ color: 0x2a2c2f, roughness: 0.35, metalness: 0.6 }), screen: std({ color: 0x070708, roughness: 0.12, metalness: 0.3 }),
+  leaf: std({ color: 0x4d7a3a, roughness: 0.85 }), leafDark: std({ color: 0x35582c, roughness: 0.85 }), olive: std({ color: 0x7e8d62, roughness: 0.85 }),
+  trunk: std({ color: 0x6b5038, roughness: 1 }), pot: std({ color: 0xd8cfc2, roughness: 0.75 }), potDark: std({ color: 0x47403a, roughness: 0.7 }),
+  soil: std({ color: 0x5a4636, roughness: 1 }), plate: std({ color: 0xfbfaf7, roughness: 0.08 }), fruitR: std({ color: 0xb8352a, roughness: 0.4 }),
+  fruitY: std({ color: 0xe9c43c, roughness: 0.45 }), fruitG: std({ color: 0x8fb04a, roughness: 0.45 }), paper: std({ color: 0xece6da, roughness: 0.9 }),
+  bookA: std({ color: 0x9b4a32, roughness: 0.8 }), bookB: std({ color: 0x3d5a6b, roughness: 0.8 }), bookC: std({ color: 0xd8cbb2, roughness: 0.8 }),
+  lampShade: std({ roughness: 0.9, emissive: 0xffd7a0, emissiveIntensity: 0 }), bulb: std({ color: 0xfff3dd, emissive: 0xffe2b0, emissiveIntensity: 0 }),
+  downlight: std({ color: 0xffffff, emissive: 0xfff0d8, emissiveIntensity: 0.4 }), led: std({ color: 0xffffff, emissive: 0xffe6c4, emissiveIntensity: 0 }),
+  teak: std({ roughness: 0.65 }), cushion: std({ roughness: 1 }), kids1: std({ color: 0xe0b45c, roughness: 0.8 }), kids2: std({ color: 0x7fa9bf, roughness: 0.8 }),
+  kids3: std({ color: 0xd08a78, roughness: 0.8 }), hedge: std({ color: 0x3c5c2e, roughness: 1 }), towel: std({ roughness: 1 }),
 };
+const PHOTO_M = [];
+
+function applyStyle(key) {
+  styleKey = key;
+  const S = STYLES[key];
+  const set = (m, col, map) => { m.color.set(col); if (map !== undefined) { m.map = map; m.needsUpdate = true; } };
+  const cache = applyStyle.cache || (applyStyle.cache = {});
+  const C = cache[key] || (cache[key] = {
+    wall: tintTex(IMG.plaster, S.wall, 0.22),
+    living: S.livingFloor[0] === 'granite' ? porcelainTex(IMG.granite, S.livingFloor[1], S.livingFloor[2], 7, S.livingFloor[3])
+      : porcelainTex(S.livingFloor[0] === 'stone' ? IMG.stone : IMG.plaster, S.livingFloor[1], S.livingFloor[2], 5, S.livingFloor[3]),
+    bed: S.bedFloor[0] === 'herring' ? tintTex(IMG.herring, S.bedFloor[1], 0.9) : plankTex(S.bedFloor[0] === 'walnut' ? IMG.walnut : IMG.oak, S.bedFloor[1], 9),
+    basement: tintTex(IMG.herring, S.basementFloor, 0.9),
+    wood: tintTex(IMG.oak, S.wood, 0.7), woodDark: tintTex(IMG.walnut, S.woodDark, 0.7),
+  });
+  if (C.basement) C.basement.repeat.set(SPAN / 3.4, SPAN / 3.4);
+  if (S.bedFloor[0] === 'herring' && C.bed) C.bed.repeat.set(SPAN / 3.4, SPAN / 3.4);
+  const tinted = (k, img, col) => (C[k + col] = C[k + col] || tintTex(img, col));
+  // הקיר: טיח עדין בצבע הסגנון
+  set(M.wall, '#ffffff', C.wall); set(M.ceiling, S.ceiling); set(M.trim, S.trim);
+  set(M.floorLiving, '#ffffff', C.living); set(M.floorBed, '#ffffff', C.bed); set(M.floorBasement, '#ffffff', C.basement);
+  set(M.wood, '#ffffff', C.wood); set(M.woodDark, '#ffffff', C.woodDark); set(M.teak, '#ffffff', C.woodDark);
+  set(M.cabinet, S.cabinet); set(M.counter, S.counter);
+  set(M.sofa, '#ffffff', tinted('l', IMG.linen, S.sofa)); set(M.sofaDark, '#ffffff', tinted('l', IMG.linen, S.sofaDark));
+  set(M.bedding, '#ffffff', tinted('l', IMG.linen, S.bedding)); set(M.cushion, '#ffffff', tinted('l', IMG.linen, S.bedding)); set(M.towel, '#ffffff', tinted('l', IMG.linen, S.bedding));
+  set(M.throw, '#ffffff', tinted('v', IMG.velvet, S.throw)); set(M.accent, '#ffffff', tinted('v', IMG.velvet, S.accent));
+  set(M.accent2, '#ffffff', tinted('v', IMG.velvet, S.accent2)); set(M.headboard, '#ffffff', tinted('v', IMG.velvet, S.headboard));
+  set(M.rug, '#ffffff', tinted('r', IMG.rug, S.rug));
+  M.metal.color.set(S.metal); M.metal.roughness = S.metalRough; M.metal.metalness = S.metalMetal;
+  M.lampShade.color.set(S.lampShade);
+  renderer.shadowMap.needsUpdate = true;
+  document.dispatchEvent(new CustomEvent('tourstyle', { detail: key }));
+}
 
 // ---------------------------------------------------------------- קבוצות
 const G = {
-  ground: new THREE.Group(), base: new THREE.Group(), out: new THREE.Group(),
-  ceilG: new THREE.Group(), ceilB: new THREE.Group(), roof: new THREE.Group(),
-  slab: new THREE.Group(), labels: new THREE.Group(), lights: new THREE.Group(),
+  ground: new THREE.Group(), base: new THREE.Group(), out: new THREE.Group(), ceilG: new THREE.Group(), ceilB: new THREE.Group(),
+  roof: new THREE.Group(), slab: new THREE.Group(), labels: new THREE.Group(), lights: new THREE.Group(),
 };
 Object.values(G).forEach((g) => scene.add(g));
 const colliders = [];
 const wallMeshes = [];
+const wallBoxes = [];
 
-// UV בקואורדינטות עולם, כדי שהאריחים יהיו 120x120 בכל משטח.
 function worldUV(geo) {
   const p = geo.attributes.position, nm = geo.attributes.normal, uv = geo.attributes.uv;
   for (let i = 0; i < p.count; i++) {
-    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
-    const ax = Math.abs(nm.getX(i)), ay = Math.abs(nm.getY(i));
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i), ax = Math.abs(nm.getX(i)), ay = Math.abs(nm.getY(i));
     let u, v;
     if (ay > 0.5) { u = x; v = -z; } else if (ax > 0.5) { u = z * -Math.sign(nm.getX(i)); v = y; } else { u = x * Math.sign(nm.getZ(i)); v = y; }
     uv.setXY(i, u / SPAN, v / SPAN);
   }
-  uv.needsUpdate = true;
 }
 function bx(x1, x2, y1, y2, z1, z2, mat, parent, o = {}) {
+  if (x2 - x1 < 1e-4 || y2 - y1 < 1e-4 || z2 - z1 < 1e-4) return null;
   const geo = new THREE.BoxGeometry(x2 - x1, y2 - y1, z2 - z1);
   geo.translate((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2);
   worldUV(geo);
   const m = new THREE.Mesh(geo, mat);
-  m.castShadow = o.cast !== false;
-  m.receiveShadow = o.recv !== false;
-  m.matrixAutoUpdate = false;
+  m.castShadow = o.cast !== false && !mat.transparent; m.receiveShadow = true; m.matrixAutoUpdate = false;
   parent.add(m);
-  if (o.wall) { m.userData.wall = true; wallMeshes.push(m); }
-  if (o.glass) m.userData.glass = true;
+  if (o.wall) { m.userData.wall = true; wallMeshes.push(m); wallBoxes.push({ x1, x2, y1, y2, z1, z2 }); }
+  if (o.keep) m.userData.keep = true;
   if (o.collide) colliders.push({ x1, x2, y1, y2, z1, z2 });
   return m;
 }
-const FACES = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
-function faceMats(f = {}) {
-  return FACES.map((k) => f[k] || (k === 'py' ? M.cut : M.paint));
-}
 const floorQ = (x1, x2, z1, z2, y, mat, parent) => bx(x1, x2, y - 0.02, y, z1, z2, mat, parent, { cast: false });
-const ceilQ = (x1, x2, z1, z2, y, parent) => bx(x1, x2, y, y + 0.02, z1, z2, M.gypsum, parent, { cast: false });
+const ceilQ = (x1, x2, z1, z2, y, parent) => bx(x1, x2, y, y + 0.02, z1, z2, M.ceiling, parent, { cast: false });
 
-// ---------------------------------------------------------------- קירות ופתחים
-// wall(): קיר בציר אחד עם פתחים. פתח = {a,b,sill,head,kind,...}, a/b לאורך הקיר, sill/head מעל הרצפה.
-function wall(x1, x2, z1, z2, lvl, o = {}) {
-  const fl = lvl === 'B' ? BY : GY;
-  const y1 = o.y1 ?? (lvl === 'B' ? BY : -SLAB);
-  const y2 = o.y2 ?? (lvl === 'B' ? -SLAB : GROSS);
-  const parent = o.parent || (lvl === 'B' ? G.base : G.ground);
+// ---------------------------------------------------------------- קירות ופתחים מתוך layout.json
+const FACEMAT = { facade: () => M.facade, p_bathwall: () => M.bathWall, concrete: () => M.concrete };
+function cladding(x1, x2, z1, z2, h1, h2, faces, parent) {
+  // חיפוי דק על פאה אחת (אבן, אריחים): שכבה של 3 מ"מ, כדי שכל גוף יהיה בחומר אחד
+  for (const [side, key] of Object.entries(faces || {})) {
+    const mat = FACEMAT[key] && FACEMAT[key](); if (!mat) continue;
+    const t = 0.003;
+    if (side === 'n') bx(x1, x2, h1, h2, z1 - t, z1, mat, parent, { cast: false });
+    if (side === 's') bx(x1, x2, h1, h2, z2, z2 + t, mat, parent, { cast: false });
+    if (side === 'w') bx(x1 - t, x1, h1, h2, z1, z2, mat, parent, { cast: false });
+    if (side === 'e') bx(x2, x2 + t, h1, h2, z1, z2, mat, parent, { cast: false });
+  }
+}
+function buildWall(w) {
+  const lvl = w.lvl, fl = lvl === 'B' ? BY : GY, parent = lvl === 'B' ? G.base : G.ground;
+  const [x1, x2, z1, z2] = w.r, y1 = w.h1, y2 = w.h2;
   const axis = (x2 - x1) >= (z2 - z1) ? 'x' : 'z';
-  const mats = faceMats(o.faces);
-  const ops = (o.ops || []).slice().sort((p, q) => p.a - q.a);
   const L1 = axis === 'x' ? x1 : z1, L2 = axis === 'x' ? x2 : z2;
   const seg = (a, b, ya, yb) => {
     if (b - a < 1e-4 || yb - ya < 1e-4) return;
-    if (axis === 'x') bx(a, b, ya, yb, z1, z2, mats, parent, { wall: true, collide: true });
-    else bx(x1, x2, ya, yb, a, b, mats, parent, { wall: true, collide: true });
+    const [sx1, sx2, sz1, sz2] = axis === 'x' ? [a, b, z1, z2] : [x1, x2, a, b];
+    bx(sx1, sx2, ya, yb, sz1, sz2, M.wall, parent, { wall: true, collide: true });
+    bx(sx1, sx2, yb, yb + 0.004, sz1, sz2, M.cut, parent, { cast: false });
+    cladding(sx1, sx2, sz1, sz2, ya, yb, w.faces, parent);
   };
   let cur = L1;
-  for (const op of ops) {
-    seg(cur, op.a, y1, y2);
-    seg(op.a, op.b, y1, fl + op.sill);
-    seg(op.a, op.b, fl + op.head, y2);
-    opening(op, axis, x1, x2, z1, z2, fl, parent);
+  for (const op of [...w.ops].sort((p, q) => p.a - q.a)) {
+    seg(cur, op.a, y1, y2); seg(op.a, op.b, y1, fl + (op.sill || 0)); seg(op.a, op.b, fl + op.head, y2);
+    opening(op, axis, x1, x2, z1, z2, fl, parent, lvl);
     cur = op.b;
   }
   seg(cur, L2, y1, y2);
 }
-
-function opening(o, axis, x1, x2, z1, z2, fl, parent) {
+function opening(o, axis, x1, x2, z1, z2, fl, parent, lvl) {
   const t0 = axis === 'x' ? z1 : x1, t1 = axis === 'x' ? z2 : x2, tm = (t0 + t1) / 2;
-  const A = o.a, Bb = o.b, ys = fl + o.sill, yh = fl + o.head;
-  const put = (a, b, ya, yb, c, d, mat, opt = {}) =>
-    axis === 'x' ? bx(a, b, ya, yb, c, d, mat, parent, opt) : bx(c, d, ya, yb, a, b, mat, parent, opt);
-  const isDoor = ['door', 'entry', 'mamad', 'arch'].includes(o.kind);
-  if (isDoor || o.kind === 'vit') {
-    // משטח רצפה בתוך עובי הקיר
-    put(A, Bb, fl - 0.02, fl, t0, t1, o.floorMat || (fl === BY ? M.basement : M.living), { cast: false });
+  const A = o.a, Bb = o.b, ys = fl + (o.sill || 0), yh = fl + o.head;
+  const put = (a, b, ya, yb, c, d, mat, opt = {}) => axis === 'x' ? bx(a, b, ya, yb, c, d, mat, parent, opt) : bx(c, d, ya, yb, a, b, mat, parent, opt);
+  const k = o.kind;
+  if (['door', 'entry', 'mamad', 'arch', 'vit'].includes(k)) {
+    const fm = o.floor === 'p_bath' ? M.bathFloor : o.floor === 'p_bedroom' ? M.floorBed : lvl === 'B' ? M.floorBasement : M.floorLiving;
+    put(A, Bb, fl - 0.02, fl, t0, t1, fm, { cast: false });
   }
-  if (o.kind === 'arch') return;
-  if (isDoor) {
-    const fr = o.kind === 'mamad' ? M.steel : o.kind === 'entry' ? M.entryDoor : M.trim;
-    put(A, A + 0.03, ys, yh, t0 - 0.01, t1 + 0.01, fr);
-    put(Bb - 0.03, Bb, ys, yh, t0 - 0.01, t1 + 0.01, fr);
-    put(A, Bb, yh - 0.03, yh, t0 - 0.01, t1 + 0.01, fr);
-    const w = Bb - A - 0.06;
-    const th = o.kind === 'door' ? 0.045 : 0.07;
-    const hingeAt = o.hinge === 'b' ? Bb - 0.03 : A + 0.03;
-    const la = o.hinge === 'b' ? hingeAt - th : hingeAt, lb = la + th;
+  if (k === 'arch') return;
+  if (['door', 'entry', 'mamad'].includes(k)) {
+    const fr = k === 'mamad' ? M.chrome : k === 'entry' ? M.woodDark : M.trim;
+    put(A, A + 0.03, ys, yh, t0 - 0.01, t1 + 0.01, fr); put(Bb - 0.03, Bb, ys, yh, t0 - 0.01, t1 + 0.01, fr); put(A, Bb, yh - 0.03, yh, t0 - 0.01, t1 + 0.01, fr);
+    const w = Bb - A - 0.06, th = k === 'door' ? 0.045 : 0.07;
+    const hinge = o.hinge === 'b' ? Bb - 0.03 : A + 0.03;
+    const la = o.hinge === 'b' ? hinge - th : hinge;
     const face = o.swing > 0 ? t1 : t0;
     const ta = o.swing > 0 ? face : face - w, tb = o.swing > 0 ? face + w : face;
-    const leaf = o.kind === 'mamad' ? M.steel : o.kind === 'entry' ? M.entryDoor : M.doorLeaf;
-    put(la, lb, ys + 0.008, yh - 0.035, ta, tb, leaf);
-    const hf = o.swing > 0 ? tb : ta;               // הקצה החופשי
-    const h1 = o.swing > 0 ? hf - 0.2 : hf + 0.06, h2 = o.swing > 0 ? hf - 0.06 : hf + 0.2;
-    put(la - 0.035, lb + 0.035, ys + 1.02, ys + 1.045, h1, h2, o.kind === 'entry' ? M.chrome : M.blackSteel);
-    if (o.kind === 'entry') put(la - 0.03, lb + 0.03, ys + 0.6, ys + 1.9, h1 + 0.05, h1 + 0.08, M.chrome);
+    put(la, la + th, ys + 0.008, yh - 0.035, ta, tb, k === 'mamad' ? M.chrome : k === 'entry' ? M.woodDark : M.trim);
+    const hf = o.swing > 0 ? tb : ta, h1 = o.swing > 0 ? hf - 0.2 : hf + 0.06, h2 = o.swing > 0 ? hf - 0.06 : hf + 0.2;
+    put(la - 0.035, la + th + 0.035, ys + 1.02, ys + 1.045, h1, h2, M.metal);
     return;
   }
-  if (o.kind === 'win' || o.kind === 'mwin') {
-    const fw = o.kind === 'mwin' ? 0.07 : 0.05, fd = o.kind === 'mwin' ? 0.05 : 0.035;
-    const fm = o.kind === 'mwin' ? M.steel : M.frame;
-    put(A, Bb, ys, ys + fw, tm - fd, tm + fd, fm);
-    put(A, Bb, yh - fw, yh, tm - fd, tm + fd, fm);
-    put(A, A + fw, ys, yh, tm - fd, tm + fd, fm);
-    put(Bb - fw, Bb, ys, yh, tm - fd, tm + fd, fm);
+  if (k === 'win' || k === 'mwin') {
+    const fw = k === 'mwin' ? 0.07 : 0.05, fd = k === 'mwin' ? 0.05 : 0.035, fm = k === 'mwin' ? M.chrome : M.frame;
+    put(A, Bb, ys, ys + fw, tm - fd, tm + fd, fm); put(A, Bb, yh - fw, yh, tm - fd, tm + fd, fm);
+    put(A, A + fw, ys, yh, tm - fd, tm + fd, fm); put(Bb - fw, Bb, ys, yh, tm - fd, tm + fd, fm);
     if (Bb - A > 1.25) put((A + Bb) / 2 - 0.025, (A + Bb) / 2 + 0.025, ys, yh, tm - fd, tm + fd, fm);
-    put(A + fw, Bb - fw, ys + fw, yh - fw, tm - 0.008, tm + 0.008, M.glass, { cast: false, glass: true });
-    // אדן פנימי מאבן
-    const inP = o.inside === 'p';
-    put(A - 0.03, Bb + 0.03, ys - 0.03, ys, inP ? tm : t0 - 0.03, inP ? t1 + 0.03 : tm, M.quartz);
-    if (o.kind === 'mwin') put(A, Bb, yh - 0.02, yh + 0.0, inP ? t0 : t1 - 0.1, inP ? t0 + 0.1 : t1, M.steel); // מסילת התריס
+    put(A + fw, Bb - fw, ys + fw, yh - fw, tm - 0.006, tm + 0.006, M.glass, { cast: false, keep: true });
+    const inp = o.inside === 'p';
+    put(A - 0.03, Bb + 0.03, ys - 0.03, ys, inp ? tm : t0 - 0.03, inp ? t1 + 0.03 : tm, M.counter);
     return;
   }
-  if (o.kind === 'vit') {
-    // ויטרינת הזזה: מסילה, כנפיים בשני מסלולים, זכוכית עבה
-    put(A, Bb, ys, ys + 0.025, tm - 0.07, tm + 0.07, M.frame);
-    put(A, Bb, yh - 0.06, yh, tm - 0.07, tm + 0.07, M.frame);
-    put(A, A + 0.04, ys, yh, tm - 0.07, tm + 0.07, M.frame);
-    put(Bb - 0.04, Bb, ys, yh, tm - 0.07, tm + 0.07, M.frame);
+  if (k === 'vit') {
+    put(A, Bb, ys, ys + 0.025, tm - 0.07, tm + 0.07, M.frame); put(A, Bb, yh - 0.06, yh, tm - 0.07, tm + 0.07, M.frame);
+    put(A, A + 0.04, ys, yh, tm - 0.07, tm + 0.07, M.frame); put(Bb - 0.04, Bb, ys, yh, tm - 0.07, tm + 0.07, M.frame);
     for (const [pa, pb, lane] of o.panels) {
-      const c = tm + (lane ? 0.035 : -0.035);
-      const f = 0.045;
-      put(pa, pa + f, ys + 0.025, yh - 0.06, c - 0.025, c + 0.025, M.frame);
-      put(pb - f, pb, ys + 0.025, yh - 0.06, c - 0.025, c + 0.025, M.frame);
-      put(pa, pb, ys + 0.025, ys + 0.09, c - 0.025, c + 0.025, M.frame);
-      put(pa, pb, yh - 0.12, yh - 0.06, c - 0.025, c + 0.025, M.frame);
-      put(pa + f, pb - f, ys + 0.09, yh - 0.12, c - 0.012, c + 0.012, M.glass, { cast: false, glass: true });
-    }
-    for (const [ca, cb] of o.blocks) {
-      if (axis === 'x') colliders.push({ x1: ca, x2: cb, y1: ys, y2: yh, z1: t0, z2: t1 });
-      else colliders.push({ x1: t0, x2: t1, y1: ys, y2: yh, z1: ca, z2: cb });
+      const c = tm + (lane ? 0.035 : -0.035), f = 0.045;
+      put(pa, pa + f, ys + 0.025, yh - 0.06, c - 0.025, c + 0.025, M.frame); put(pb - f, pb, ys + 0.025, yh - 0.06, c - 0.025, c + 0.025, M.frame);
+      put(pa, pb, ys + 0.025, ys + 0.09, c - 0.025, c + 0.025, M.frame); put(pa, pb, yh - 0.12, yh - 0.06, c - 0.025, c + 0.025, M.frame);
+      put(pa + f, pb - f, ys + 0.09, yh - 0.12, c - 0.012, c + 0.012, M.glass, { cast: false, keep: true });
+      if (axis === 'x') colliders.push({ x1: pa, x2: pb, y1: ys, y2: yh, z1: t0, z2: t1 }); else colliders.push({ x1: t0, x2: t1, y1: ys, y2: yh, z1: pa, z2: pb });
     }
   }
 }
-
-// מעקה זכוכית H=105 עם פרופיל עליון
-function rail(x1, x2, z1, z2, y, parent, h = 1.05) {
-  const ax = (x2 - x1) >= (z2 - z1);
-  const cx1 = ax ? x1 : (x1 + x2) / 2 - 0.01, cx2 = ax ? x2 : (x1 + x2) / 2 + 0.01;
-  const cz1 = ax ? (z1 + z2) / 2 - 0.01 : z1, cz2 = ax ? (z1 + z2) / 2 + 0.01 : z2;
-  bx(cx1, cx2, y, y + h - 0.04, cz1, cz2, M.glass, parent, { cast: false, glass: true });
-  bx(ax ? x1 : cx1 - 0.015, ax ? x2 : cx2 + 0.015, y + h - 0.04, y + h, ax ? cz1 - 0.015 : z1, ax ? cz2 + 0.015 : z2, M.blackSteel, parent);
-  bx(ax ? x1 : cx1 - 0.02, ax ? x2 : cx2 + 0.02, y, y + 0.05, ax ? cz1 - 0.02 : z1, ax ? cz2 + 0.02 : z2, M.blackSteel, parent);
-  colliders.push({ x1: Math.min(x1, cx1 - 0.03), x2: Math.max(x2, cx2 + 0.03), y1: y, y2: y + h, z1: Math.min(z1, cz1 - 0.03), z2: Math.max(z2, cz2 + 0.03) });
+function rail(x1, x2, z1, z2, y, parent) {
+  bx(x1, x2, y, y + 1.01, z1, z2, M.glass, parent, { cast: false, keep: true });
+  bx(x1 - 0.005, x2 + 0.005, y + 1.01, y + 1.05, z1 - 0.015, z2 + 0.015, M.metal, parent);
+  colliders.push({ x1: x1 - 0.03, x2: x2 + 0.03, y1: y, y2: y + 1.05, z1: z1 - 0.03, z2: z2 + 0.03 });
 }
 
-// ---------------------------------------------------------------- קומת כניסה
-const g0 = G.ground;
-const F = M.facade, TB = M.bathWall;
+// ---------------------------------------------------------------- בנייה: קירות, רצפות, מדרגות, חוץ
+function buildArchitecture() {
+  LAYOUT.walls.forEach(buildWall);
+  LAYOUT.rails.forEach((r) => rail(r.r[0], r.r[1], r.r[2], r.r[3], r.h, r.bk.startsWith('OUT') ? G.out : G.ground));
+  const FM = { p_living: M.floorLiving, p_bedroom: M.floorBed, p_bath: M.bathFloor, p_basement: M.floorBasement };
+  for (const [x1, x2, z1, z2, m] of LAYOUT.floors.G) { floorQ(x1, x2, z1, z2, GY, FM[m], G.ground); ceilQ(x1, x2, z1, z2, NET, G.ceilG); }
+  for (const [x1, x2, z1, z2, m] of LAYOUT.floors.B) { floorQ(x1, x2, z1, z2, BY, FM[m], G.base); ceilQ(x1, x2, z1, z2, BY + NET, G.ceilB); }
+  ceilQ(0, 3.22, 7.35, 9.35, NET, G.ceilG);
+  // פאנלים בתחתית הקירות (8 ס"מ), רק איפה שיש קיר בפועל
+  const wallAt = (fl, x, z) => wallBoxes.some((b) => b.y1 <= fl + 0.04 && b.y2 >= fl + 0.04 && x >= b.x1 - 1e-3 && x <= b.x2 + 1e-3 && z >= b.z1 - 1e-3 && z <= b.z2 + 1e-3);
+  const skirt = (lvl, x1, x2, z1, z2) => {
+    const fl = lvl === 'B' ? BY : GY, par = lvl === 'B' ? G.base : G.ground, t = 0.012, h = 0.08, st = 0.05;
+    for (const edge of ['n', 's', 'w', 'e']) {
+      const horiz = edge === 'n' || edge === 's';
+      const a0 = horiz ? x1 : z1, a1 = horiz ? x2 : z2, n = Math.max(1, Math.floor((a1 - a0) / st));
+      const fixed = edge === 'n' ? z1 : edge === 's' ? z2 : edge === 'w' ? x1 : x2;
+      const probe = fixed + (edge === 'n' || edge === 'w' ? -0.03 : 0.03);
+      let start = null;
+      for (let i = 0; i <= n; i++) {
+        const a = a0 + (a1 - a0) * i / n;
+        const ok = i < n && (horiz ? wallAt(fl, a, probe) : wallAt(fl, probe, a));
+        if (ok && start === null) start = a;
+        if ((!ok || i === n) && start !== null) {
+          const e = ok ? a1 : a;
+          if (e - start > 0.04) {
+            if (edge === 'n') bx(start, e, fl, fl + h, z1, z1 + t, M.trim, par, { cast: false });
+            if (edge === 's') bx(start, e, fl, fl + h, z2 - t, z2, M.trim, par, { cast: false });
+            if (edge === 'w') bx(x1, x1 + t, fl, fl + h, start, e, M.trim, par, { cast: false });
+            if (edge === 'e') bx(x2 - t, x2, fl, fl + h, start, e, M.trim, par, { cast: false });
+          }
+          start = null;
+        }
+      }
+    }
+  };
+  for (const [x1, x2, z1, z2, m] of LAYOUT.floors.G) if (m !== 'p_bath') skirt('G', x1, x2, z1, z2);
+  for (const [x1, x2, z1, z2, m] of LAYOUT.floors.B) if (m !== 'p_bath') skirt('B', x1, x2, z1, z2);
 
-// יחידת הורים
-wall(1.94, 5.89, -0.25, 0, 'G', { faces: { nz: F }, y2: 4.10 });
-wall(1.94, 2.14, -0.25, 3.27, 'G', { faces: { nx: F }, y2: 4.10 });
-wall(1.94, 2.14, 3.27, 5.65, 'G', { faces: { nx: TB } });
-wall(5.59, 5.89, -0.25, 2.60, 'G', { faces: { px: F }, y2: 4.10, ops: [{ a: 0.60, b: 2.20, sill: 0.9, head: 2.4, kind: 'win', inside: 'n' }] });
-wall(5.59, 5.89, 2.60, 5.95, 'G');
-wall(-0.72, 1.94, 5.65, 5.75, 'G', { faces: { nz: TB }, ops: [{ a: 0.60, b: 1.40, sill: 0, head: 2.1, kind: 'door', hinge: 'b', swing: -1, floorMat: M.bath }] });
-wall(1.94, 5.59, 5.65, 5.75, 'G', { ops: [{ a: 3.40, b: 4.20, sill: 0, head: 2.1, kind: 'door', hinge: 'a', swing: -1, floorMat: M.bedroom }] });
-wall(-0.72, 1.94, 3.27, 3.47, 'G', { faces: { nz: F, pz: TB }, y2: 4.10 });
-wall(-0.72, -0.52, 3.47, 5.65, 'G', { faces: { nx: F, px: TB }, y2: 4.10 });
-wall(-0.72, 0.50, 5.75, 6.65, 'G');                                   // פיר וקיר מערבי של המעבר
-wall(-1.94, 4.45, 6.65, 6.75, 'G', { faces: { nx: F } });
-wall(4.35, 4.45, 5.75, 6.65, 'G', { ops: [{ a: 5.80, b: 6.60, sill: 0, head: 2.1, kind: 'door', hinge: 'a', swing: 1 }] }); // דלת יחידת ההורים
-// בליטת המדרגות
-wall(-1.94, -1.69, 6.65, 8.50, 'G', { faces: { nx: F }, y2: 4.10 });
-wall(-1.94, -0.25, 8.25, 8.50, 'G', { faces: { pz: F } });
-// שירותי אורחים
-wall(2.80, 2.95, 6.75, 8.35, 'G', { faces: { px: TB } });
-wall(4.25, 4.45, 6.75, 8.35, 'G', { ops: [{ a: 7.00, b: 7.70, sill: 0, head: 2.1, kind: 'door', hinge: 'b', swing: 1 }] });
-wall(2.80, 4.45, 8.25, 8.35, 'G', { faces: { nz: TB } });
-// קיר מערבי חיצוני + דלת כניסה
-wall(-0.25, 0, 8.25, 16.24, 'G', { faces: { nx: F }, y2: 4.10, ops: [{ a: 8.70, b: 9.70, sill: 0, head: 2.4, kind: 'entry', hinge: 'a', swing: 1 }] });
-// ממ"ד
-wall(5.59, 10.71, 2.60, 2.90, 'G', { faces: { nz: F }, y2: 4.10 });
-wall(10.13, 10.71, 2.90, 5.65, 'G', { faces: { px: F }, y2: 4.10, ops: [{ a: 3.80, b: 4.80, sill: 1.0, head: 2.0, kind: 'mwin', inside: 'n' }] });
-wall(5.59, 7.22, 5.65, 5.95, 'G', { ops: [{ a: 6.10, b: 6.90, sill: 0, head: 2.0, kind: 'mamad', hinge: 'a', swing: 1 }] });
-wall(7.22, 10.71, 5.65, 5.95, 'G', { faces: { pz: TB } });
-// חדר רחצה כללי
-wall(7.17, 7.27, 5.95, 8.29, 'G', { faces: { px: TB }, ops: [{ a: 7.30, b: 8.10, sill: 0, head: 2.1, kind: 'door', hinge: 'b', swing: 1, floorMat: M.bath }] });
-wall(10.46, 10.71, 5.95, 8.49, 'G', { faces: { px: F, nx: TB }, y2: 4.10, ops: [{ a: 6.80, b: 7.40, sill: 1.5, head: 2.2, kind: 'win', inside: 'n' }] });
-wall(5.87, 7.22, 8.29, 8.49, 'G', { ops: [{ a: 6.25, b: 7.05, sill: 0, head: 2.1, kind: 'door', hinge: 'b', swing: 1, floorMat: M.bedroom }] });
-wall(7.22, 10.46, 8.29, 8.49, 'G', { faces: { nz: TB } });
-// חדר שינה 2
-wall(5.87, 6.12, 8.49, 11.29, 'G');
-wall(10.46, 10.71, 8.49, 11.54, 'G', { faces: { px: F }, y2: 4.10, ops: [{ a: 9.30, b: 10.70, sill: 0.9, head: 2.4, kind: 'win', inside: 'n' }] });
-wall(5.87, 10.46, 11.29, 11.54, 'G');
-// סלון
-wall(10.46, 10.71, 11.54, 16.24, 'G', { faces: { px: F }, y2: 4.10, ops: [{ a: 12.30, b: 13.80, sill: 0.9, head: 2.4, kind: 'win', inside: 'n' }] });
-wall(-0.25, 10.71, 15.99, 16.24, 'G', {
-  faces: { pz: F }, y2: 4.10, ops: [
-    { a: 0.66, b: 5.86, sill: 0, head: NET, kind: 'vit', panels: [[0.66, 1.98, 1], [3.20, 4.54, 0], [3.22, 4.56, 1], [4.54, 5.86, 0]], blocks: [[0.66, 1.98], [3.20, 5.86]] },
-    { a: 6.31, b: 9.21, sill: 0, head: NET, kind: 'vit', panels: [[6.31, 7.78, 1], [6.33, 7.80, 0]], blocks: [[6.31, 7.80]] },
-  ],
-});
-// מעקות חדר המדרגות
-rail(0, 2.05, 8.22, 8.28, 0, g0);
-rail(2.05, 2.80, 7.47, 7.53, 0, g0);
-// לובי הבניין (שטח משותף, נקודת ההתחלה)
-wall(-4.25, -1.94, 8.25, 8.50, 'G', { faces: { pz: F } });
-wall(-4.25, -4.00, 8.50, 11.75, 'G', { faces: { px: F } });
-wall(-4.25, -0.25, 11.50, 11.75, 'G', { faces: { nz: F } });
-floorQ(-4.0, -0.25, 8.50, 11.50, GY, M.outdoor, g0);
-ceilQ(-4.0, -0.25, 8.50, 11.50, 3.0, G.ceilG);
-bx(-4.0, -0.25, 3.02, 3.8, 8.5, 11.5, M.gypsum, G.ceilG, { cast: false });
-
-// רצפות פורצלן 120x120
-const GF = [
-  [0, 5.87, 8.25, 11.54, M.living], [0, 10.46, 11.54, 15.99, M.living],
-  [4.45, 7.17, 5.75, 8.29, M.living], [4.45, 5.87, 8.29, 8.49, M.living], [0.50, 4.35, 5.75, 6.65, M.living],
-  [2.05, 2.80, 7.50, 8.25, M.living],
-  [2.14, 5.59, 0, 5.65, M.bedroom], [5.89, 10.13, 2.90, 5.65, M.bedroom], [6.12, 10.46, 8.49, 11.29, M.bedroom],
-  [-0.52, 1.94, 3.47, 5.65, M.bath], [7.27, 10.46, 5.95, 8.29, M.bath], [2.95, 4.25, 6.75, 8.25, M.bath],
-];
-GF.forEach(([a, b, c, d, m]) => floorQ(a, b, c, d, GY, m, g0));
-// תקרות גבס 3.40
-const GC = [
-  [2.14, 5.59, 0, 5.65], [-0.52, 1.94, 3.47, 5.65], [0.50, 4.35, 5.75, 6.65], [4.45, 7.17, 5.75, 8.29],
-  [5.89, 10.13, 2.90, 5.65], [7.27, 10.46, 5.95, 8.29], [2.95, 4.25, 6.75, 8.25], [6.12, 10.46, 8.49, 11.29],
-  [0, 5.87, 8.25, 11.54], [-1.69, 2.80, 6.75, 8.25], [0, 10.46, 11.54, 15.99], [4.45, 5.87, 8.29, 8.49],
-];
-GC.forEach(([a, b, c, d]) => ceilQ(a, b, c, d, NET, G.ceilG));
-
-// ---------------------------------------------------------------- מרתף
-const g1 = G.base;
-const CF = M.facade;
-wall(-0.25, 0, 0.35, 6.75, 'B');
-wall(-0.25, 0, 8.25, 10.89, 'B');
-wall(-0.25, 2.04, 0.35, 0.60, 'B');
-wall(1.94, 2.04, -1.22, 2.58, 'B');
-wall(1.94, 5.89, -1.22, -0.97, 'B');
-wall(2.04, 5.49, 2.58, 2.68, 'B', { ops: [{ a: 3.20, b: 4.00, sill: 0, head: 2.1, kind: 'door', hinge: 'a', swing: -1 }] });
-wall(5.49, 5.89, -1.90, 2.60, 'B', {
-  y2: 0, faces: { px: CF }, ops: [
-    { a: -0.40, b: 2.00, sill: 0, head: 2.6, kind: 'vit', panels: [[-0.40, 0.82, 1], [-0.38, 0.84, 0]], blocks: [[-0.40, 0.84]], floorMat: M.basement },
-  ],
-});
-wall(5.49, 6.25, 2.60, 9.81, 'B', {
-  ops: [
-    { a: 3.00, b: 3.70, sill: 0, head: 2.1, kind: 'door', hinge: 'a', swing: 1, floorMat: M.bath },
-    { a: 7.10, b: 7.90, sill: 0, head: 2.1, kind: 'door', hinge: 'a', swing: 1 },
-  ],
-});
-wall(5.89, 10.71, 2.60, 2.80, 'B', {
-  y2: 0, faces: { nz: CF, pz: TB }, ops: [
-    { a: 6.60, b: 7.50, sill: 1.4, head: 2.4, kind: 'win', inside: 'p' },
-    { a: 9.20, b: 10.10, sill: 1.8, head: 2.4, kind: 'win', inside: 'p' },
-  ],
-});
-wall(5.59, 10.53, -1.90, -1.65, 'B', { y2: 0, faces: { pz: CF } });
-wall(10.28, 10.53, -1.65, 2.60, 'B', { y2: 0, faces: { nx: CF } });
-wall(10.46, 10.71, 2.80, 10.06, 'B', { faces: { px: M.concrete }, ops: [{ a: 6.40, b: 8.90, sill: 1.05, head: 2.6, kind: 'win', inside: 'n' }] });
-wall(7.85, 8.86, 2.80, 5.60, 'B', { faces: { nx: TB, px: TB } });
-wall(6.25, 10.46, 5.60, 5.70, 'B', { ops: [{ a: 9.20, b: 9.90, sill: 0, head: 2.1, kind: 'door', hinge: 'b', swing: -1, floorMat: M.bath }] });
-wall(5.49, 10.71, 9.81, 10.06, 'B');
-wall(-0.25, 5.49, 8.25, 8.35, 'B', { ops: [{ a: 3.20, b: 4.00, sill: 0, head: 2.1, kind: 'door', hinge: 'a', swing: 1 }] });
-wall(2.61, 2.71, 8.35, 10.64, 'B', { ops: [{ a: 9.20, b: 10.00, sill: 0, head: 2.1, kind: 'door', hinge: 'a', swing: -1 }] });
-wall(4.71, 5.49, 8.35, 10.06, 'B');
-wall(-0.25, 2.71, 10.64, 10.89, 'B');
-wall(2.61, 4.81, 10.56, 10.81, 'B');
-wall(-1.94, 5.49, 6.65, 6.75, 'B', { ops: [{ a: 3.00, b: 4.60, sill: 0, head: 2.5, kind: 'arch' }] });
-wall(-1.94, -1.69, 6.65, 8.50, 'B');
-wall(-1.94, -0.25, 8.25, 8.50, 'B');
-// חצר חלון לסטודיו (מתחת לסבכה)
-wall(11.71, 11.96, 3.12, 10.06, 'B', { y2: 0, faces: { nx: M.concrete } });
-wall(10.71, 11.96, 3.12, 3.37, 'B', { y2: 0, faces: { pz: M.concrete } });
-wall(10.71, 11.96, 9.81, 10.06, 'B', { y2: 0, faces: { nz: M.concrete } });
-floorQ(10.71, 11.71, 3.37, 9.81, BY, M.gravel, g1);
-
-const BF = [
-  [0, 5.49, 2.68, 6.65, M.basement], [0, 1.94, 0.60, 2.68, M.basement], [2.04, 5.49, -0.97, 2.58, M.basement],
-  [6.25, 7.85, 2.80, 5.60, M.bath], [8.86, 10.46, 2.80, 5.60, M.bath], [6.25, 10.46, 5.70, 9.81, M.basement],
-  [2.05, 5.49, 6.75, 8.25, M.basement], [2.71, 4.71, 8.35, 10.56, M.basement], [0, 2.61, 8.35, 10.64, M.basement],
-  [5.89, 10.28, -1.65, 2.60, M.outdoor],
-];
-BF.forEach(([a, b, c, d, m]) => floorQ(a, b, c, d, BY, m, g1));
-const BCy = BY + NET;
-const BC = [
-  [0, 5.49, 2.68, 6.65], [0, 1.94, 0.60, 2.68], [2.04, 5.49, -0.97, 2.58], [6.25, 7.85, 2.80, 5.60],
-  [8.86, 10.46, 2.80, 5.60], [6.25, 10.46, 5.70, 9.81], [2.80, 5.49, 6.75, 8.25], [2.05, 2.80, 7.50, 8.25],
-  [2.71, 4.71, 8.35, 10.56], [0, 2.61, 8.35, 10.64],
-];
-BC.forEach(([a, b, c, d]) => ceilQ(a, b, c, d, BCy, G.ceilB));
-
-// ---------------------------------------------------------------- מדרגות (U, 22 רומים)
-// מהלך עליון בנתיב הדרומי (z 7.55-8.25) יורד מערבה, פודסט ביניים, מהלך תחתון בנתיב הצפוני יורד מזרחה.
-function stairH(x, z) {
-  if (x < -1.69 || x > 2.80 || z < 6.75 || z > 8.25) return null;
-  if (x >= 2.05) return z >= 7.50 ? GY : BY;
-  if (x < -0.75) return GY - 11 * RISER;
-  if (z >= 7.50) { const i = Math.min(10, Math.max(1, Math.ceil((2.05 - x) / 0.28))); return GY - i * RISER; }
-  const j = Math.min(10, Math.max(1, Math.ceil((x + 0.75) / 0.28)));
-  return GY - (11 + j) * RISER;
-}
-(function buildStair() {
+  // לובי הבניין וכיס הכניסה
+  floorQ(-3.5, 1.28, 9.45, 11.13, GY, M.pavers, G.ground);
+  bx(-3.75, -0.25, -0.3, GROSS, 9.20, 9.45, M.facade, G.ground, { collide: true });
+  bx(-3.75, -0.25, -0.3, GROSS, 11.13, 11.38, M.facade, G.ground, { collide: true });
+  bx(-3.75, -3.5, -0.3, GROSS, 9.45, 11.13, M.facade, G.ground, { collide: true });
+  ceilQ(-3.5, 1.28, 9.45, 11.13, 3.0, G.ceilG);
+  bx(-3.5, 1.28, 3.02, GROSS, 9.45, 11.13, M.ceiling, G.ceilG, { cast: false });
+  bx(10.06, 10.21, GY, NET, 16.14, 16.29, M.metal, G.ground, { collide: true });          // עמוד RHS
+  floorQ(6.26, 10.65, -1.10, 3.15, BY, M.pavers, G.base);                                  // חצר אנגלית
+  floorQ(10.71, 11.76, 4.28, 10.56, BY, M.gravel, G.base);                                 // חצר החלון
+  // מדרגות U: 5 שלבים, 7 מדרגות פנייה, 9 שלבים (22 רומים)
   const gs = G.base;
-  for (let i = 1; i <= 10; i++) {
-    const xa = 2.05 - i * 0.28, xb = 2.05 - (i - 1) * 0.28, top = GY - i * RISER;
-    bx(xa, xb, BY, top - 0.04, 7.55, 8.25, M.trim, gs);
-    bx(xa - 0.02, xb, top - 0.04, top, 7.55, 8.25, M.oak, gs);
+  for (let i = 1; i <= 5; i++) {
+    const xa = 2.27 - i * 0.264, xb = 2.27 - (i - 1) * 0.264, top = GY - i * RISER;
+    bx(xa, xb, BY, top - 0.04, 8.40, 9.35, M.trim, gs); bx(xa - 0.02, xb, top - 0.04, top, 8.40, 9.35, M.wood, gs);
   }
-  const land = GY - 11 * RISER;
-  bx(-1.69, -0.75, BY, land - 0.04, 6.75, 8.25, M.trim, gs);
-  bx(-1.69, -0.75, land - 0.04, land, 6.75, 8.25, M.oak, gs);
-  for (let j = 1; j <= 10; j++) {
-    const xa = -0.75 + (j - 1) * 0.28, xb = -0.75 + j * 0.28, top = GY - (11 + j) * RISER;
-    if (top - 0.04 > BY) bx(xa, xb, BY, top - 0.04, 6.75, 7.45, M.trim, gs);
-    bx(xa, xb + 0.02, top - 0.04, top, 6.75, 7.45, M.oak, gs);
-  }
-  // קיר מרכזי בין שני המהלכים, מרצפת המרתף עד התקרה של קומת הכניסה
-  bx(-0.75, 2.05, BY, GROSS, 7.45, 7.55, faceMats({}), gs, { wall: true, collide: true });
-  // מאחזי יד
-  const hr = (x1, z, y1, x2, y2) => {
-    const len = Math.hypot(x2 - x1, y2 - y1);
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, len, 12), M.blackSteel);
-    m.position.set((x1 + x2) / 2, (y1 + y2) / 2, z);
-    m.rotation.z = Math.atan2(y2 - y1, x2 - x1) - Math.PI / 2;
-    m.castShadow = true; gs.add(m);
+  const pv = [0.95, 8.35];
+  const rectRay = (ang) => {
+    const dx = -Math.sin(ang * Math.PI / 180), dz = Math.cos(ang * Math.PI / 180), ts = [];
+    if (dx < -1e-9) ts.push((0 - pv[0]) / dx); if (dz > 1e-9) ts.push((9.35 - pv[1]) / dz); if (dz < -1e-9) ts.push((7.35 - pv[1]) / dz);
+    const t = Math.min(...ts.filter((v) => v > 0)); return [pv[0] + dx * t, pv[1] + dz * t];
   };
-  hr(2.05, 8.20, GY + 0.9, -0.75, land + 0.9);
-  hr(-0.75, 6.80, land + 0.9, 2.05, BY + 0.9);
-  // פס LED בקיר המרכזי
-  bx(-0.75, 2.05, -0.05, -0.02, 7.43, 7.45, M.light, gs, { cast: false });
-})();
-
-// ---------------------------------------------------------------- תקרות קונסטרוקטיביות וחוץ
-// תקרת המרתף = רצפת קומת הכניסה, עם פתחים לחצר האנגלית, לחצר החלון ולמדרגות.
-(function slabs() {
-  const s = new THREE.Shape();
-  s.moveTo(-1.94, -1.90); s.lineTo(11.96, -1.90); s.lineTo(11.96, 16.24); s.lineTo(-1.94, 16.24); s.closePath();
-  const hole = (pts) => { const h = new THREE.Path(); h.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach((p) => h.lineTo(p[0], p[1])); h.closePath(); s.holes.push(h); };
-  hole([[5.89, -1.65], [5.89, 2.60], [10.28, 2.60], [10.28, -1.65]]);
-  hole([[10.71, 3.37], [10.71, 9.81], [11.71, 9.81], [11.71, 3.37]]);
-  hole([[-1.69, 6.75], [-1.69, 8.25], [2.05, 8.25], [2.05, 7.50], [2.80, 7.50], [2.80, 6.75]]);
-  const geo = new THREE.ExtrudeGeometry(s, { depth: SLAB, bevelEnabled: false });
-  geo.rotateX(Math.PI / 2);           // shape y -> z, extrude לכיוון -y
-  worldUV(geo);
-  const m = new THREE.Mesh(geo, [M.paving, M.concrete]);
-  m.position.y = GY - 0.021;
-  m.castShadow = true; m.receiveShadow = true;
-  G.slab.add(m);
-  // תקרת קומת הכניסה (קונסטרוקציה + שתי קומות מעל, לצל אמיתי על הגינה)
-  const r = new THREE.Shape();
-  const pts = [[-1.94, -0.25], [5.89, -0.25], [5.89, 2.60], [10.71, 2.60], [10.71, 16.24], [-1.94, 16.24]];
-  r.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach((p) => r.lineTo(p[0], p[1])); r.closePath();
-  const rg = new THREE.ExtrudeGeometry(r, { depth: SLAB, bevelEnabled: false });
-  rg.rotateX(Math.PI / 2); worldUV(rg);
-  const rm = new THREE.Mesh(rg, M.concrete);
-  rm.position.y = GROSS + SLAB; rm.castShadow = true; rm.receiveShadow = true;
-  G.roof.add(rm);
-  const ug = new THREE.ExtrudeGeometry(r, { depth: 6.2, bevelEnabled: false });
-  ug.rotateX(Math.PI / 2); worldUV(ug);
-  const um = new THREE.Mesh(ug, M.facade);
-  um.position.y = GROSS + SLAB + 6.2; um.castShadow = true; um.receiveShadow = true;
-  G.roof.add(um);
-  // פסי חלונות בחזית הקומות העליונות
-  for (const fy of [5.2, 8.3]) {
-    bx(0.3, 10.4, fy, fy + 1.5, 16.24, 16.28, M.screen, G.roof, { cast: false });
-    bx(10.71, 10.75, fy, fy + 1.5, 3.2, 15.8, M.screen, G.roof, { cast: false });
-    bx(-0.2, 10.71, fy - 0.9, fy - 0.75, 16.24, 17.6, M.concrete, G.roof);   // מרפסת של הקומה מעל
+  const cornerA = Math.atan2(0.95, 1.0) * 180 / Math.PI;
+  const corners = [[0, 9.35, cornerA], [0, 7.35, 180 - cornerA]];
+  for (let k = 1; k <= 7; k++) {
+    const a0 = (k - 1) * 180 / 7, a1 = k * 180 / 7, pts = [pv, rectRay(a0)];
+    corners.forEach(([cx, cz, ca]) => { if (a0 < ca && ca < a1) pts.push([cx, cz]); });
+    pts.push(rectRay(a1));
+    const top = GY - (5 + k) * RISER;
+    const sh = new THREE.Shape(); sh.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach((p) => sh.lineTo(p[0], p[1]));
+    const mk = (h0, h1, mat) => {
+      const g = new THREE.ExtrudeGeometry(sh, { depth: h1 - h0, bevelEnabled: false });
+      g.rotateX(Math.PI / 2); g.translate(0, h1, 0);   // shape y -> z, ההבלטה כלפי מטה מ-h1
+      g.computeVertexNormals(); worldUV(g);
+      const m = new THREE.Mesh(g, mat); m.castShadow = m.receiveShadow = true; m.matrixAutoUpdate = false; gs.add(m);
+    };
+    mk(BY, top - 0.04, M.trim); mk(top - 0.04, top, M.wood);
   }
-})();
-
-// קרקע חיצונית, דק, דשא, סבכה, גדר
-(function outdoor() {
+  for (let j = 1; j <= 9; j++) {
+    const xa = 0.95 + (j - 1) * 0.252, xb = 0.95 + j * 0.252, top = GY - (12 + j) * RISER;
+    bx(xa, xb, BY, top - 0.04, 7.35, 8.30, M.trim, gs); bx(xa, xb + 0.02, top - 0.04, top, 7.35, 8.30, M.wood, gs);
+  }
+  bx(0.95, 3.22, BY, GY, 8.30, 8.40, M.wall, gs, { wall: true, collide: true });
+  bx(2.27, 3.22, -SLAB, GY - 0.021, 8.40, 9.35, M.concrete, G.slab);
+  // רצפת הכניסה מעל המרתף (עם פתחים) ותקרה עליונה עם שתי קומות מעל
+  [[-0.25, 6.26, -0.62, 7.35], [6.26, 10.71, 3.15, 7.35], [-0.25, 0.0, 7.35, 9.45], [3.22, 10.71, 7.35, 11.99], [-0.25, 3.22, 9.35, 11.99],
+    [-0.25, 10.71, 11.99, 16.69], [10.71, 12.01, 3.15, 4.28], [10.71, 12.01, 10.56, 16.69], [11.76, 12.01, 4.28, 10.56]]
+    .forEach(([a, b, c, d]) => bx(a, b, -SLAB, GY - 0.021, c, d, M.concrete, G.slab));
+  [[-0.25, 6.26, -0.25, 7.35], [6.26, 10.71, 3.15, 7.35], [-0.25, 10.71, 7.35, 16.69], [-3.75, -0.25, 9.20, 11.38]].forEach(([a, b, c, d]) => {
+    bx(a, b, GROSS, GROSS + SLAB, c, d, M.concrete, G.roof);
+    bx(a, b, GROSS + SLAB, GROSS + SLAB + 6.2, c, d, M.facade, G.roof);
+  });
+  for (const hh of [5.0, 8.1]) {
+    bx(-0.25, 10.71, hh - 0.75, hh - 0.6, 16.69, 18.10, M.concrete, G.roof);
+    bx(-0.25, 10.71, hh - 0.6, hh + 0.45, 18.08, 18.10, M.glass, G.roof, { cast: false, keep: true });
+    bx(0.2, 10.3, hh - 0.4, hh + 1.6, 16.69, 16.72, M.screen, G.roof, { cast: false });
+  }
+  // חוץ: ריצוף, דשא, דק, אדניות, סבכה, גדר וגדר חיה, פרגולה
   const o = G.out;
-  const sh = new THREE.Shape();
-  sh.moveTo(-60, -60); sh.lineTo(80, -60); sh.lineTo(80, 90); sh.lineTo(-60, 90); sh.closePath();
-  const h = new THREE.Path();
-  h.moveTo(-1.94, -1.90); h.lineTo(-1.94, 16.24); h.lineTo(11.96, 16.24); h.lineTo(11.96, -1.90); h.closePath();
-  sh.holes.push(h);
-  const g = new THREE.ShapeGeometry(sh); g.rotateX(Math.PI / 2);
-  const p = g.attributes.position, uv = g.attributes.uv;
-  for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) / SPAN, p.getZ(i) / SPAN);
-  const m = new THREE.Mesh(g, std({ map: TX.outdoor, roughness: 0.9, color: 0xe2ddd2, side: THREE.DoubleSide }));
-  m.position.y = GY - 0.03; m.receiveShadow = true; o.add(m);
-  bx(-60, 80, BY - 0.3, BY - 0.05, -60, 90, M.earth, scene, { cast: false });
-
-  // דק עץ מתחת לפרגולה
-  floorQ(-0.25, 10.71, 16.24, 19.54, GY + 0.01, M.deck, o);
-  // דשא
-  [[-0.25, 13.71, 19.54, 22.24], [11.71, 13.71, 3.37, 9.81], [10.71, 13.71, 9.81, 16.24], [10.71, 13.71, 16.24, 19.54]]
-    .forEach(([a, b, c, d]) => floorQ(a, b, c, d, GY + 0.005, M.grass, o));
-  // אבני דריכה בגינה הצדדית
-  for (let z = 10.3; z < 16; z += 0.75) floorQ(11.75, 12.45, z, z + 0.45, GY + 0.015, M.outdoor, o);
-  // סבכה מעל חצר החלון
-  const gg = new THREE.PlaneGeometry(1.0, 6.44); gg.rotateX(-Math.PI / 2);
-  const guv = gg.attributes.uv; for (let i = 0; i < guv.count; i++) guv.setXY(i, guv.getX(i) * 4, guv.getY(i) * 26);
-  const grate = new THREE.Mesh(gg, M.grateMat); grate.position.set(11.21, GY + 0.01, 6.59);
-  grate.castShadow = true; grate.receiveShadow = true; o.add(grate);
-  bx(10.71, 11.71, GY - 0.02, GY + 0.012, 3.32, 3.37, M.blackSteel, o);
-  bx(10.71, 11.71, GY - 0.02, GY + 0.012, 9.81, 9.86, M.blackSteel, o);
-  // מעקות החצר האנגלית (ברמת הקרקע)
-  rail(5.89, 10.28, -1.80, -1.74, GY, o);
-  rail(10.34, 10.40, -1.80, 2.60, GY, o);
-  rail(5.71, 5.77, -1.80, -0.25, GY, o);
-  // גדר הגינה + גדר חיה
-  const fence = (x1, x2, z1, z2) => {
-    bx(x1, x2, GY, 1.05, z1, z2, M.blackSteel, o, { collide: true });
-  };
-  const hedge = (x1, x2, z1, z2) => bx(x1, x2, GY, 1.5, z1, z2, M.leafDark, o, { collide: true });
-  fence(-0.27, -0.23, 16.24, 22.24); hedge(-0.85, -0.27, 16.24, 22.84);
-  fence(-0.25, 13.71, 22.22, 22.26); hedge(-0.85, 14.31, 22.26, 22.84);
-  fence(13.69, 13.73, 3.37, 22.24); hedge(13.73, 14.31, 3.37, 22.84);
-  fence(10.71, 13.71, 3.35, 3.39); hedge(11.96, 14.31, 2.79, 3.35);
-  // פרגולה מעל הדק
-  const posts = [[-0.15, 19.44], [5.23, 19.44], [10.61, 19.44]];
-  posts.forEach(([x, z]) => bx(x - 0.07, x + 0.07, GY, 3.55, z - 0.07, z + 0.07, M.blackSteel, G.roof));
-  bx(-0.25, 10.71, 3.40, 3.62, 19.37, 19.51, M.blackSteel, G.roof);
-  const slat = new THREE.BoxGeometry(0.05, 0.14, 3.28);
-  const inst = new THREE.InstancedMesh(slat, M.blackSteel, 50);
-  const mtx = new THREE.Matrix4();
-  for (let i = 0; i < 50; i++) { mtx.makeTranslation(-0.1 + i * 0.218, 3.69, 17.88); inst.setMatrixAt(i, mtx); }
+  [[-40, 50, -40, -1.35], [-40, -3.75, -1.35, 60], [13.71, 50, -1.35, 60], [-3.75, 13.71, 22.10, 60], [10.90, 13.71, -1.35, 1.06],
+    [-3.75, 6.01, -1.35, -0.62], [-3.75, 2.31, -0.62, 0.95], [-3.75, -0.25, 0.95, 9.20], [-3.75, -0.25, 11.38, 22.10]]
+    .forEach(([a, b, c, d]) => bx(a, b, -0.4, -0.03, c, d, M.pavers, o, { cast: false }));
+  bx(-40, 50, BY - 0.35, BY - 0.05, -40, 60, M.concrete, scene, { cast: false });
+  bx(0.97, 10.71, -0.3, GY + 0.01, 16.69, 19.69, M.deck, o);
+  [[-0.25, 13.71, 19.69, 22.10], [10.71, 13.71, 16.69, 19.69], [10.71, 13.71, 10.56, 16.69], [11.76, 13.71, 4.28, 10.56], [10.71, 13.71, 1.06, 4.28]]
+    .forEach(([a, b, c, d]) => bx(a, b, -0.4, GY + 0.005, c, d, M.grass, o, { cast: false }));
+  for (const z of [17.0, 17.9, 18.8]) {
+    bx(-0.25, 0.92, -0.3, 0.45, z, z + 0.8, M.concrete, o, { collide: true }); bx(-0.2, 0.87, 0.45, 0.47, z + 0.05, z + 0.75, M.soil, o);
+    place(plant(0.6, M.leaf, M.pot, Math.round(z * 10)), o, 0.33, 0.25, z + 0.4, 0, false);
+  }
+  for (let z = 11.0; z < 16.0; z += 0.75) floorQ(11.9, 12.6, z, z + 0.45, GY + 0.015, M.pavers, o);
+  for (let i = 0; i < 34; i++) bx(10.73 + i * 0.03, 10.738 + i * 0.03, -0.03, 0, 4.28, 10.56, M.metal, o);
+  for (const z of [4.28, 5.85, 7.42, 8.99, 10.53]) bx(10.71, 11.76, -0.03, 0, z, z + 0.03, M.metal, o);
+  [[-0.27, -0.23, 16.69, 22.10], [-0.25, 13.71, 22.08, 22.12], [13.69, 13.73, 1.06, 22.10], [10.90, 13.71, 1.04, 1.08]]
+    .forEach(([a, b, c, d]) => bx(a, b, 0, 1.05, c, d, M.metal, o, { collide: true }));
+  [[-0.85, -0.27, 16.69, 22.70], [-0.85, 14.31, 22.12, 22.70], [13.73, 14.31, 1.06, 22.70]]
+    .forEach(([a, b, c, d]) => softBox(b - a, 1.5, d - c, (a + b) / 2, 0, (c + d) / 2, 0, M.hedge, o, 0.25, 0.02));
+  for (const x of [1.05, 5.80, 10.55]) bx(x - 0.07, x + 0.07, 0, 3.55, 19.50, 19.64, M.metal, G.roof);
+  bx(0.97, 10.71, 3.40, 3.62, 19.50, 19.64, M.metal, G.roof);
+  const slat = new THREE.BoxGeometry(0.05, 0.14, 2.95);
+  const inst = new THREE.InstancedMesh(slat, M.metal, 45), mtx = new THREE.Matrix4();
+  for (let i = 0; i < 45; i++) { mtx.makeTranslation(1.025 + i * 0.216, 3.69, 18.165); inst.setMatrixAt(i, mtx); }
   inst.castShadow = true; G.roof.add(inst);
-})();
+}
 
-// ---------------------------------------------------------------- ריהוט
+// ---------------------------------------------------------------- רהיטים: גאומטריה רכה ובנאים
+function puff(geo, amt) {
+  // "נפיחות": מרכז הפאות העליונה והתחתונה נדחף החוצה, כמו כרית ממולאת
+  geo.computeBoundingBox(); const b = geo.boundingBox, c = new THREE.Vector3(); b.getCenter(c);
+  const s = new THREE.Vector3(); b.getSize(s); const p = geo.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) {
+    v.fromBufferAttribute(p, i).sub(c);
+    const nx = v.x / (s.x / 2), ny = v.y / (s.y / 2), nz = v.z / (s.z / 2);
+    const k = (1 - Math.min(1, nx * nx)) * (1 - Math.min(1, nz * nz));
+    v.y += Math.sign(ny) * amt * k * s.y * 0.5;
+    const side = 1 - 0.25 * amt * (1 - Math.min(1, ny * ny));
+    p.setXYZ(i, v.x * side + c.x, v.y + c.y, v.z * side + c.z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+function softGeo(w, h, d, r, amt) {
+  const g = new RoundedBoxGeometry(w, h, d, MOBILE ? 3 : 4, Math.min(r, Math.min(w, h, d) * 0.49));
+  return amt ? puff(g, amt) : g;
+}
+function softBox(w, h, d, x, y, z, rot, mat, parent, r = 0.06, amt = 0.15, tilt = 0) {
+  const m = new THREE.Mesh(softGeo(w, h, d, r, amt), mat);
+  m.position.set(x, y + h / 2, z); m.rotation.set(tilt, rot, 0, 'YXZ'); m.castShadow = m.receiveShadow = true;
+  parent.add(m); return m;
+}
 const grp = () => new THREE.Group();
 function B(g, w, h, d, x, y, z, mat, cast = true) {
   const geo = new THREE.BoxGeometry(w, h, d); worldUV(geo);
-  const m = new THREE.Mesh(geo, mat);
-  m.position.set(x, y, z); m.castShadow = cast; m.receiveShadow = true; g.add(m); return m;
+  const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = cast && !mat.transparent; m.receiveShadow = true; g.add(m); return m;
+}
+function S(g, w, h, d, x, y, z, mat, r = 0.05, amt = 0.12, tilt = 0) {
+  const m = new THREE.Mesh(softGeo(w, h, d, r, amt), mat); m.position.set(x, y, z); m.rotation.x = tilt; m.castShadow = m.receiveShadow = true; g.add(m); return m;
 }
 function C(g, rt, rb, h, x, y, z, mat, seg = 24) {
-  const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat);
-  m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; g.add(m); return m;
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, MOBILE ? Math.max(8, seg >> 1) : seg), mat);
+  m.position.set(x, y, z); m.castShadow = !mat.transparent; m.receiveShadow = true; g.add(m); return m;
 }
+function placePlant(g, parent, x, y, z) { place(g, parent, x, y, z, 0, false); colliders.push({ x1: x - 0.2, x2: x + 0.2, y1: y, y2: y + 0.6, z1: z - 0.2, z2: z + 0.2 }); }
 function place(g, parent, x, y, z, rot = 0, collide = true) {
   g.position.set(x, y, z); g.rotation.y = rot; parent.add(g); g.updateMatrixWorld(true);
-  if (collide) {
-    const bb = new THREE.Box3().setFromObject(g);
-    colliders.push({ x1: bb.min.x, x2: bb.max.x, y1: bb.min.y, y2: bb.max.y, z1: bb.min.z, z2: bb.max.z });
+  if (collide) { const bb = new THREE.Box3().setFromObject(g); colliders.push({ x1: bb.min.x, x2: bb.max.x, y1: bb.min.y, y2: bb.max.y, z1: bb.min.z, z2: bb.max.z }); }
+  return g;
+}
+const LAMPS = [];
+// חזית = +z. rot=R90 → חזית למזרח, -R90 → למערב, PI → לצפון.
+function bed(w, l) {
+  const g = grp();
+  B(g, w + 0.08, 0.28, l + 0.04, 0, 0.14, 0, M.wood);
+  S(g, w, 0.24, l - 0.04, 0, 0.40, 0.01, M.bedding, 0.08, 0.05);
+  S(g, w + 0.10, 0.10, l * 0.70, 0, 0.57, l * 0.16, M.bedding, 0.05, 0.5);
+  S(g, w + 0.10, 0.08, 0.28, 0, 0.58, -l * 0.20, M.bedding, 0.04, 0.5);
+  S(g, w + 0.16, 0.05, 0.46, 0, 0.645, l * 0.36, M.throw, 0.025, 0.4);
+  const pw = Math.min(0.62, (w - 0.08) / 2);
+  for (const lx of [-w / 4, w / 4]) {
+    S(g, pw, 0.17, 0.42, lx, 0.66, -l / 2 + 0.30, M.bedding, 0.08, 0.9, -0.25);
+    S(g, pw * 0.8, 0.15, 0.34, lx, 0.70, -l / 2 + 0.52, lx < 0 ? M.throw : M.accent, 0.07, 0.9, -0.4);
+  }
+  S(g, w + 0.32, 1.20, 0.10, 0, 0.60, -l / 2 - 0.06, M.headboard, 0.04, 0.12);
+  return g;
+}
+function nightstand(lit = true) {
+  const g = grp();
+  B(g, 0.5, 0.48, 0.4, 0, 0.30, 0, M.woodDark); B(g, 0.46, 0.012, 0.36, 0, 0.30, 0.205, M.metal, false);
+  C(g, 0.05, 0.07, 0.30, 0.1, 0.69, 0, M.ceramic, 20);
+  const sh = C(g, 0.12, 0.16, 0.22, 0.1, 0.95, 0, M.lampShade, 24); sh.castShadow = false;
+  if (lit) LAMPS.push({ g, x: 0.1, y: 0.92, z: 0 });
+  return g;
+}
+function sofa(w, d = 0.95, mat = M.sofa, seats = null) {
+  const g = grp(), n = seats || Math.max(2, Math.round((w - 0.4) / 0.85)), sw = (w - 0.36) / n;
+  B(g, w, 0.08, d - 0.08, 0, 0.09, 0, M.metal);
+  S(g, w, 0.32, d, 0, 0.28, 0, mat, 0.06, 0.05);
+  for (let i = 0; i < n; i++) {
+    const x = -w / 2 + 0.18 + sw * (i + 0.5);
+    S(g, sw - 0.02, 0.16, d - 0.26, x, 0.51, 0.1, mat, 0.07, 0.5);
+    S(g, sw - 0.04, 0.46, 0.2, x, 0.78, -d / 2 + 0.22, mat, 0.08, 0.5, -0.12);
+  }
+  S(g, 0.18, 0.58, d, -w / 2 + 0.09, 0.40, 0, mat, 0.07, 0.15); S(g, 0.18, 0.58, d, w / 2 - 0.09, 0.40, 0, mat, 0.07, 0.15);
+  S(g, 0.42, 0.40, 0.14, -w / 2 + 0.50, 0.80, -d / 2 + 0.36, M.accent, 0.07, 0.9, -0.2);
+  S(g, 0.40, 0.38, 0.14, w / 2 - 0.50, 0.80, -d / 2 + 0.36, M.accent2, 0.07, 0.9, -0.25);
+  return g;
+}
+function armchair(mat = M.accent) {
+  const g = grp();
+  S(g, 0.78, 0.30, 0.78, 0, 0.32, 0, mat, 0.07, 0.08); S(g, 0.60, 0.14, 0.56, 0, 0.53, 0.06, mat, 0.06, 0.5);
+  S(g, 0.78, 0.48, 0.16, 0, 0.72, -0.31, mat, 0.07, 0.3, -0.1);
+  S(g, 0.12, 0.50, 0.78, -0.33, 0.45, 0, mat, 0.05, 0.1); S(g, 0.12, 0.50, 0.78, 0.33, 0.45, 0, mat, 0.05, 0.1);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) C(g, 0.018, 0.012, 0.17, sx * 0.32, 0.085, sz * 0.32, M.wood, 8);
+  return g;
+}
+function coffeeTable(r = 0.5, h = 0.38) {
+  const g = grp();
+  C(g, r, r, 0.035, 0, h, 0, M.counter, 40); C(g, r * 0.35, r * 0.45, h - 0.02, 0, (h - 0.02) / 2, 0, M.woodDark, 24);
+  C(g, 0.07, 0.05, 0.16, r * 0.3, h + 0.1, 0.05, M.ceramic, 16);
+  B(g, 0.24, 0.04, 0.18, -r * 0.25, h + 0.04, -0.06, M.bookB); B(g, 0.22, 0.03, 0.16, -r * 0.25, h + 0.075, -0.06, M.bookC);
+  return g;
+}
+function chair(mat = M.sofa) {
+  const g = grp();
+  S(g, 0.46, 0.07, 0.46, 0, 0.47, 0, mat, 0.03, 0.3); S(g, 0.44, 0.42, 0.06, 0, 0.74, -0.21, mat, 0.03, 0.2, -0.08);
+  for (const [x, z] of [[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2]]) C(g, 0.016, 0.014, 0.45, x, 0.225, z, M.wood, 8);
+  return g;
+}
+function diningTable(w, d, setTable = true) {
+  const g = grp();
+  B(g, w, 0.045, d, 0, 0.735, 0, M.wood);
+  B(g, 0.08, 0.71, d - 0.3, -w / 2 + 0.35, 0.355, 0, M.metal); B(g, 0.08, 0.71, d - 0.3, w / 2 - 0.35, 0.355, 0, M.metal);
+  if (!setTable) return g;
+  // שולחן ערוך: ראנר, פלייסמטים, צלחות, כוסות, סכו"ם ואגרטל פרחים
+  B(g, w * 0.8, 0.003, 0.36, 0, 0.76, 0, M.throw, false);
+  for (const dx of [-0.75, 0, 0.75]) for (const side of [-1, 1]) {
+    const zz = side * 0.30;
+    B(g, 0.42, 0.003, 0.32, dx, 0.759, zz, M.bedding, false);
+    C(g, 0.135, 0.11, 0.018, dx, 0.77, zz, M.plate, 32); C(g, 0.10, 0.08, 0.015, dx, 0.785, zz, M.plate, 32);
+    C(g, 0.035, 0.03, 0.13, dx + 0.17, 0.825, zz - side * 0.17, M.drinkGlass, 16);
+    B(g, 0.015, 0.003, 0.19, dx - 0.17, 0.762, zz, M.chrome, false); B(g, 0.015, 0.003, 0.20, dx + 0.17, 0.762, zz, M.chrome, false);
+  }
+  C(g, 0.07, 0.05, 0.22, 0, 0.87, 0, M.ceramic, 20);
+  for (let i = 0; i < 7; i++) {
+    const a = i / 7 * Math.PI * 2, s = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), i % 2 ? M.paper : M.accent2);
+    s.position.set(Math.cos(a) * 0.06, 1.02 + (i % 3) * 0.02, Math.sin(a) * 0.06); g.add(s);
   }
   return g;
 }
-const R90 = Math.PI / 2;
-// כיוון: החזית של כל רהיט היא +z, הגב -z. rot=R90 → חזית למזרח, -R90 → למערב, PI → לצפון.
-function bed(w, l) {
+function pendant(parent, x, z, ceilY, drop = 0.75) {
   const g = grp();
-  B(g, w + 0.06, 0.28, l, 0, 0.14, 0, M.oak);
-  B(g, w, 0.24, l - 0.06, 0, 0.40, 0.02, M.linen);
-  B(g, w + 0.04, 0.07, l * 0.62, 0, 0.55, l * 0.18, M.duvet);
-  B(g, w * 0.42, 0.12, 0.38, -w * 0.24, 0.58, -l / 2 + 0.3, M.pillow);
-  B(g, w * 0.42, 0.12, 0.38, w * 0.24, 0.58, -l / 2 + 0.3, M.pillow);
-  B(g, w + 0.3, 1.15, 0.09, 0, 0.575, -l / 2 - 0.045, M.fabricHead);
-  return g;
-}
-function nightstand() {
-  const g = grp();
-  B(g, 0.5, 0.45, 0.4, 0, 0.3, 0, M.walnut);
-  C(g, 0.06, 0.08, 0.3, 0.1, 0.67, 0, M.pot);
-  C(g, 0.12, 0.15, 0.2, 0.1, 0.9, 0, M.light, 20).castShadow = false;
-  return g;
-}
-function sofa(w, d = 0.95, mat = M.fabric) {
-  const g = grp();
-  B(g, w, 0.36, d, 0, 0.22, 0, mat);
-  B(g, w - 0.36, 0.12, d - 0.28, 0, 0.46, 0.1, mat);
-  B(g, w, 0.46, 0.22, 0, 0.6, -d / 2 + 0.11, mat);
-  B(g, 0.18, 0.6, d, -w / 2 + 0.09, 0.32, 0, mat);
-  B(g, 0.18, 0.6, d, w / 2 - 0.09, 0.32, 0, mat);
-  for (let x = -w / 2 + 0.55; x < w / 2 - 0.3; x += 0.75) B(g, 0.42, 0.38, 0.12, x, 0.72, -d / 2 + 0.3, M.cushion);
-  B(g, w, 0.04, d, 0, 0.02, 0, M.blackSteel);
-  return g;
-}
-function chaise(w, l, mat = M.fabric) {
-  const g = grp();
-  B(g, w, 0.36, l, 0, 0.22, 0, mat);
-  B(g, w - 0.1, 0.12, l - 0.1, 0, 0.46, 0, mat);
-  B(g, 0.18, 0.6, l, w / 2 - 0.09, 0.32, 0, mat);
-  return g;
-}
-function coffeeTable(w, d, h = 0.38) {
-  const g = grp();
-  B(g, w, 0.04, d, 0, h, 0, M.walnut);
-  B(g, w - 0.2, h - 0.02, d - 0.2, 0, (h - 0.02) / 2, 0, M.darkStone);
-  C(g, 0.09, 0.09, 0.06, w * 0.25, h + 0.05, 0, M.ceramic);
-  return g;
-}
-function chair() {
-  const g = grp();
-  B(g, 0.46, 0.06, 0.46, 0, 0.46, 0, M.fabric);
-  B(g, 0.46, 0.45, 0.05, 0, 0.72, -0.21, M.fabric);
-  for (const [x, z] of [[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2]]) B(g, 0.03, 0.44, 0.03, x, 0.22, z, M.blackSteel);
-  return g;
-}
-function diningTable(w, d) {
-  const g = grp();
-  B(g, w, 0.05, d, 0, 0.735, 0, M.oak);
-  B(g, 0.08, 0.71, d - 0.3, -w / 2 + 0.35, 0.355, 0, M.blackSteel);
-  B(g, 0.08, 0.71, d - 0.3, w / 2 - 0.35, 0.355, 0, M.blackSteel);
-  const bowl = C(g, 0.22, 0.12, 0.09, 0, 0.805, 0, M.ceramic, 28);
-  return g;
-}
-function pendant(parent, x, z, ceilY, drop = 1.6, w = 1.4) {
-  bx(x - 0.005, x + 0.005, ceilY - drop + 0.1, ceilY, z - 0.005, z + 0.005, M.blackSteel, parent, { cast: false });
-  bx(x - w / 2, x + w / 2, ceilY - drop, ceilY - drop + 0.06, z - 0.04, z + 0.04, M.blackSteel, parent, { cast: false });
-  bx(x - w / 2 + 0.03, x + w / 2 - 0.03, ceilY - drop - 0.01, ceilY - drop, z - 0.025, z + 0.025, M.light, parent, { cast: false });
+  B(g, 0.006, drop - 0.2, 0.006, 0, ceilY - (drop - 0.2) / 2, 0, M.metal, false);
+  const sh = new THREE.Mesh(new THREE.SphereGeometry(0.18, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), M.lampShade);
+  sh.position.y = ceilY - drop + 0.18; g.add(sh);
+  const bl = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 8), M.bulb); bl.position.y = ceilY - drop + 0.16; g.add(bl);
+  place(g, parent, x, 0, z, 0, false);
+  LAMPS.push({ g, x: 0, y: ceilY - drop + 0.1, z: 0, big: true });
 }
 function stool() {
   const g = grp();
-  C(g, 0.19, 0.19, 0.06, 0, 0.74, 0, M.fabricDark);
-  C(g, 0.025, 0.025, 0.7, 0, 0.36, 0, M.blackSteel);
-  C(g, 0.2, 0.2, 0.02, 0, 0.01, 0, M.blackSteel);
+  S(g, 0.38, 0.07, 0.38, 0, 0.76, 0, M.sofaDark, 0.03, 0.3); C(g, 0.022, 0.022, 0.72, 0, 0.37, 0, M.metal, 8); C(g, 0.18, 0.2, 0.02, 0, 0.01, 0, M.metal, 20);
   return g;
 }
-function wardrobe(w, h = 2.6, d = 0.6, mat = M.lacquer) {
-  const g = grp();
-  B(g, w, h, d, 0, h / 2, 0, mat);
+function wardrobe(w, h = 2.6, d = 0.6, mat = M.wood) {
+  const g = grp(); B(g, w, h, d, 0, h / 2, 0, mat);
   const n = Math.max(1, Math.round(w / 0.55));
-  for (let i = 1; i < n; i++) B(g, 0.008, h - 0.1, 0.01, -w / 2 + i * w / n, h / 2, d / 2 + 0.002, M.cut, false);
-  for (let i = 0; i < n; i++) B(g, 0.02, 0.5, 0.02, -w / 2 + (i + 0.5) * w / n + (i % 2 ? -1 : 1) * (w / n / 2 - 0.06), 1.1, d / 2 + 0.015, M.blackSteel, false);
+  for (let i = 1; i < n; i++) B(g, 0.006, h - 0.1, 0.01, -w / 2 + i * w / n, h / 2, d / 2 + 0.002, M.cut, false);
+  for (let i = 0; i < n; i++) B(g, 0.02, 0.5, 0.02, -w / 2 + (i + 0.5) * w / n + (i % 2 ? -1 : 1) * (w / n / 2 - 0.06), 1.1, d / 2 + 0.015, M.metal, false);
   return g;
 }
 function counter(len, opts = {}) {
   const g = grp();
-  B(g, len, 0.1, 0.55, 0, 0.05, -0.02, M.cut);
-  B(g, len, 0.78, 0.62, 0, 0.49, 0, M.lacquer);
-  B(g, len + 0.01, 0.03, 0.65, 0, 0.895, 0.01, M.quartz);
-  for (let x = -len / 2 + 0.6; x < len / 2; x += 0.6) B(g, 0.006, 0.7, 0.005, x, 0.5, 0.311, M.cut, false);
-  if (opts.sink != null) {
-    B(g, 0.7, 0.012, 0.42, opts.sink, 0.906, 0.04, M.blackSteel, false);
-    C(g, 0.015, 0.015, 0.35, opts.sink, 1.08, -0.22, M.chrome);
-    B(g, 0.02, 0.02, 0.22, opts.sink, 1.25, -0.12, M.chrome);
-  }
+  B(g, len, 0.1, 0.55, 0, 0.05, -0.02, M.cut); B(g, len, 0.78, 0.62, 0, 0.49, 0, M.cabinet); B(g, len + 0.01, 0.03, 0.65, 0, 0.895, 0.01, M.counter);
+  for (let x = -len / 2 + 0.6; x < len / 2; x += 0.6) B(g, 0.005, 0.7, 0.005, x, 0.5, 0.311, M.cut, false);
+  if (opts.sink != null) { B(g, 0.7, 0.012, 0.42, opts.sink, 0.906, 0.04, M.metal, false); C(g, 0.015, 0.015, 0.35, opts.sink, 1.08, -0.22, M.metal, 10); B(g, 0.02, 0.02, 0.22, opts.sink, 1.25, -0.12, M.metal); }
   if (opts.cook != null) B(g, 0.8, 0.01, 0.52, opts.cook, 0.915, 0.02, M.screen, false);
   return g;
 }
 function tallUnit(len, h) {
-  const g = grp();
-  B(g, len, h, 0.62, 0, h / 2, 0, M.lacquer);
-  for (let x = -len / 2 + 0.6; x < len / 2; x += 0.6) B(g, 0.006, h - 0.1, 0.005, x, h / 2, 0.311, M.cut, false);
-  B(g, 0.6, 0.6, 0.006, len / 2 - 0.9, 1.25, 0.312, M.screen, false);
-  B(g, 0.6, 0.45, 0.006, len / 2 - 0.9, 0.75, 0.312, M.screen, false);
+  const g = grp(); B(g, len, h, 0.62, 0, h / 2, 0, M.cabinet);
+  for (let x = -len / 2 + 0.6; x < len / 2; x += 0.6) B(g, 0.005, h - 0.1, 0.005, x, h / 2, 0.311, M.cut, false);
+  B(g, 0.6, 0.6, 0.006, len / 2 - 0.9, 1.25, 0.312, M.screen, false); B(g, 0.6, 0.45, 0.006, len / 2 - 0.9, 0.75, 0.312, M.screen, false);
   return g;
 }
 function island(len, dep) {
   const g = grp();
-  B(g, len - 0.06, 0.86, dep - 0.25, 0, 0.43, -0.1, M.walnut);
-  B(g, len, 0.04, dep, 0, 0.9, 0, M.quartz);
-  B(g, 0.04, 0.88, dep, -len / 2 + 0.02, 0.44, 0, M.quartz);
-  B(g, 0.04, 0.88, dep, len / 2 - 0.02, 0.44, 0, M.quartz);
-  B(g, 0.75, 0.012, 0.5, 0, 0.926, -0.15, M.screen, false);
+  B(g, len - 0.06, 0.86, dep - 0.25, 0, 0.43, -0.1, M.woodDark); B(g, len, 0.04, dep, 0, 0.9, 0, M.counter);
+  B(g, 0.04, 0.88, dep, -len / 2 + 0.02, 0.44, 0, M.counter); B(g, 0.04, 0.88, dep, len / 2 - 0.02, 0.44, 0, M.counter);
+  // פרטים במטבח: קערת פירות, קרש חיתוך, קנקן
+  C(g, 0.16, 0.09, 0.08, -0.35, 0.96, -0.05, M.woodDark, 24);
+  [[0.0, 0.0, M.fruitR], [0.07, 0.03, M.fruitY], [-0.06, 0.04, M.fruitG], [0.02, -0.07, M.fruitR], [-0.04, -0.04, M.fruitY]].forEach(([a, b, m]) => {
+    const s = new THREE.Mesh(new THREE.SphereGeometry(0.038, 14, 10), m); s.position.set(-0.35 + a, 1.02, -0.05 + b); s.castShadow = true; g.add(s);
+  });
+  B(g, 0.42, 0.02, 0.28, 0.45, 0.93, 0.05, M.wood); C(g, 0.06, 0.05, 0.22, 0.75, 1.03, -0.15, M.ceramic, 16);
   return g;
 }
 function toilet() {
-  const g = grp();
-  const bowl = C(g, 0.19, 0.16, 0.36, 0, 0.42, 0.04, M.ceramic, 24); bowl.scale.set(1, 1, 1.45);
-  B(g, 0.36, 0.03, 0.5, 0, 0.615, 0.06, M.ceramic);
-  B(g, 0.22, 0.14, 0.01, 0, 1.05, -0.22, M.chrome);
+  const g = grp(); const b = C(g, 0.19, 0.16, 0.36, 0, 0.42, 0.04, M.ceramic, 24); b.scale.set(1, 1, 1.45);
+  S(g, 0.36, 0.03, 0.5, 0, 0.615, 0.06, M.ceramic, 0.012, 0); B(g, 0.22, 0.14, 0.01, 0, 1.05, -0.22, M.chrome);
   return g;
 }
-function vanity(len, sinks = 2, withMirror = true) {
-  const g = grp();
-  B(g, len, 0.42, 0.48, 0, 0.62, 0, M.walnut);
-  B(g, len, 0.03, 0.5, 0, 0.845, 0.01, M.quartz);
+function vanity(len, sinks = 2, mirror = true) {
+  const g = grp(); B(g, len, 0.42, 0.48, 0, 0.62, 0, M.woodDark); B(g, len, 0.03, 0.5, 0, 0.845, 0.01, M.counter);
   for (let i = 0; i < sinks; i++) {
-    const x = -len / 2 + (i + 0.5) * len / sinks;
-    const s = C(g, 0.2, 0.17, 0.12, x, 0.92, 0.04, M.ceramic, 28); s.scale.set(1, 1, 0.8);
-    C(g, 0.014, 0.014, 0.28, x, 1.0, -0.19, M.chrome);
-    B(g, 0.02, 0.02, 0.14, x, 1.13, -0.13, M.chrome);
+    const x = -len / 2 + (i + 0.5) * len / sinks; const s = C(g, 0.2, 0.17, 0.12, x, 0.92, 0.04, M.ceramic, 28); s.scale.set(1, 1, 0.8);
+    C(g, 0.014, 0.014, 0.28, x, 1.0, -0.19, M.metal, 10); B(g, 0.02, 0.02, 0.14, x, 1.13, -0.13, M.metal);
   }
-  if (withMirror) {
-    B(g, len, 0.95, 0.02, 0, 1.62, -0.235, M.mirror);
-    B(g, len + 0.04, 0.02, 0.03, 0, 2.11, -0.23, M.light, false);
-  }
+  if (mirror) { B(g, len, 0.95, 0.02, 0, 1.62, -0.235, M.mirror); B(g, len + 0.04, 0.02, 0.03, 0, 2.11, -0.23, M.led, false); }
   return g;
 }
 function shower(parent, x1, x2, z1, z2, y, glass) {
-  // ראש גשם מהתקרה, ניקוז קווי, מחיצות זכוכית
   const cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
   bx(cx - 0.18, cx + 0.18, y + NET - 0.02, y + NET - 0.005, cz - 0.18, cz + 0.18, M.chrome, parent, { cast: false });
-  bx(x1 + 0.05, x2 - 0.05, y - 0.005, y + 0.002, z2 - 0.08, z2 - 0.04, M.blackSteel, parent, { cast: false });
-  glass.forEach(([a, b, c, d]) => {
-    bx(a, b, y, y + 2.1, c, d, M.glass, parent, { cast: false, glass: true, collide: true });
-    bx(a, b, y + 2.08, y + 2.1, c, d, M.blackSteel, parent);
-  });
+  bx(x1 + 0.05, x2 - 0.05, y - 0.005, y + 0.002, z2 - 0.08, z2 - 0.04, M.metal, parent, { cast: false });
+  glass.forEach(([a, b, c, d]) => { bx(a, b, y, y + 2.1, c, d, M.glass, parent, { cast: false, collide: true, keep: true }); bx(a, b, y + 2.08, y + 2.1, c, d, M.metal, parent); });
 }
-function plant(h = 1.2, mat = M.leaf) {
-  const g = grp();
-  C(g, 0.2, 0.16, 0.42, 0, 0.21, 0, M.pot);
-  const s = new THREE.Mesh(new THREE.IcosahedronGeometry(h * 0.32, 1), mat);
-  s.position.set(0, 0.42 + h * 0.45, 0); s.scale.set(1, 1.35, 1); s.castShadow = true; g.add(s);
+function plant(h = 1.2, mat = M.leaf, potMat = M.pot, seed = 1) {
+  // עציץ ואשכול עלים מוארכים
+  const g = grp(), r = rng(seed);
+  C(g, 0.18, 0.14, 0.38, 0, 0.19, 0, potMat, 20); C(g, 0.16, 0.16, 0.02, 0, 0.375, 0, M.soil, 16);
+  const leafGeo = new THREE.SphereGeometry(1, 8, 6), n = MOBILE ? 10 : 18;
+  for (let i = 0; i < n; i++) {
+    const a = r() * Math.PI * 2, t = 0.25 + r() * 0.75, L = h * (0.22 + r() * 0.18);
+    const m = new THREE.Mesh(leafGeo, r() < 0.5 ? mat : M.leafDark);
+    m.scale.set(L * 0.28, 0.012, L * 0.5);
+    m.position.set(Math.cos(a) * 0.16 * t, 0.4 + h * 0.45 * t + 0.05, Math.sin(a) * 0.16 * t);
+    m.rotation.set(-0.9 + r() * 0.6, -a + Math.PI / 2, 0, 'YXZ'); m.translateZ(L * 0.45); m.castShadow = true; g.add(m);
+  }
+  C(g, 0.012, 0.012, h * 0.5, 0, 0.4 + h * 0.25, 0, M.trunk, 6);
   return g;
 }
-function tree(h = 4, mat = M.leaf, crown = 1.4) {
-  const g = grp();
-  C(g, 0.09, 0.14, h * 0.55, 0, h * 0.275, 0, M.trunk, 10);
-  for (const [x, y, z, r] of [[0, h * 0.72, 0, crown], [0.6, h * 0.62, 0.3, crown * 0.7], [-0.5, h * 0.66, -0.3, crown * 0.75], [0.1, h * 0.9, -0.2, crown * 0.6]]) {
-    const s = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), mat);
-    s.position.set(x, y, z); s.castShadow = true; s.receiveShadow = true; g.add(s);
+function tree(h = 4, mat = M.leaf, crown = 1.4, seed = 3) {
+  const g = grp(), r = rng(seed);
+  C(g, 0.09, 0.15, h * 0.55, 0, h * 0.275, 0, M.trunk, 10);
+  const geo = new THREE.IcosahedronGeometry(1, 2);
+  for (let i = 0; i < 6; i++) {
+    const s = new THREE.Mesh(geo, i % 2 ? mat : M.leafDark), rr = crown * (0.55 + r() * 0.45);
+    s.scale.set(rr, rr * 0.8, rr); s.position.set((r() - 0.5) * crown, h * (0.62 + r() * 0.25), (r() - 0.5) * crown); s.castShadow = true; g.add(s);
   }
   return g;
 }
-function shelf(w, h, d = 0.4, mat = M.oak) {
-  const g = grp();
+function shelf(w, h, d = 0.35, mat = M.wood, seed = 2) {
+  const g = grp(), r = rng(seed);
   B(g, 0.03, h, d, -w / 2, h / 2, 0, mat); B(g, 0.03, h, d, w / 2, h / 2, 0, mat);
   for (let y = 0.05; y < h; y += 0.38) B(g, w, 0.025, d, 0, y, 0, mat);
-  const r = rng(Math.round(w * 100 + h * 10));
-  for (let y = 0.075; y < h - 0.3; y += 0.38) for (let x = -w / 2 + 0.08; x < w / 2 - 0.1; x += 0.06 + r() * 0.08) {
-    if (r() < 0.35) continue;
-    const bh = 0.18 + r() * 0.12;
-    B(g, 0.04, bh, d * 0.7, x, y + bh / 2, 0, [M.terracotta, M.sage, M.fabricDark, M.linen, M.kids1][Math.floor(r() * 5)], false);
+  for (let y = 0.075; y < h - 0.3; y += 0.38) for (let x = -w / 2 + 0.08; x < w / 2 - 0.1; x += 0.05 + r() * 0.06) {
+    if (r() < 0.3) { x += 0.12; if (r() < 0.4) C(g, 0.05, 0.04, 0.16, x, y + 0.09, 0, M.ceramic, 12); continue; }
+    const bh = 0.18 + r() * 0.1; B(g, 0.035, bh, d * 0.7, x, y + bh / 2, 0, [M.bookA, M.bookB, M.bookC, M.paper][Math.floor(r() * 4)], false);
   }
   return g;
 }
-function rug(parent, x1, x2, z1, z2, y, mat = M.rug) { bx(x1, x2, y, y + 0.012, z1, z2, mat, parent, { cast: false }); }
+function rug(parent, x1, x2, z1, z2, y, mat = M.rug) { S(parent, x2 - x1, 0.014, z2 - z1, (x1 + x2) / 2, y + 0.007, (z1 + z2) / 2, mat, 0.006, 0); }
 function desk(w = 1.6, d = 0.75) {
-  const g = grp();
-  B(g, w, 0.035, d, 0, 0.74, 0, M.oak);
-  B(g, 0.04, 0.72, d - 0.1, -w / 2 + 0.05, 0.36, 0, M.blackSteel);
-  B(g, 0.04, 0.72, d - 0.1, w / 2 - 0.05, 0.36, 0, M.blackSteel);
-  B(g, 0.6, 0.36, 0.02, 0, 1.0, -d / 2 + 0.15, M.screen);
-  B(g, 0.04, 0.2, 0.04, 0, 0.84, -d / 2 + 0.15, M.blackSteel);
+  const g = grp(); B(g, w, 0.035, d, 0, 0.74, 0, M.wood);
+  B(g, 0.04, 0.72, d - 0.1, -w / 2 + 0.05, 0.36, 0, M.metal); B(g, 0.04, 0.72, d - 0.1, w / 2 - 0.05, 0.36, 0, M.metal);
+  C(g, 0.06, 0.07, 0.02, w / 2 - 0.2, 0.77, -d / 2 + 0.15, M.metal, 12); C(g, 0.01, 0.01, 0.35, w / 2 - 0.2, 0.95, -d / 2 + 0.15, M.metal, 6);
+  const sh = C(g, 0.06, 0.09, 0.1, w / 2 - 0.2, 1.12, -d / 2 + 0.2, M.lampShade, 16); sh.castShadow = false;
+  B(g, 0.32, 0.02, 0.24, -0.2, 0.77, 0, M.screen); B(g, 0.32, 0.22, 0.01, -0.2, 0.89, -0.12, M.screen);
   return g;
 }
 function officeChair() {
-  const g = grp();
-  B(g, 0.5, 0.08, 0.48, 0, 0.47, 0, M.fabricDark);
-  B(g, 0.48, 0.55, 0.06, 0, 0.82, -0.22, M.fabricDark);
-  C(g, 0.03, 0.03, 0.4, 0, 0.24, 0, M.chrome);
-  C(g, 0.3, 0.3, 0.03, 0, 0.04, 0, M.blackSteel);
+  const g = grp(); S(g, 0.5, 0.08, 0.48, 0, 0.47, 0, M.sofaDark, 0.03, 0.3); S(g, 0.48, 0.55, 0.06, 0, 0.82, -0.22, M.sofaDark, 0.03, 0.15);
+  C(g, 0.03, 0.03, 0.4, 0, 0.24, 0, M.chrome, 8); C(g, 0.3, 0.3, 0.03, 0, 0.04, 0, M.metal, 16);
   return g;
 }
-function tv(w = 1.65) {
+function artwork(parent, img, x, y, z, rot, w, h) {
+  // תמונה אמיתית במסגרת עם פספרטו. rot: הכיוון שהתמונה פונה אליו (0 = דרום)
   const g = grp();
-  B(g, w, w * 0.57, 0.04, 0, 0, 0, M.screen);
-  return g;
+  B(g, w, h, 0.03, 0, 0, 0, M.frame); B(g, w - 0.04, h - 0.04, 0.032, 0, 0, 0.001, M.paper, false);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.16, h - 0.16), PHOTO_M[img]); m.position.z = 0.0175; m.userData.keep = true; g.add(m);
+  place(g, parent, x, y, z, rot, false);
 }
-function washer() {
-  const g = grp();
-  B(g, 0.6, 0.85, 0.6, 0, 0.425, 0, M.ceramic);
-  const d = C(g, 0.17, 0.17, 0.02, 0, 0.45, 0.3, M.screen, 28); d.rotation.x = R90;
-  return g;
-}
-function outdoorSofa(w) {
-  const g = grp();
-  B(g, w, 0.3, 0.9, 0, 0.2, 0, M.teak);
-  B(g, w - 0.1, 0.14, 0.75, 0, 0.42, 0.05, M.cushion);
-  B(g, w, 0.4, 0.14, 0, 0.55, -0.38, M.teak);
-  B(g, w - 0.2, 0.36, 0.14, 0, 0.66, -0.28, M.cushion);
-  return g;
-}
-function sunbed() {
-  const g = grp();
-  B(g, 0.7, 0.3, 1.95, 0, 0.18, 0, M.teak);
-  B(g, 0.66, 0.08, 1.4, 0, 0.37, 0.25, M.cushion);
-  const back = B(g, 0.66, 0.08, 0.6, 0, 0.55, -0.62, M.cushion); back.rotation.x = -0.7;
-  return g;
-}
-function beanbag(mat) {
-  const g = grp();
-  const s = new THREE.Mesh(new THREE.SphereGeometry(0.4, 20, 14), mat);
-  s.scale.set(1, 0.55, 1); s.position.y = 0.22; s.castShadow = true; g.add(s);
-  return g;
+function towel(parent, x, y, z, rot, w = 0.5, h = 0.7) { const g = grp(); S(g, w, h, 0.045, 0, 0, 0, M.towel, 0.02, 0.15); place(g, parent, x, y, z, rot, false); }
+function floorLamp(parent, x, z, y) {
+  const g = grp(); C(g, 0.16, 0.18, 0.025, 0, 0.012, 0, M.metal, 20); C(g, 0.012, 0.012, 1.45, 0, 0.74, 0, M.metal, 8);
+  const sh = C(g, 0.17, 0.22, 0.28, 0, 1.55, 0, M.lampShade, 28); sh.castShadow = false;
+  place(g, parent, x, y, z, 0, true); LAMPS.push({ g, x: 0, y: 1.5, z: 0 });
 }
 
-// --- סלון, מטבח ופינת אוכל
-place(tallUnit(1.6, NET), g0, 0.31, GY, 11.1, R90);
-bx(0, 0.02, 0.92, 1.6, 11.9, 15.6, M.quartz, g0, { cast: false });
-place(counter(3.7, { sink: -0.6, cook: 1.1 }), g0, 0.31, GY, 13.75, R90);
-bx(0.0, 0.55, 2.2, 2.32, 13.55, 14.35, M.blackSteel, g0);            // מנדף
-bx(0.0, 0.3, 2.32, NET, 13.75, 14.15, M.lacquer, g0);
-place(island(2.5, 1.0), g0, 2.05, GY, 13.65, R90);
-[12.9, 13.65, 14.4].forEach((z) => place(stool(), g0, 2.85, GY, z, 0, false));
-place(diningTable(2.4, 1.0), g0, 4.6, GY, 13.7, 0);
-[-0.75, 0, 0.75].forEach((dx) => { place(chair(), g0, 4.6 + dx, GY, 13.0, 0, false); place(chair(), g0, 4.6 + dx, GY, 14.4, Math.PI, false); });
-pendant(G.ceilG, 4.6, 13.7, NET, 1.75, 1.6);
-rug(g0, 6.8, 9.9, 12.5, 15.3, GY);
-place(sofa(2.8), g0, 8.3, GY, 14.88, Math.PI);
-place(chaise(0.9, 1.25), g0, 6.95, GY, 13.85, 0);
-place(coffeeTable(1.2, 0.7), g0, 8.5, GY, 13.45);
-place(sofa(0.9, 0.85, M.sage), g0, 10.0, GY, 13.4, -R90);
-const media = grp(); B(media, 2.6, 0.42, 0.45, 0, 0.45, 0, M.walnut); place(media, g0, 8.3, GY, 11.77, 0);
-place(tv(1.65), g0, 8.3, GY + 1.55, 11.565, 0, false);
-place(plant(1.6), g0, 9.95, GY, 15.5, 0);
-place(plant(1.1, M.leafDark), g0, 5.5, GY, 11.9, 0);
-// עמוד RHS
-bx(10.18, 10.33, GY, NET, 15.69, 15.84, M.blackSteel, g0, { collide: true });
-// מבואת כניסה
-const bench = grp(); B(bench, 1.2, 0.42, 0.4, 0, 0.21, 0, M.oak); place(bench, g0, 3.6, GY, 8.56, 0);
-bx(3.0, 4.2, 1.2, 2.2, 8.35, 8.37, M.mirror, g0, { cast: false });
-place(plant(1.3), g0, 0.45, GY, 10.0, 0);
-// פס תאורה עקיפה בגבס של הסלון + גופי תאורה שקועים
-bx(0.2, 10.26, NET - 0.012, NET - 0.002, 11.62, 11.7, M.light, G.ceilG, { cast: false });
-bx(10.3, 10.38, NET - 0.012, NET - 0.002, 11.7, 15.9, M.light, G.ceilG, { cast: false });
-function downlights(parent, pts, y) { pts.forEach(([x, z]) => bx(x - 0.045, x + 0.045, y - 0.006, y, z - 0.045, z + 0.045, M.light, parent, { cast: false })); }
-function acSlot(parent, x1, x2, z, y) { bx(x1, x2, y - 0.006, y, z - 0.025, z + 0.025, M.slot, parent, { cast: false }); }
-downlights(G.ceilG, [[1.5, 9.4], [3.5, 9.4], [1.2, 12.4], [1.2, 15.0], [6.5, 15.2], [10.0, 12.2], [3.6, 6.2], [1.6, 6.2], [5.0, 7.0], [6.4, 7.0], [3.6, 7.5]], NET);
-acSlot(G.ceilG, 1.0, 5.0, 15.7, NET); acSlot(G.ceilG, 6.6, 10.0, 15.7, NET); acSlot(G.ceilG, 2.6, 5.2, 0.3, NET); acSlot(G.ceilG, 6.6, 9.8, 8.8, NET); acSlot(G.ceilG, 6.5, 9.6, 3.2, NET);
+function buildFurniture() {
+  const g0 = G.ground, g1 = G.base, go = G.out, gc = G.ceilG;
+  // --- מטבח (לפי התוכנית): ארונות גבוהים בצפון, קו עבודה במערב, אי באמצע
+  place(tallUnit(2.87, NET), g0, 1.435, GY, 11.69, 0);
+  bx(0, 0.02, 0.92, 1.6, 12.3, 15.6, M.counter, g0, { cast: false });
+  place(counter(3.3, { sink: -0.65, cook: 0.6 }), g0, 0.31, GY, 13.95, R90);
+  bx(0.0, 0.55, 2.2, 2.32, 13.0, 13.7, M.metal, g0); bx(0.0, 0.3, 2.32, NET, 13.15, 13.55, M.cabinet, g0);
+  place(island(2.1, 0.9), g0, 2.30, GY, 14.10, R90);
+  [13.4, 14.1, 14.8].forEach((z) => place(stool(), g0, 3.05, GY, z, -R90, false));
+  // --- פינת אוכל
+  place(diningTable(2.4, 1.0), g0, 4.55, GY, 14.15, 0);
+  [-0.75, 0, 0.75].forEach((dx) => { place(chair(), g0, 4.55 + dx, GY, 13.42, 0, false); place(chair(), g0, 4.55 + dx, GY, 14.88, Math.PI, false); });
+  pendant(gc, 3.95, 14.15, NET); pendant(gc, 5.15, 14.15, NET);
+  // --- סלון
+  rug(g0, 6.5, 9.5, 13.0, 15.5, GY);
+  place(sofa(2.7, 0.98), g0, 7.95, GY, 15.90, Math.PI);
+  place(armchair(), g0, 9.75, GY, 13.25, -R90 - 0.35); place(armchair(), g0, 6.45, GY, 13.35, R90 + 0.35);
+  place(coffeeTable(0.5), g0, 8.0, GY, 14.25);
+  const media = grp(); B(media, 2.6, 0.42, 0.45, 0, 0.41, 0, M.woodDark); B(media, 1.45, 0.83, 0.035, 0, 1.45, -0.21, M.screen);
+  C(media, 0.06, 0.05, 0.3, -1.0, 0.77, 0, M.ceramic, 16); B(media, 0.3, 0.12, 0.2, 0.95, 0.68, 0, M.bookA);
+  place(media, g0, 8.2, GY, 12.22, 0);
+  placePlant(plant(1.7, M.leaf, M.potDark, 4), g0, 6.30, GY, 15.95);
+  placePlant(plant(1.3, M.leafDark, M.pot, 5), g0, 10.05, GY, 12.45);
+  floorLamp(g0, 9.65, 15.85, GY);
+  artwork(g0, 0, 7.95, 1.95, 16.42, Math.PI, 1.5, 1.0);
+  // --- מבואה
+  const bench = grp(); B(bench, 1.2, 0.4, 0.4, 0, 0.2, 0, M.wood); S(bench, 1.1, 0.06, 0.36, 0, 0.43, 0, M.sofa, 0.025, 0.3);
+  place(bench, g0, 3.97, GY, 9.66, 0);
+  artwork(g0, 1, 3.97, 1.6, 9.47, 0, 1.0, 0.7);
+  placePlant(plant(1.4, M.leaf, M.potDark, 6), g0, 1.75, GY, 11.0);
+  // --- יחידת הורים
+  place(bed(1.8, 2.0), g0, 3.67, GY, 1.9, R90);
+  place(nightstand(), g0, 2.84, GY, 0.62, R90); place(nightstand(), g0, 2.84, GY, 3.18, R90);
+  rug(g0, 3.1, 5.5, 0.4, 3.4, GY, M.rug);
+  const ot = grp(); S(ot, 1.2, 0.42, 0.45, 0, 0.21, 0, M.headboard, 0.06, 0.2); place(ot, g0, 5.0, GY, 1.9, R90);
+  place(armchair(M.accent), g0, 5.40, GY, 3.55, -R90 - 0.6);
+  placePlant(plant(1.2, M.leaf, M.pot, 7), g0, 5.65, GY, 0.35);
+  artwork(g0, 2, 2.575, 1.95, 1.9, R90, 1.4, 0.95);
+  place(wardrobe(2.72, NET - 0.02, 0.60), g0, 3.26, GY, 6.95, Math.PI);
+  place(wardrobe(1.50, NET - 0.02, 0.60), g0, 0.30, GY, 6.50, R90);
+  rug(g0, 0.8, 4.4, 5.85, 6.55, GY, M.rug);
+  bx(0.6, 4.4, NET - 0.012, NET - 0.002, 6.18, 6.24, M.led, gc, { cast: false });
+  // חדר רחצה הורים
+  bx(0.0, 0.25, GY, NET, 3.47, 4.05, M.bathWall, g0, { collide: true });
+  place(toilet(), g0, 0.50, GY, 3.80, R90);
+  shower(g0, 0.0, 1.05, 4.37, 5.65, GY, [[0.25, 1.05, 4.36, 4.38], [1.04, 1.06, 4.37, 5.05]]);
+  place(vanity(1.70, 2), g0, 2.22, GY, 4.45, -R90);
+  for (let y = 0.85; y < 1.6; y += 0.12) bx(0.95, 1.45, y, y + 0.02, 3.48, 3.52, M.chrome, g0, { cast: false });
+  towel(g0, 1.2, 1.2, 3.56, 0);
+  place(plant(0.5, M.leaf, M.ceramic, 8), g0, 2.25, GY + 0.86, 3.85, 0, false);
+  // שירותי אורחים
+  place(toilet(), g0, 3.97, GY, 7.62, 0); place(vanity(0.45, 1, false), g0, 3.57, GY, 8.6, R90);
+  // ממ"ד (חדר עבודה)
+  place(desk(1.5, 0.65), g0, 8.15, GY, 3.78, 0); place(officeChair(), g0, 8.15, GY, 4.4, Math.PI, false);
+  place(sofa(1.6, 0.9, M.sofa, 2), g0, 6.71, GY, 4.35, R90);
+  place(shelf(1.0, 2.0), g0, 9.6, GY, 3.63, 0);
+  artwork(g0, 6, 6.275, 1.7, 4.35, R90, 1.2, 0.8);
+  // חדר רחצה כללי
+  shower(g0, 7.27, 8.47, 6.40, 7.55, GY, [[7.27, 7.97, 7.54, 7.56]]);
+  place(vanity(1.6, 2), g0, 8.65, GY, 8.50, Math.PI); place(toilet(), g0, 10.18, GY, 8.30, -R90);
+  const wsh = grp(); B(wsh, 0.6, 0.85, 0.6, 0, 0.425, 0, M.ceramic); const dr = C(wsh, 0.17, 0.17, 0.02, 0, 0.45, 0.3, M.screen, 24); dr.rotation.x = R90;
+  place(wsh, g0, 10.13, GY, 6.73, -R90);
+  towel(g0, 9.6, 1.4, 8.715, Math.PI);
+  // חדר שינה 2
+  place(bed(1.6, 2.0), g0, 7.21, GY, 10.5, R90); place(nightstand(), g0, 6.40, GY, 11.48, R90);
+  place(wardrobe(2.0, 2.6, 0.6), g0, 9.3, GY, 11.44, Math.PI);
+  place(desk(1.2, 0.6), g0, 10.16, GY, 9.8, -R90); place(officeChair(), g0, 9.55, GY, 9.8, R90, false);
+  artwork(g0, 3, 6.135, 1.95, 10.5, R90, 0.9, 0.65);
+  rug(g0, 7.4, 9.2, 9.2, 11.0, GY, M.rug);
+  // תאורה שקועה ופסי לד
+  bx(0.2, 10.26, NET - 0.012, NET - 0.002, 12.07, 12.13, M.led, gc, { cast: false });
+  [[1.5, 10.2], [4.0, 10.2], [1.2, 12.9], [1.2, 15.6], [6.6, 15.8], [10.0, 12.6], [5.9, 6.6], [5.9, 8.0], [3.6, 2.0], [4.8, 4.8], [8.4, 4.8], [8.8, 7.5], [8.3, 10.3], [1.2, 4.6]]
+    .forEach(([x, z]) => bx(x - 0.045, x + 0.045, NET - 0.006, NET, z - 0.045, z + 0.045, M.downlight, gc, { cast: false }));
 
-// --- יחידת הורים
-place(bed(1.8, 2.0), g0, 3.23, GY, 1.9, R90);
-place(nightstand(), g0, 2.39, GY, 0.6, R90);
-place(nightstand(), g0, 2.39, GY, 3.2, R90);
-const footBench = grp(); B(footBench, 1.4, 0.45, 0.42, 0, 0.225, 0, M.fabricHead); place(footBench, g0, 4.5, GY, 1.9, -R90);
-place(sofa(0.85, 0.85, M.sage), g0, 5.15, GY, 2.6, -R90 - 0.4);
-rug(g0, 3.6, 5.4, 0.5, 3.3, GY, M.rugDark);
-// חדר ארונות: ארונות גב-אל-גב כמחיצה, ומדפים לאורך הקיר הדרומי
-place(wardrobe(2.55, NET - 0.02, 0.55, M.oak), g0, 3.415, GY, 4.125, 0);
-place(wardrobe(1.16, NET - 0.02, 0.45, M.oak), g0, 2.72, GY, 5.425, Math.PI);
-place(wardrobe(1.29, NET - 0.02, 0.45, M.oak), g0, 4.945, GY, 5.425, Math.PI);
-bx(2.14, 2.16, 0.5, 2.3, 4.45, 5.15, M.mirror, g0, { cast: false });
-bx(2.2, 4.62, NET - 0.01, NET - 0.002, 4.75, 4.85, M.light, G.ceilG, { cast: false });
-// חדר רחצה הורים 2.46x2.18
-bx(-0.52, -0.32, GY, NET, 3.47, 4.37, M.bathWall, g0, { collide: true });     // פיר ונטה
-place(toilet(), g0, -0.02, GY, 3.92, R90);
-shower(g0, -0.52, 0.43, 4.37, 5.65, GY, [[-0.32, 0.43, 4.36, 4.38], [0.42, 0.44, 4.37, 5.0]]);
-bx(-0.52, -0.40, 1.1, 1.13, 4.7, 5.4, M.quartz, g0);                           // מדף אבן במקלחת
-place(vanity(1.7, 2), g0, 1.70, GY, 4.45, -R90);
-for (let y = 0.85; y < 1.6; y += 0.12) bx(0.4, 0.9, y, y + 0.02, 3.49, 3.53, M.chrome, g0, { cast: false }); // מחמם מגבות
-// מעבר + שירותי אורחים
-place(toilet(), g0, 3.6, GY, 7.0, 0);
-place(vanity(0.45, 1, false), g0, 3.2, GY, 7.85, R90);
-bx(2.95, 2.97, 1.2, 2.0, 7.6, 8.1, M.mirror, g0, { cast: false });
-
-// --- ממ"ד
-place(desk(1.5, 0.65), g0, 7.6, GY, 3.25, 0);
-place(officeChair(), g0, 7.6, GY, 3.8, Math.PI, false);
-place(sofa(1.9, 0.9, M.fabricHead), g0, 6.36, GY, 4.4, R90);
-place(shelf(1.0, 2.0, 0.35), g0, 9.4, GY, 3.08, 0);
-
-// --- חדר רחצה כללי
-shower(g0, 7.27, 8.47, 5.95, 7.05, GY, [[7.27, 7.97, 7.04, 7.06]]);
-place(vanity(1.6, 2), g0, 9.1, GY, 8.05, Math.PI);
-place(toilet(), g0, 9.9, GY, 6.2, 0);
-
-// --- חדר שינה 2
-place(bed(1.6, 2.0), g0, 7.21, GY, 10.0, R90);
-place(nightstand(), g0, 6.37, GY, 11.06, R90);
-place(wardrobe(1.9, 2.6, 0.6), g0, 9.45, GY, 10.99, Math.PI);
-place(desk(1.2, 0.6), g0, 10.16, GY, 9.9, -R90);
-place(officeChair(), g0, 9.6, GY, 9.9, R90, false);
-
-// --- מרתף
-// מיני בר
-place(counter(1.6, { sink: 0.3 }), g1, 0.31, BY, 1.6, R90);
-bx(0, 0.35, BY + 1.5, BY + 1.53, 0.8, 2.4, M.oak, g1);
-bx(0, 0.35, BY + 1.9, BY + 1.93, 0.8, 2.4, M.oak, g1);
-bx(0, 0.02, BY + 0.92, BY + 1.5, 0.8, 2.4, M.darkStone, g1, { cast: false });
-place(stool(), g1, 0.95, BY, 1.2, 0, false); place(stool(), g1, 0.95, BY, 2.0, 0, false);
-// מרחב משפחה
-rug(g1, 1.9, 4.8, 3.4, 6.2, BY, M.rugDark);
-place(sofa(2.6, 0.95, M.fabricDark), g1, 2.0, BY, 4.8, R90);
-place(coffeeTable(1.1, 0.7), g1, 3.6, BY, 4.8, R90);
-const media2 = grp(); B(media2, 2.2, 0.42, 0.42, 0, 0.45, 0, M.walnut); place(media2, g1, 5.28, BY, 5.0, -R90);
-place(tv(1.85), g1, 5.47, BY + 1.5, 5.0, -R90, false);
-place(plant(1.3), g1, 0.45, BY, 6.2, 0);
-// חדר משחקים
-rug(g1, 2.6, 5.0, -0.5, 2.1, BY, std({ color: 0xd7d0c0, roughness: 1 }));
-const kt = grp(); B(kt, 0.9, 0.03, 0.6, 0, 0.5, 0, M.oak); [[-0.4, -0.25], [0.4, -0.25], [-0.4, 0.25], [0.4, 0.25]].forEach(([x, z]) => B(kt, 0.04, 0.5, 0.04, x, 0.25, z, M.oak));
-place(kt, g1, 3.8, BY, 0.8, 0);
-[[3.4, 0.35], [4.2, 0.35], [3.4, 1.25], [4.2, 1.25]].forEach(([x, z], i) => { const c = grp(); B(c, 0.32, 0.04, 0.32, 0, 0.3, 0, [M.kids1, M.kids2, M.kids3, M.kids2][i]); B(c, 0.32, 0.3, 0.03, 0, 0.45, -0.15, [M.kids1, M.kids2, M.kids3, M.kids2][i]); B(c, 0.28, 0.3, 0.28, 0, 0.14, 0, M.oak); place(c, g1, x, BY, z, i < 2 ? 0 : Math.PI, false); });
-place(shelf(1.8, 1.2, 0.35), g1, 2.24, BY, 0.6, R90);
-place(beanbag(M.kids2), g1, 4.8, BY, -0.3, 0);
-place(beanbag(M.kids3), g1, 4.9, BY, 1.9, 0);
-const tent = grp(); const cone = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.5, 4), std({ color: 0xf0e6d6, roughness: 1 })); cone.position.y = 0.75; cone.castShadow = true; tent.add(cone); place(tent, g1, 2.8, BY, -0.3, 0.5);
-// חדרי רחצה במרתף
-place(vanity(0.85, 1, false), g1, 7.425, BY, 3.04, 0);
-place(toilet(), g1, 7.6, BY, 4.0, -R90);
-shower(g1, 6.25, 7.85, 4.45, 5.60, BY, [[6.25, 7.15, 4.44, 4.46]]);
-place(vanity(0.8, 1), g1, 9.1, BY, 4.6, R90);
-place(toilet(), g1, 10.2, BY, 4.35, -R90);
-shower(g1, 8.86, 10.46, 2.80, 3.95, BY, [[9.4, 10.46, 3.94, 3.96]]);
-// סטודיו
-rug(g1, 7.2, 9.6, 6.9, 9.2, BY);
-place(sofa(2.2, 0.9), g1, 7.6, BY, 6.15, 0);
-place(coffeeTable(1.0, 0.6), g1, 7.6, BY, 7.25);
-place(desk(1.8, 0.8), g1, 10.06, BY, 7.65, -R90);
-place(officeChair(), g1, 9.4, BY, 7.65, R90, false);
-place(shelf(2.4, 2.3, 0.35), g1, 7.8, BY, 9.63, Math.PI);
-place(plant(1.4), g1, 6.6, BY, 9.4, 0);
-// חדר שירות ומחסן
-place(washer(), g1, 3.1, BY, 10.26, Math.PI);
-place(washer(), g1, 3.75, BY, 10.26, Math.PI);
-place(counter(0.6, { sink: 0 }), g1, 4.4, BY, 10.24, Math.PI);
-place(shelf(1.2, 2.0, 0.4, M.steel), g1, 4.5, BY, 9.0, -R90);
-place(shelf(2.2, 2.2, 0.45, M.steel), g1, 1.2, BY, 10.4, Math.PI);
-place(shelf(1.5, 2.2, 0.45, M.steel), g1, 0.25, BY, 9.2, R90);
-// חצר אנגלית
-const planter = grp(); B(planter, 1.4, 0.55, 1.4, 0, 0.275, 0, M.concrete); B(planter, 1.3, 0.02, 1.3, 0, 0.54, 0, M.soil);
-place(planter, g1, 9.0, BY, 0.0, 0);
-place(tree(3.2, M.olive, 0.9), g1, 9.0, BY + 0.55, 0.0, 0, false);
-const bench2 = grp(); B(bench2, 1.8, 0.45, 0.45, 0, 0.225, 0, M.teak); place(bench2, g1, 7.4, BY, -1.35, 0);
-[-1.1, 0.6, 2.0].forEach((z) => { const t = grp(); C(t, 0.22, 0.18, 0.45, 0, 0.225, 0, M.pot); const cn = new THREE.Mesh(new THREE.ConeGeometry(0.32, 2.6, 8), M.leafDark); cn.position.y = 1.7; cn.castShadow = true; t.add(cn); place(t, g1, 9.9, BY, z, 0); });
-
-// --- גינה ודק
-place(diningTable(2.2, 1.0), G.out, 2.6, GY, 17.9, 0);
-[-0.7, 0, 0.7].forEach((dx) => { place(chair(), G.out, 2.6 + dx, GY, 17.2, 0, false); place(chair(), G.out, 2.6 + dx, GY, 18.6, Math.PI, false); });
-place(outdoorSofa(2.6), G.out, 9.8, GY, 18.0, -R90);
-place(outdoorSofa(1.0), G.out, 7.4, GY, 18.0, R90);
-place(coffeeTable(1.1, 0.6), G.out, 8.6, GY, 18.0, R90);
-place(sunbed(), G.out, 4.4, GY, 21.0, Math.PI);
-place(sunbed(), G.out, 5.4, GY, 21.0, Math.PI);
-place(tree(4.6, M.leaf, 1.6), G.out, 1.3, GY, 21.0, 0);
-place(tree(4.2, M.olive, 1.3), G.out, 12.4, GY, 20.6, 0);
-place(tree(3.6, M.leaf, 1.2), G.out, 12.9, GY, 12.2, 0);
-place(plant(1.4), G.out, 10.2, GY, 16.7, 0);
-place(plant(1.2, M.leafDark), G.out, 0.25, GY, 16.7, 0);
-
-// ---------------------------------------------------------------- חדרים (שם ושטח)
-// שטח = מכפלת המידות הנטו של כל חלק בחדר.
-const ROOMS = [
-  { id: 'lobby', lvl: 'G', name: 'לובי הבניין', note: 'שטח משותף · הכניסה לדירה', rects: [[-4.0, -0.25, 8.5, 11.5]] },
-  { id: 'foyer', lvl: 'G', name: 'מבואת כניסה', rects: [[0, 5.87, 8.25, 11.54]] },
-  { id: 'great', lvl: 'G', name: 'מטבח, פינת אוכל וסלון', rects: [[0, 10.46, 11.54, 15.99]] },
-  { id: 'master', lvl: 'G', name: 'חדר שינה הורים', rects: [[2.14, 5.59, 0, 3.85]] },
-  { id: 'dress', lvl: 'G', name: 'חדר ארונות', rects: [[2.14, 5.59, 3.85, 5.65]] },
-  { id: 'mbath', lvl: 'G', name: 'חדר רחצה הורים', rects: [[-0.52, 1.94, 3.47, 5.65]] },
-  { id: 'passage', lvl: 'G', name: 'מעבר יחידת הורים', rects: [[0.50, 4.35, 5.75, 6.65]] },
-  { id: 'hall', lvl: 'G', name: 'מסדרון', rects: [[4.45, 5.59, 5.75, 8.29], [5.59, 7.17, 5.95, 8.29]] },
-  { id: 'wc', lvl: 'G', name: 'שירותי אורחים', rects: [[2.95, 4.25, 6.75, 8.25]] },
-  { id: 'mamad', lvl: 'G', name: 'ממ״ד / חדר שינה', rects: [[5.89, 10.13, 2.90, 5.65]] },
-  { id: 'bath', lvl: 'G', name: 'חדר רחצה', rects: [[7.27, 10.46, 5.95, 8.29]] },
-  { id: 'bed2', lvl: 'G', name: 'חדר שינה', rects: [[6.12, 10.46, 8.49, 11.29]] },
-  { id: 'stairs', lvl: 'S', name: 'מדרגות למרתף', rects: [[-1.69, 2.80, 6.75, 8.25]] },
-  { id: 'deck', lvl: 'G', name: 'מרפסת דק עם פרגולה', rects: [[-0.25, 10.71, 16.24, 19.54]] },
-  { id: 'garden', lvl: 'G', name: 'גינה פרטית', areaOverride: 13.96 * 6.0 + 3.0 * 12.87, note: 'כולל הדק', rects: [[-0.25, 13.71, 19.54, 22.24], [10.71, 13.71, 3.37, 19.54]] },
-  { id: 'family', lvl: 'B', name: 'מרחב משפחה ומיני בר', rects: [[0, 5.49, 2.68, 6.65], [0, 1.94, 0.60, 2.68]] },
-  { id: 'play', lvl: 'B', name: 'חדר משחקים', rects: [[2.04, 5.49, -0.97, 2.58]] },
-  { id: 'bbath1', lvl: 'B', name: 'חדר רחצה (מרתף)', rects: [[6.25, 7.85, 2.80, 5.60]] },
-  { id: 'bbath2', lvl: 'B', name: 'חדר רחצה (מרתף)', rects: [[8.86, 10.46, 2.80, 5.60]] },
-  { id: 'studio', lvl: 'B', name: 'סטודיו', rects: [[6.25, 10.46, 5.70, 9.81]] },
-  { id: 'bhall', lvl: 'B', name: 'מבואת מרתף', rects: [[2.05, 5.49, 6.75, 8.25]] },
-  { id: 'service', lvl: 'B', name: 'חדר שירות', rects: [[2.71, 4.71, 8.35, 10.56]] },
-  { id: 'storage', lvl: 'B', name: 'מחסן', rects: [[0, 2.61, 8.35, 10.64]] },
-  { id: 'court', lvl: 'B', name: 'חצר אנגלית', rects: [[5.89, 10.28, -1.65, 2.60]] },
-];
-ROOMS.forEach((r) => {
-  r.area = r.areaOverride ?? r.rects.reduce((s, [a, b, c, d]) => s + (b - a) * (d - c), 0);
-  const [a, b, c, d] = r.rects[0];
-  r.cx = (a + b) / 2; r.cz = (c + d) / 2;
-});
-
-// תוויות במבט מלמעלה
-function label(text, sub) {
-  const c = document.createElement('canvas'); c.width = 512; c.height = 160;
-  const ctx = c.getContext('2d');
-  ctx.direction = 'rtl'; ctx.textAlign = 'center';
-  ctx.fillStyle = 'rgba(255,255,255,0.88)';
-  const rr = 22; ctx.beginPath(); ctx.roundRect(8, 18, 496, 124, rr); ctx.fill();
-  ctx.fillStyle = '#1f2328'; ctx.font = 'bold 46px "Segoe UI", Arial, sans-serif'; ctx.fillText(text, 256, 74);
-  ctx.fillStyle = '#5a6068'; ctx.font = '38px "Segoe UI", Arial, sans-serif'; ctx.fillText(sub, 256, 122);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true }));
-  sp.scale.set(2.9, 0.91, 1); sp.renderOrder = 10;
-  return sp;
-}
-const fmtArea = (a) => `${a.toFixed(1)} מ״ר`;
-ROOMS.forEach((r) => {
-  if (['lobby', 'passage', 'stairs'].includes(r.id)) return;
-  const sp = label(r.name, fmtArea(r.area));
-  sp.position.set(r.cx, (r.lvl === 'B' ? BY : GY) + 2.0, r.cz);
-  sp.userData.lvl = r.lvl;
-  G.labels.add(sp);
-});
-G.labels.visible = false;
-
-// ---------------------------------------------------------------- אור
-const hemi = new THREE.HemisphereLight(0xdfe8f3, 0xa69a86, 0.5);
-scene.add(hemi);
-const sun = new THREE.DirectionalLight(0xfff2df, 3.2);
-sun.castShadow = true;
-sun.shadow.mapSize.set(4096, 4096);
-const sc = sun.shadow.camera;
-sc.left = -19; sc.right = 19; sc.top = 19; sc.bottom = -19; sc.near = 1; sc.far = 110;
-sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.025;
-sun.target.position.set(5.5, 0, 9);
-scene.add(sun); scene.add(sun.target);
-const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-scene.environmentIntensity = 0.28;
-
-// שמיים
-(function sky() {
-  const t = canvasTex(256, (ctx, n) => {
-    const g = ctx.createLinearGradient(0, 0, 0, n);
-    g.addColorStop(0, '#6f9fd3'); g.addColorStop(0.48, '#bcd6ee'); g.addColorStop(0.52, '#dfe6df'); g.addColorStop(1, '#b9b9a9');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, n, n);
+  // --- מרתף: מיני בר, מרחב משפחה
+  place(counter(1.8, { sink: 0.4 }), g1, 0.31, BY, 2.20, R90);
+  bx(0, 0.35, BY + 1.5, BY + 1.53, 1.3, 3.1, M.wood, g1); bx(0, 0.35, BY + 1.9, BY + 1.93, 1.3, 3.1, M.wood, g1);
+  for (let i = 0; i < 6; i++) C(g1, 0.035, 0.035, 0.3, 0.12 + (i % 3) * 0.08, BY + 1.68, 1.5 + i * 0.25, i % 2 ? M.bookA : M.screen, 12);
+  place(stool(), g1, 0.95, BY, 1.8, R90, false); place(stool(), g1, 0.95, BY, 2.6, R90, false);
+  rug(g1, 1.4, 4.4, 3.9, 6.6, BY, M.rug);
+  place(sofa(2.5, 0.95, M.sofaDark), g1, 0.85, BY, 5.2, R90);
+  place(coffeeTable(0.45), g1, 2.5, BY, 5.2);
+  place(armchair(M.accent2), g1, 3.9, BY, 3.95, -R90 - 0.7);
+  const media2 = grp(); B(media2, 2.2, 0.42, 0.42, 0, 0.41, 0, M.woodDark); B(media2, 1.6, 0.92, 0.035, 0, 1.45, -0.19, M.screen);
+  place(media2, g1, 5.28, BY, 5.2, -R90);
+  placePlant(plant(1.3, M.leaf, M.pot, 9), g1, 0.45, BY, 6.85);
+  artwork(g1, 4, 0.015, BY + 1.75, 5.2, R90, 1.6, 1.05);
+  floorLamp(g1, 0.45, 3.6, BY);
+  // חדר משחקים
+  rug(g1, 3.0, 5.6, 0.0, 2.6, BY, M.rug);
+  const kt = grp(); B(kt, 0.9, 0.03, 0.6, 0, 0.5, 0, M.wood); [[-0.4, -0.25], [0.4, -0.25], [-0.4, 0.25], [0.4, 0.25]].forEach(([x, z]) => B(kt, 0.04, 0.5, 0.04, x, 0.25, z, M.wood));
+  place(kt, g1, 4.3, BY, 1.2, 0);
+  [[3.9, 0.7, M.kids1], [4.7, 0.7, M.kids2], [3.9, 1.7, M.kids3], [4.7, 1.7, M.kids2]].forEach(([x, z, m], i) => {
+    const c = grp(); B(c, 0.3, 0.3, 0.3, 0, 0.15, 0, M.wood); S(c, 0.3, 0.05, 0.3, 0, 0.32, 0, m, 0.02, 0.3); place(c, g1, x, BY, z, i < 2 ? 0 : Math.PI, false);
   });
-  t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
-  const s = new THREE.Mesh(new THREE.SphereGeometry(200, 32, 16), new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, fog: false }));
-  scene.add(s);
-})();
+  place(shelf(2.4, 1.2, 0.35, M.wood, 11), g1, 2.76, BY, 1.4, R90);
+  softBox(0.75, 0.45, 0.75, 5.4, BY, 0.05, 0, M.accent, g1, 0.3, 0.4); softBox(0.75, 0.45, 0.75, 5.5, BY, 1.7, 0, M.accent2, g1, 0.3, 0.4);
+  colliders.push({ x1: 5.0, x2: 5.8, y1: BY, y2: BY + 0.45, z1: -0.35, z2: 0.45 }, { x1: 5.1, x2: 5.9, y1: BY, y2: BY + 0.45, z1: 1.3, z2: 2.1 });
+  placePlant(plant(1.1, M.leaf, M.pot, 12), g1, 5.7, BY, -0.1);
+  artwork(g1, 7, 2.575, BY + 1.65, 1.3, R90, 1.2, 0.8);
+  // סטודיו
+  place(desk(1.8, 0.8), g1, 10.06, BY, 8.3, -R90); place(officeChair(), g1, 9.4, BY, 8.3, R90, false);
+  place(sofa(2.1, 0.9), g1, 8.4, BY, 6.7, 0);
+  place(coffeeTable(0.45), g1, 8.4, BY, 7.85);
+  place(armchair(M.accent), g1, 7.3, BY, 9.35, R90 + 0.5);
+  place(shelf(2.4, 2.2, 0.35, M.wood, 13), g1, 8.2, BY, 10.18, Math.PI);
+  placePlant(plant(1.6, M.leaf, M.potDark, 14), g1, 6.65, BY, 9.95);
+  rug(g1, 7.0, 9.6, 7.2, 9.6, BY, M.rug);
+  artwork(g1, 5, 8.0, BY + 1.85, 6.265, 0, 1.6, 1.0);
+  // חדרי רחצה במרתף
+  shower(g1, 6.25, 7.85, 3.35, 4.45, BY, [[6.95, 7.85, 4.44, 4.46]]);
+  place(vanity(0.7, 1), g1, 6.49, BY, 4.95, R90); place(toilet(), g1, 7.60, BY, 5.0, -R90);
+  place(vanity(0.8, 1), g1, 9.10, BY, 5.40, R90); place(toilet(), g1, 10.18, BY, 4.95, -R90);
+  shower(g1, 8.86, 10.46, 3.35, 4.45, BY, [[9.40, 10.46, 4.44, 4.46]]);
+  towel(g1, 7.05, BY + 1.3, 6.125, Math.PI); towel(g1, 9.0, BY + 1.3, 6.125, Math.PI);
+  // חדר שירות ומחסן
+  [3.1, 3.75].forEach((x) => { const w = grp(); B(w, 0.6, 0.85, 0.6, 0, 0.425, 0, M.ceramic); const d2 = C(w, 0.17, 0.17, 0.02, 0, 0.45, 0.3, M.screen, 24); d2.rotation.x = R90; place(w, g1, x, BY, 11.36, Math.PI); });
+  place(counter(0.6, { sink: 0 }), g1, 4.4, BY, 11.35, Math.PI);
+  place(shelf(1.2, 2.0, 0.4, M.chrome, 15), g1, 5.29, BY, 10.2, -R90);
+  place(shelf(2.2, 2.2, 0.45, M.chrome, 16), g1, 1.2, BY, 11.52, Math.PI); place(shelf(1.4, 2.2, 0.45, M.chrome, 17), g1, 0.25, BY, 10.2, R90);
+  // חצר אנגלית
+  const pl = grp(); B(pl, 1.4, 0.55, 1.4, 0, 0.275, 0, M.concrete); B(pl, 1.3, 0.02, 1.3, 0, 0.54, 0, M.soil); place(pl, g1, 9.2, BY, 0.6, 0);
+  place(tree(3.2, M.olive, 0.9, 21), g1, 9.2, BY + 0.55, 0.6, 0, false);
+  const bc = grp(); B(bc, 1.8, 0.45, 0.45, 0, 0.225, 0, M.teak); place(bc, g1, 7.6, BY, -0.85, 0);
+  [-0.6, 1.2, 2.6].forEach((z, i) => place(plant(2.0, M.leafDark, M.potDark, 30 + i), g1, 10.3, BY, z, 0));
 
-// תאורה פנימית חמה (אפשר לכבות)
-[[2.5, 3.1, 13.8, 9], [7.8, 3.1, 13.8, 9], [3, 3.1, 9.8, 7], [3.8, 3.1, 1.9, 6], [3.8, 3.1, 4.8, 4], [0.7, 3.1, 4.5, 4], [5.8, 3.1, 7.0, 5],
-  [8, 3.1, 4.3, 6], [8.8, 3.1, 7.1, 5], [8.3, 3.1, 9.9, 6], [3.6, 3.1, 7.5, 3], [-2.1, 2.7, 10, 5],
-  [2.7, BY + 3.1, 4.7, 10], [1.0, BY + 3.1, 1.6, 6], [3.8, BY + 3.1, 0.8, 9], [8.3, BY + 3.1, 7.7, 10], [7.0, BY + 3.1, 4.2, 4],
-  [9.6, BY + 3.1, 4.2, 4], [4.0, BY + 3.1, 7.5, 5], [3.7, BY + 3.1, 9.5, 4], [1.3, BY + 3.1, 9.5, 4], [0.5, BY + 2.6, 7.5, 3]]
-  .forEach(([x, y, z, i]) => { const l = new THREE.PointLight(0xffd9ad, i * 0.65, 9, 2); l.position.set(x, y, z); G.lights.add(l); });
-downlights(G.ceilB, [[1.5, 4.0], [3.5, 4.0], [1.5, 5.8], [3.5, 5.8], [3.0, 0.0], [4.6, 0.0], [3.0, 1.8], [4.6, 1.8], [7.3, 6.6], [9.3, 6.6], [7.3, 8.9], [9.3, 8.9], [3.6, 7.5], [4.8, 7.5], [1.0, 1.6]], BCy);
+  // --- דק וגינה
+  place(diningTable(2.2, 1.0, false), go, 3.0, GY, 18.25, 0);
+  [-0.7, 0, 0.7].forEach((dx) => { place(chair(M.cushion), go, 3.0 + dx, GY, 17.55, 0, false); place(chair(M.cushion), go, 3.0 + dx, GY, 18.95, Math.PI, false); });
+  place(sofa(2.6, 0.9, M.cushion), go, 9.9, GY, 18.2, -R90);
+  place(coffeeTable(0.4), go, 8.75, GY, 18.2);
+  [4.6, 5.6].forEach((x) => { const sb = grp(); B(sb, 0.7, 0.3, 1.95, 0, 0.18, 0, M.teak); S(sb, 0.66, 0.08, 1.4, 0, 0.37, 0.25, M.cushion, 0.03, 0.3); const bk = S(sb, 0.66, 0.08, 0.6, 0, 0.55, -0.62, M.cushion, 0.03, 0.3); bk.rotation.x = -0.7; place(sb, go, x, GY, 21.0, Math.PI); });
+  [[0.6, 21.6, 4.5, M.leaf, 1.6], [12.6, 20.6, 5.0, M.olive, 1.4], [12.9, 13.0, 4.0, M.leaf, 1.2], [-3.0, 14.0, 7.0, M.leaf, 2.2], [16.5, 8.0, 6.0, M.leafDark, 2.0],
+    [6.0, 26.0, 7.5, M.leaf, 2.4], [17.0, 22.0, 6.5, M.olive, 2.0], [-2.5, 24.0, 6.0, M.leafDark, 2.0]]
+    .forEach(([x, z, h, m, c], i) => place(tree(h, m, c, 40 + i), go, x, GY, z, i, i < 3));
+  placePlant(plant(1.0, M.leaf, M.potDark, 50), go, 10.3, GY, 16.95);
+}
 
-// מיקום השמש: קו רוחב 31.9°, זמן שמש = שעון + 20 דקות (+1 שעה שעון קיץ).
-function sunDir(day, hour, dst) {
-  const lat = 31.9 * Math.PI / 180;
-  const decl = 23.44 * Math.PI / 180 * Math.sin(2 * Math.PI * (284 + day) / 365);
-  const solar = hour + 0.33 - (dst ? 1 : 0);
-  const H = (solar - 12) * 15 * Math.PI / 180;
-  const sinEl = Math.sin(lat) * Math.sin(decl) + Math.cos(lat) * Math.cos(decl) * Math.cos(H);
-  const el = Math.asin(sinEl);
+// ---------------------------------------------------------------- איחוד גאומטריות לפי חומר (פחות קריאות ציור = חלק בטלפון)
+function mergeGroup(group) {
+  group.updateMatrixWorld(true);
+  const buckets = new Map(), toRemove = [];
+  group.traverse((o) => {
+    if (!o.isMesh || o.isInstancedMesh || o.userData.wall || o.userData.keep || o.material.transparent || Array.isArray(o.material)) return;
+    let g = o.geometry.clone().applyMatrix4(o.matrixWorld);
+    if (g.index) g = g.toNonIndexed();
+    for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
+    if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+    g.clearGroups();
+    const key = o.material.uuid + (o.castShadow ? 's' : 'n');
+    if (!buckets.has(key)) buckets.set(key, { mat: o.material, cast: o.castShadow, geos: [] });
+    buckets.get(key).geos.push(g); toRemove.push(o);
+  });
+  toRemove.forEach((o) => o.parent.remove(o));
+  const merged = new THREE.Group();
+  for (const { mat, cast, geos } of buckets.values()) {
+    const g = mergeGeometries(geos, false); if (!g) continue;
+    const m = new THREE.Mesh(g, mat); m.castShadow = cast; m.receiveShadow = true; m.matrixAutoUpdate = false; merged.add(m);
+  }
+  const empty = []; group.traverse((o) => { if (o !== group && o.isGroup && o.children.length === 0) empty.push(o); });
+  empty.forEach((o) => o.parent && o.parent.remove(o));
+  group.add(merged);
+}
+
+// ---------------------------------------------------------------- אור, שמיים, שעות
+const hemi = new THREE.HemisphereLight(0xdfe8f3, 0xa69a86, 0.4); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff2df, 3);
+sun.castShadow = true;
+const SMAP = MOBILE ? 2048 : 4096;
+sun.shadow.mapSize.set(SMAP, SMAP);
+Object.assign(sun.shadow.camera, { left: -17, right: 17, top: 17, bottom: -17, near: 1, far: 120 });
+sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.03;
+sun.target.position.set(5.5, 0, 10); scene.add(sun, sun.target);
+const pmrem = new THREE.PMREMGenerator(renderer);
+const PANO = {}, ENV = {};
+const DOLL_BG = new THREE.Color(0xe4e6e3);
+const PANO_SUN_A = (0.626 - 0.5) * Math.PI * 2;   // מיקום זוהר השמש בתמונת השקיעה (u=0.626)
+
+function sunDir(day, hour) {
+  const lat = 31.9 * Math.PI / 180, decl = 23.44 * Math.PI / 180 * Math.sin(2 * Math.PI * (284 + day) / 365);
+  const H = (hour + 0.33 - 12) * 15 * Math.PI / 180;
+  const el = Math.asin(Math.sin(lat) * Math.sin(decl) + Math.cos(lat) * Math.cos(decl) * Math.cos(H));
   const az = Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(lat) - Math.tan(decl) * Math.cos(lat)) + Math.PI;
   return { el, az, v: new THREE.Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)) };
 }
-const DATES = { today: [327, false], dec: [355, false], mar: [80, false], jun: [172, true] };
-let sunState = { date: 'today', hour: 10 };
-function updateSun() {
-  const [day, dst] = DATES[sunState.date];
-  const s = sunDir(day, sunState.hour, dst);
+const DAY = 327;   // 23 בנובמבר
+const TIMES = {
+  morning: { name: 'בוקר', hour: 8.25, sunCol: 0xffe2c0, sun: 2.6, hemi: 0.65, env: 0.25, pano: 'noon', bg: 0.9, exp: 1.0, lamps: 0 },
+  noon: { name: 'צהריים', hour: 12.2, sunCol: 0xfff6ea, sun: 3.2, hemi: 0.65, env: 0.4, pano: 'noon', bg: 1.0, exp: 0.95, lamps: 0 },
+  sunset: { name: 'שקיעה', hour: 16.15, sunCol: 0xffa858, sun: 2.4, hemi: 0.32, env: 0.5, pano: 'sunset', bg: 1.0, exp: 1.05, lamps: 0.35 },
+  night: { name: 'לילה', hour: 16.15, sunCol: 0x9fb4ff, sun: 0.0, hemi: 0.06, env: 0.12, pano: 'night', bg: 0.9, exp: 1.1, lamps: 1 },
+};
+let timeKey = 'sunset';
+const LAMP_LIGHTS = [];
+function applyTime(key) {
+  timeKey = key;
+  const T = TIMES[key], s = sunDir(DAY, T.hour);
   sun.position.copy(sun.target.position).addScaledVector(s.v, 60);
-  const k = Math.max(0, Math.min(1, s.el / 0.25));
-  sun.intensity = 3.2 * k;
-  sun.color.setHSL(0.09, 0.8, 0.82 + 0.12 * k);
-  hemi.intensity = 0.22 + 0.3 * k;
-  return s;
+  sun.color.set(T.sunCol); sun.intensity = T.sun; sun.castShadow = T.sun > 0;
+  hemi.intensity = T.hemi; hemi.color.set(key === 'night' ? 0x2a3550 : key === 'sunset' ? 0xffd9b4 : 0xf4efe6); hemi.groundColor.set(0xb3a28a);   // מילוי ניטרלי-חם: קירות לבנים לא נראים כחולים
+  scene.background = mode === 'doll' ? DOLL_BG : PANO[T.pano]; scene.environment = ENV[T.pano];
+  scene.backgroundIntensity = T.bg; scene.environmentIntensity = T.env;
+  // סיבוב השמיים: זוהר השמש בתמונה נמצא בכיוון השמש של שעת השקיעה בתוכנית
+  const ss = sunDir(DAY, TIMES.sunset.hour), want = Math.atan2(-Math.cos(ss.az), Math.sin(ss.az));
+  scene.backgroundRotation.set(0, want - PANO_SUN_A, 0); scene.environmentRotation.set(0, want - PANO_SUN_A, 0);
+  renderer.toneMappingExposure = T.exp;
+  M.lampShade.emissiveIntensity = 1.6 * T.lamps; M.bulb.emissiveIntensity = 6 * T.lamps; M.led.emissiveIntensity = 2.5 * T.lamps;
+  M.downlight.emissiveIntensity = 0.4 + 3 * T.lamps;
+  LAMP_LIGHTS.forEach((l) => { l.visible = T.lamps > 0; l.intensity = l.userData.base * T.lamps; });
+  renderer.shadowMap.needsUpdate = true;
+  document.dispatchEvent(new CustomEvent('tourtime', { detail: key }));
+}
+function buildLampLights() {
+  // מספר מוגבל של מנורות אמיתיות (בלי צל) כדי לשמור על מהירות; השאר זוהר בלבד
+  const v = new THREE.Vector3();
+  const pick = MOBILE ? LAMPS.filter((l, i) => l.big || i % 2 === 0).slice(0, 5) : LAMPS.slice(0, 10);
+  pick.forEach((l) => {
+    l.g.updateMatrixWorld(true); v.set(l.x, l.y, l.z); l.g.localToWorld(v);
+    const p = new THREE.PointLight(0xffc98a, 0, l.big ? 7 : 5, 2); p.userData.base = l.big ? 9 : 5; p.position.copy(v); G.lights.add(p); LAMP_LIGHTS.push(p);
+  });
+  // תאורה כללית חמה בחדרים (בלילה)
+  [[5.2, 3.0, 14.2, 9], [3.6, 3.0, 10.6, 5], [4.3, 3.0, 2.6, 6], [8.4, 3.0, 4.8, 5], [8.3, 3.0, 10.3, 5], [5.9, 3.0, 7.2, 4],
+    [2.7, BY + 3.0, 5.2, 7], [4.3, BY + 3.0, 1.4, 5], [8.3, BY + 3.0, 8.3, 6]].forEach(([x, y, z, i]) => {
+    const p = new THREE.PointLight(0xffd2a0, 0, 10, 2); p.userData.base = i * 1.5; p.position.set(x, y, z); G.lights.add(p); LAMP_LIGHTS.push(p);
+  });
+}
+
+// ---------------------------------------------------------------- חדרים, שטחים ומשפטי מכירה
+const ROOMS = [
+  { id: 'lobby', lvl: 'G', name: 'לובי הבניין', note: 'שטח משותף · הכניסה לדירה', rects: [[-3.5, 1.28, 9.45, 11.13]] },
+  { id: 'foyer', lvl: 'G', name: 'מבואת כניסה', area: 11.4, rects: [[1.38, 5.87, 9.45, 11.99]], line: 'כניסה מרווחת עם מבט ישיר לסלון ולגינה.' },
+  { id: 'great', lvl: 'G', name: 'סלון, מטבח ופינת אוכל', area: 47.4, rects: [[0, 10.46, 11.99, 16.44], [0, 1.38, 11.38, 11.99]], line: 'חלל אחד פתוח, עם ויטרינות הזזה בגובה 3.40 לגינה.' },
+  { id: 'master', lvl: 'G', name: 'חדר שינה הורים', area: 19.5, rects: [[2.56, 6.01, 0, 5.65]], line: 'חדר שינה גדול, עם חלון לחצר האנגלית.' },
+  { id: 'dress', lvl: 'G', name: 'חדר ארונות', area: 6.9, rects: [[0, 4.62, 5.75, 7.25]], line: 'מעבר עם ארונות לאורך הקיר, בתוך יחידת ההורים.' },
+  { id: 'mbath', lvl: 'G', name: 'חדר רחצה הורים', area: 5.4, rects: [[0, 2.46, 3.47, 5.65]], line: 'מקלחון, כיור כפול וחיפוי קרמיקה עד התקרה.' },
+  { id: 'hall', lvl: 'G', name: 'מסדרון', area: 6.6, rects: [[4.72, 7.17, 5.75, 8.74], [4.72, 5.87, 8.74, 9.45]] },
+  { id: 'wc', lvl: 'G', name: 'שירותי אורחים', area: 2.6, rects: [[3.32, 4.62, 7.35, 9.35]] },
+  { id: 'mamad', lvl: 'G', name: 'ממ״ד / חדר עבודה', area: 11.7, rects: [[6.26, 10.50, 3.45, 6.20]], line: 'ממ״ד שמשמש גם כחדר עבודה.' },
+  { id: 'bath', lvl: 'G', name: 'חדר רחצה', area: 7.5, rects: [[7.27, 10.46, 6.40, 8.74]], line: 'חדר רחצה עם חלון ומקום למכונת כביסה.' },
+  { id: 'bed2', lvl: 'G', name: 'חדר שינה', area: 12.2, rects: [[6.12, 10.46, 8.94, 11.74]], line: 'חדר שינה שקט עם חלון למזרח.' },
+  { id: 'stairs', lvl: 'S', name: 'מדרגות למרתף', rects: [[0, 3.22, 7.35, 9.35]], line: 'מדרגות פנימיות לקומת המרתף.' },
+  { id: 'deck', lvl: 'G', name: 'דק ופרגולה', area: 29.2, rects: [[0.97, 10.71, 16.69, 19.69]], line: 'דק מקורה בפרגולה, צמוד לסלון.' },
+  { id: 'garden', lvl: 'G', name: 'גינה פרטית', area: 122.4, note: 'כולל הדק', rects: [[-0.25, 13.71, 19.69, 22.10], [10.71, 13.71, 1.06, 19.69]], line: 'גינה פרטית של 122 מ״ר מסביב לדירה.' },
+  { id: 'family', lvl: 'B', name: 'מרחב משפחה ומיני בר', area: 26.9, rects: [[0, 5.49, 3.28, 7.25], [0, 2.46, 1.20, 3.28]], line: 'מרחב משפחה עם מיני בר, בקומה שלמה מתחת לבית.' },
+  { id: 'play', lvl: 'B', name: 'חדר משחקים', area: 12.2, rects: [[2.56, 6.01, -0.37, 3.18]], line: 'חדר משחקים צמוד למרחב המשפחה.' },
+  { id: 'bbath1', lvl: 'B', name: 'חדר רחצה (מרתף)', area: 4.5, rects: [[6.25, 7.85, 3.35, 6.15]] },
+  { id: 'bbath2', lvl: 'B', name: 'חדר רחצה (מרתף)', area: 4.5, rects: [[8.86, 10.46, 3.35, 6.15]] },
+  { id: 'studio', lvl: 'B', name: 'סטודיו', area: 17.3, rects: [[6.25, 10.46, 6.25, 10.36]], line: 'סטודיו עם חלון גדול, מתאים לעבודה מהבית.' },
+  { id: 'bhall', lvl: 'B', name: 'מבואת מרתף', area: 4.5, rects: [[3.22, 5.49, 7.35, 9.35]] },
+  { id: 'service', lvl: 'B', name: 'חדר שירות', area: 6.1, rects: [[2.71, 5.49, 9.45, 11.66]] },
+  { id: 'storage', lvl: 'B', name: 'מחסן', area: 6.0, rects: [[0, 2.61, 9.45, 11.74]] },
+  { id: 'court', lvl: 'B', name: 'חצר אנגלית', area: 18.7, rects: [[6.26, 10.65, -1.10, 3.15]] },
+];
+ROOMS.forEach((r) => { const [a, b, c, d] = r.rects[0]; r.cx = (a + b) / 2; r.cz = (c + d) / 2; });
+const fmtArea = (a) => `${a.toFixed(1)} מ״ר`;
+function label(text, sub) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 160;
+  const x = c.getContext('2d'); x.direction = 'rtl'; x.textAlign = 'center';
+  x.fillStyle = 'rgba(255,255,255,0.9)'; x.beginPath(); x.roundRect(8, 18, 496, 124, 22); x.fill();
+  x.fillStyle = '#1f2328'; x.font = 'bold 44px "Segoe UI", Arial, sans-serif'; x.fillText(text, 256, 74);
+  x.fillStyle = '#1f4f46'; x.font = '36px "Segoe UI", Arial, sans-serif'; x.fillText(sub, 256, 122);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); sp.scale.set(2.9, 0.91, 1); sp.renderOrder = 10;
+  return sp;
 }
 
 // ---------------------------------------------------------------- תנועה והתנגשויות
-const RAD = 0.25, EYE = 1.62, STEP = 0.45;
-const player = { x: -2.6, z: 9.2, feet: GY, yaw: -R90, pitch: 0 };
-const courtyardHole = [5.89, 10.28, -1.65, 2.60];
-function inR(x, z, r) { return x >= r[0] && x <= r[1] && z >= r[2] && z <= r[3]; }
+const RAD = 0.25, EYE = 1.6, STEP = 0.45;
+const player = { x: -2.6, z: 10.3, feet: GY };
+const COURT = [6.26, 10.65, -1.10, 3.15];
+const inR = (x, z, r) => x >= r[0] && x <= r[1] && z >= r[2] && z <= r[3];
+function stairH(x, z) {
+  if (x < 0 || x > 3.22 || z < 7.35 || z > 9.35) return null;
+  if (x >= 2.27 && z >= 8.40) return GY;
+  if (x >= 0.95 && z >= 8.40) return GY - Math.min(5, Math.max(1, Math.ceil((2.27 - x) / 0.264))) * RISER;
+  if (x >= 0.95 && z <= 8.30) return GY - (12 + Math.min(9, Math.max(1, Math.ceil((x - 0.95) / 0.252)))) * RISER;
+  if (x >= 0.95) return GY - 12 * RISER;
+  const phi = Math.atan2(-(x - 0.95), z - 8.35) * 180 / Math.PI;
+  return GY - (5 + Math.min(7, Math.max(1, Math.floor(phi / (180 / 7)) + 1))) * RISER;
+}
 function surfaceAt(x, z, feet) {
-  const c = [];
-  const s = stairH(x, z);
-  if (s !== null) c.push(s, BY);
-  else { if (!inR(x, z, courtyardHole)) c.push(GY); c.push(BY); }
-  let best = null;
-  for (const h of c) if (h <= feet + STEP && (best === null || h > best)) best = h;
+  const c = [], s = stairH(x, z);
+  if (s !== null) c.push(s, BY); else { if (!inR(x, z, COURT)) c.push(GY); c.push(BY); }
+  let best = null; for (const h of c) if (h <= feet + STEP && (best === null || h > best)) best = h;
   return best;
 }
 function blocked(x, z, feet) {
@@ -1202,207 +985,288 @@ function blocked(x, z, feet) {
 function tryMove(nx, nz) {
   const h = surfaceAt(nx, nz, player.feet);
   if (h === null || h < player.feet - 0.6) return false;
-  if (blocked(nx, nz, h) && !blocked(player.x, player.z, player.feet)) return false;   // מי שנתקע בתוך רהיט יכול לצאת
-  player.x = nx; player.z = nz; player.feet = h;
-  return true;
+  if (blocked(nx, nz, h) && !blocked(player.x, player.z, player.feet)) return false;
+  player.x = nx; player.z = nz; player.feet = h; return true;
 }
 
 // ---------------------------------------------------------------- שליטה
 const plc = new PointerLockControls(camera, renderer.domElement);
 const orbit = new OrbitControls(camera, renderer.domElement);
 orbit.enabled = false; orbit.enableDamping = true; orbit.maxPolarAngle = Math.PI * 0.47; orbit.minDistance = 4; orbit.maxDistance = 60;
-let mode = 'walk';
-let camY = player.feet + EYE;
-const keys = {};
+let mode = 'walk', camY = player.feet + EYE;
+const keys = {}, joy = { x: 0, y: 0 };
 const KEYMAP = { KeyW: 'f', ArrowUp: 'f', KeyS: 'b', ArrowDown: 'b', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
-addEventListener('keydown', (e) => { if (KEYMAP[e.code]) { keys[KEYMAP[e.code]] = true; e.preventDefault(); } if (e.code.startsWith('Shift')) keys.run = true; });
+addEventListener('keydown', (e) => { if (KEYMAP[e.code]) { keys[KEYMAP[e.code]] = true; if (mode === 'walk') e.preventDefault(); } if (e.code.startsWith('Shift')) keys.run = true; });
 addEventListener('keyup', (e) => { if (KEYMAP[e.code]) keys[KEYMAP[e.code]] = false; if (e.code.startsWith('Shift')) keys.run = false; });
-camera.position.set(player.x, player.feet + EYE, player.z);
-camera.rotation.order = 'YXZ';
-camera.rotation.set(0, player.yaw, 0);
-
-// גרירה עם העכבר כשאין נעילת סמן (או במגע)
+camera.position.set(player.x, camY, player.z); camera.rotation.set(0, -R90, 0);
 let drag = null;
-renderer.domElement.addEventListener('pointerdown', (e) => { if (mode === 'walk' && !plc.isLocked) drag = { x: e.clientX, y: e.clientY }; });
-addEventListener('pointerup', () => { drag = null; });
+renderer.domElement.addEventListener('pointerdown', (e) => { if (mode === 'walk' && !plc.isLocked) drag = { x: e.clientX, y: e.clientY, id: e.pointerId }; });
+addEventListener('pointerup', (e) => { if (drag && drag.id === e.pointerId) drag = null; });
 addEventListener('pointermove', (e) => {
-  if (!drag || mode !== 'walk' || plc.isLocked) return;
-  const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag = { x: e.clientX, y: e.clientY };
+  if (!drag || drag.id !== e.pointerId || mode !== 'walk' || plc.isLocked) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY;
   const eu = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
-  eu.y -= dx * 0.004; eu.x = Math.max(-1.4, Math.min(1.4, eu.x - dy * 0.004));
-  camera.quaternion.setFromEuler(eu);
+  eu.y -= dx * 0.005; eu.x = Math.max(-1.3, Math.min(1.3, eu.x - dy * 0.004)); camera.quaternion.setFromEuler(eu);
 });
 
-function setLevelVisibility(lvl) {
+function setLevel(lvl) {
   const showG = lvl !== 'B';
   G.ground.visible = showG; G.slab.visible = showG; G.out.visible = showG;
   G.labels.children.forEach((s) => { s.visible = lvl === 'B' ? s.userData.lvl === 'B' : s.userData.lvl !== 'B'; });
 }
-let dollLevel = 'G';
-let walkSaved = null;
+let dollLevel = 'G', walkQ = null;
 function setMode(m) {
+  if (mode === 'tour' && m !== 'tour' && tour.active) tourStop(false);
   mode = m;
   if (m === 'doll') {
-    walkSaved = camera.quaternion.clone();
-    plc.unlock();
-    G.ceilG.visible = false; G.ceilB.visible = false; G.roof.visible = false;
-    G.labels.visible = true;
-    setLevelVisibility(dollLevel);
-    orbit.enabled = true;
-    orbit.target.set(5, dollLevel === 'B' ? BY : 0, 8);
-    camera.position.set(-2, 15, 23);
-    orbit.update();
+    walkQ = walkQ || camera.quaternion.clone(); plc.unlock();
+    G.ceilG.visible = G.ceilB.visible = G.roof.visible = false; G.labels.visible = true; setLevel(dollLevel);
+    scene.background = DOLL_BG;   // במבט מלמעלה: רקע נקי במקום תחתית הפנורמה
+    orbit.enabled = true; orbit.target.set(5, dollLevel === 'B' ? BY : 0, 9); camera.position.set(-3, 17 + (dollLevel === 'B' ? BY : 0), 26); orbit.update();
   } else {
-    orbit.enabled = false;
-    G.ceilG.visible = true; G.ceilB.visible = true; G.roof.visible = true;
-    G.labels.visible = false;
-    setLevelVisibility('G');
-    G.ground.visible = true; G.slab.visible = true; G.out.visible = true;
-    camera.position.set(player.x, player.feet + EYE, player.z);
-    if (walkSaved) camera.quaternion.copy(walkSaved);
-    camY = player.feet + EYE;
+    orbit.enabled = false; G.ceilG.visible = G.ceilB.visible = G.roof.visible = true; G.labels.visible = false; setLevel('G');
+    scene.background = PANO[TIMES[timeKey].pano];
+    if (m === 'walk') { camera.position.set(player.x, player.feet + EYE, player.z); if (walkQ) camera.quaternion.copy(walkQ); camY = player.feet + EYE; }
   }
+  renderer.shadowMap.needsUpdate = true;
   document.dispatchEvent(new CustomEvent('tourmode', { detail: m }));
 }
-function setDollLevel(l) {
-  dollLevel = l;
-  if (mode === 'doll') {
-    setLevelVisibility(l);
-    const dy = (l === 'B' ? BY : 0) - orbit.target.y;
-    orbit.target.y += dy; camera.position.y += dy; orbit.update();
-  }
-}
+function setDollLevel(l) { dollLevel = l; if (mode === 'doll') { setLevel(l); const dy = (l === 'B' ? BY : 0) - orbit.target.y; orbit.target.y += dy; camera.position.y += dy; orbit.update(); } }
+const SPOTS = {   // [x, z, x מבט, z מבט]
+  great: [6.6, 12.5, 9.8, 16.0], master: [5.6, 5.2, 2.8, 1.4], mbath: [1.3, 5.55, 0.9, 3.5], mamad: [10.0, 5.9, 6.8, 3.8], bath: [8.3, 7.95, 10.4, 6.5],
+  bed2: [9.3, 9.15, 6.6, 11.2], family: [5.0, 7.0, 0.8, 4.2], play: [5.6, 2.9, 3.0, 0.0], studio: [6.6, 9.9, 10.2, 6.8], garden: [9.0, 21.8, 4.5, 16.0],
+  deck: [6.0, 17.3, 8.0, 22.0], foyer: [2.3, 10.4, 7.5, 14.5], lobby: [-2.6, 10.3, 1.3, 10.3], court: [8.0, 2.9, 8.5, -1.0], dress: [4.3, 6.2, 0.2, 6.4],
+  wc: [4.3, 9.0, 3.6, 7.4], bbath1: [6.6, 5.9, 7.2, 3.4], bbath2: [9.4, 5.9, 9.8, 3.4], service: [3.4, 9.8, 4.5, 11.5], storage: [2.2, 10.0, 0.5, 11.2],
+  bhall: [4.6, 8.2, 6.5, 8.0], hall: [5.3, 6.2, 5.3, 10.0],
+};
 function teleport(id) {
-  const r = ROOMS.find((q) => q.id === id);
-  if (!r) return;
-  const spots = {
-    great: [7.4, 15.68, 0.79], master: [4.9, 0.6, 1.87], mbath: [1.0, 5.3, 0.46], mamad: [8.8, 5.2, 0.79], bath: [8.0, 7.6, -0.79],
-    bed2: [9.0, 10.4, 1.35], family: [4.6, 6.2, 1.1], play: [4.0, 2.2, 0.79], studio: [7.7, 8.9, -0.79], garden: [6.6, 21.7, 0],
-    deck: [4.5, 19.2, 0], foyer: [1.0, 9.2, -2.36], lobby: [-2.6, 9.2, -R90], court: [6.4, 1.9, -0.79], dress: [5.2, 4.8, R90], wc: [3.75, 7.9, 0.79],
-    bbath1: [6.6, 3.4, -2.68], bbath2: [9.6, 5.3, 0.2], service: [3.4, 8.7, -2.36], storage: [2.2, 9.6, 1.57], bhall: [4.8, 7.6, -R90], hall: [5.0, 6.2, Math.PI],
-  };
-  const [x, z, yaw] = spots[id] || [r.cx, r.cz, 0];
-  player.x = x; player.z = z; player.feet = r.lvl === 'B' ? BY : GY; player.yaw = yaw;
-  camY = player.feet + EYE;
-  walkSaved = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.08, yaw, 0, 'YXZ'));
-  if (mode !== 'walk') setMode('walk');
-  else { camera.quaternion.copy(walkSaved); camera.position.set(x, camY, z); }
+  const r = ROOMS.find((q) => q.id === id); if (!r) return;
+  const [x, z, tx, tz] = SPOTS[id] || [r.cx, r.cz, r.cx, r.cz - 1];
+  const yaw = Math.atan2(-(tx - x), -(tz - z));
+  player.x = x; player.z = z; player.feet = r.lvl === 'B' ? BY : GY; camY = player.feet + EYE;
+  walkQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.06, yaw, 0, 'YXZ'));
+  if (mode !== 'walk') setMode('walk'); else { camera.quaternion.copy(walkQ); camera.position.set(x, camY, z); }
+}
+
+// ---------------------------------------------------------------- סיור מודרך לפי מסלול הקונה
+// עובר דרך מרכזי הדלתות. בכל עצירה: שם החדר, שטח ומשפט אחד. בסוף עולה למבט מלמעלה. עד דקה וחצי.
+const ROUTE = [   // [x, z] או [x, z, חדר, x מבט, z מבט]
+  [-2.4, 10.3], [0.4, 10.3], [1.33, 10.35], [2.4, 10.5, 'foyer', 7.5, 14.5],
+  [3.9, 11.9], [5.6, 12.65, 'great', 9.8, 16.0], [4.4, 12.75], [3.4, 12.85, 'kitchen', 0.4, 14.6],
+  [3.05, 14.0], [3.15, 15.6], [3.3, 16.1], [3.3, 17.1], [5.9, 17.35, 'deck', 8.0, 22.0],
+  [3.3, 17.1], [3.3, 16.1], [3.15, 15.6], [3.05, 14.0], [3.7, 12.7], [5.0, 11.0], [5.4, 9.2], [5.45, 8.45],
+  [6.65, 8.45], [6.75, 9.2], [8.6, 9.22, 'bed2', 6.6, 11.2], [6.75, 9.2], [6.65, 8.45],
+  [6.65, 7.2], [6.70, 6.0], [7.6, 5.55, 'mamad', 9.8, 3.7], [6.70, 6.0], [6.65, 7.0],
+  [5.4, 6.25], [4.3, 6.2, 'dress', 0.2, 6.4], [4.1, 5.95], [4.1, 5.2], [4.7, 4.4, 'master', 2.7, 1.6],
+  [4.1, 5.2], [4.1, 6.05], [5.3, 6.4], [5.4, 8.6], [5.2, 9.8], [4.4, 10.25], [2.75, 10.1], [2.75, 9.0, 'stairs', 1.0, 8.9],
+  [2.0, 8.88], [1.1, 8.88], [0.5, 8.8], [0.42, 8.35], [0.5, 7.85], [1.1, 7.82], [3.0, 7.82], [4.0, 7.85],
+  [4.4, 7.4], [4.4, 6.5, 'family', 0.8, 4.2], [4.72, 5.6], [4.75, 3.9], [4.75, 2.75, 'play', 3.0, 0.2], [4.75, 3.9], [4.72, 5.6], [4.4, 6.5], [4.4, 7.4],
+  [4.95, 8.0], [5.9, 8.0], [6.7, 8.0, 'studio', 10.2, 7.0],
+];
+const STOP_INFO = { kitchen: { name: 'מטבח ופינת אוכל', area: null, line: 'אי מטבח ופינת אוכל ליד הוויטרינה, צמודים לדק.' } };
+const tour = { active: false, paused: false, u: 0, curve: null, len: 0, stops: [], next: 0, hold: 0, yaw: 0, pitch: -0.04, speed: 1.75, phase: 'move', rise: 0, feet: GY };
+function buildTourCurve() {
+  tour.curve = new THREE.CatmullRomCurve3(ROUTE.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal', 0.5);
+  tour.len = tour.curve.getLength();
+  const N = 4000, samples = tour.curve.getSpacedPoints(N);
+  tour.stops = [];
+  let from = 0;
+  ROUTE.forEach(([x, z, id, tx, tz]) => {
+    if (!id) return;
+    const yaw = Math.atan2(-(tx - x), -(tz - z));
+    let best = from, bd = 1e9;
+    for (let i = from; i <= N; i++) { const p = samples[i], d = (p.x - x) ** 2 + (p.z - z) ** 2; if (d < bd) { bd = d; best = i; } if (d < 1e-4) break; }
+    tour.stops.push({ id, u: best / N, yaw }); from = best + 1;
+  });
+}
+function stopInfo(id) { const s = STOP_INFO[id]; if (s) return s; const r = ROOMS.find((q) => q.id === id); return { name: r.name, area: r.area, line: r.line }; }
+function tourStart() {
+  if (!tour.curve) buildTourCurve();
+  plc.unlock();
+  mode = 'tour'; orbit.enabled = false; G.ceilG.visible = G.ceilB.visible = G.roof.visible = true; G.labels.visible = false; setLevel('G');
+  scene.background = PANO[TIMES[timeKey].pano];
+  Object.assign(tour, { active: true, paused: false, u: 0, next: 0, hold: 0, phase: 'move', feet: GY, rise: 0 });
+  const p = tour.curve.getPointAt(0), q = tour.curve.getPointAt(0.004);
+  tour.yaw = Math.atan2(-(q.x - p.x), -(q.z - p.z)); camY = GY + EYE;
+  renderer.shadowMap.needsUpdate = true;
+  document.dispatchEvent(new CustomEvent('tourmode', { detail: 'tour' }));
+  document.dispatchEvent(new CustomEvent('tourstop', { detail: null }));
+}
+function tourStop(toWalk = true) {
+  tour.active = false; document.dispatchEvent(new CustomEvent('tourstop', { detail: null }));
+  if (toWalk) { player.x = camera.position.x; player.z = camera.position.z; player.feet = tour.feet; walkQ = camera.quaternion.clone(); mode = 'x'; setMode('walk'); }
+}
+function tourNext() {
+  if (!tour.active || tour.phase === 'rise') return;
+  if (tour.phase === 'hold') { tour.hold = 0; return; }
+  if (tour.next < tour.stops.length) tour.u = Math.max(tour.u, tour.stops[tour.next].u - 0.003);
+  else tour.u = 1;
+}
+function angDiff(a, b) { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; }
+function tourUpdate(dt) {
+  if (tour.paused) return;
+  if (tour.phase === 'rise') {
+    tour.rise += dt / 4.5; const k = Math.min(1, tour.rise), e = k * k * (3 - 2 * k);
+    camera.position.lerpVectors(tour.from, tour.to, e);
+    camera.lookAt(new THREE.Vector3().lerpVectors(tour.lookFrom, new THREE.Vector3(5.2, 0, 9.5), e));
+    if (k > 0.55 && !tour.showedG) { tour.showedG = true; setLevel('G'); renderer.shadowMap.needsUpdate = true; }
+    if (k >= 1) { tour.active = false; dollLevel = 'G'; mode = 'x'; setMode('doll'); document.dispatchEvent(new CustomEvent('tourdone')); }
+    return;
+  }
+  if (tour.phase === 'hold') {
+    tour.hold -= dt;
+    tour.yaw += angDiff(tour.yaw, tour.stops[tour.next].yaw) * Math.min(1, dt * 1.5);
+    if (tour.hold <= 0) { tour.phase = 'move'; tour.next++; document.dispatchEvent(new CustomEvent('tourstop', { detail: null })); }
+  } else {
+    tour.u = Math.min(1, tour.u + tour.speed * dt / tour.len);
+    const st = tour.stops[tour.next];
+    if (st && tour.u >= st.u) {
+      tour.u = st.u; tour.phase = 'hold'; tour.hold = st.id === 'stairs' ? 2.0 : 2.8;
+      document.dispatchEvent(new CustomEvent('tourstop', { detail: { ...stopInfo(st.id), index: tour.next + 1, count: tour.stops.length } }));
+    }
+    const p = tour.curve.getPointAt(tour.u), q = tour.curve.getPointAt(Math.min(1, tour.u + 0.012));
+    if (q.distanceTo(p) > 1e-4) {
+      const want = Math.atan2(-(q.x - p.x), -(q.z - p.z)), d = angDiff(tour.yaw, want), maxRate = 0.85 * dt;   // עד ~50° בשנייה: בלי סיבובים חדים
+      tour.yaw += Math.max(-maxRate, Math.min(maxRate, d * Math.min(1, dt * 2.2)));
+    }
+    if (tour.u >= 1) {
+      tour.phase = 'rise'; tour.rise = 0; tour.showedG = false;
+      tour.from = camera.position.clone(); tour.to = new THREE.Vector3(-2.5, 17, 25);
+      tour.lookFrom = camera.position.clone().add(new THREE.Vector3(-Math.sin(tour.yaw), -0.2, -Math.cos(tour.yaw)));
+      G.ceilG.visible = G.ceilB.visible = G.roof.visible = false; setLevel('B'); renderer.shadowMap.needsUpdate = true;
+      document.dispatchEvent(new CustomEvent('tourstop', { detail: { name: 'כל הדירה', area: 250, line: 'קומת כניסה 151 מ״ר, מרתף 99 מ״ר וגינה פרטית 122 מ״ר.', index: 0, count: 0 } }));
+      return;
+    }
+  }
+  const p = tour.curve.getPointAt(tour.u);
+  const h = surfaceAt(p.x, p.z, tour.feet); if (h !== null) tour.feet = h;
+  camY += (tour.feet + EYE - camY) * Math.min(1, dt * 6);
+  camera.position.set(p.x, camY, p.z);
+  camera.quaternion.setFromEuler(new THREE.Euler(tour.pitch, tour.yaw, 0, 'YXZ'));
 }
 
 // ---------------------------------------------------------------- HUD
-let lastRoom = null;
+let lastRoom;
 function currentRoom() {
-  const lvl = player.feet > -2 ? 'G' : 'B';
-  if (stairH(player.x, player.z) !== null) return ROOMS.find((r) => r.id === 'stairs');
-  return ROOMS.find((r) => (r.lvl === lvl) && r.rects.some((q) => inR(player.x, player.z, q))) || null;
+  const x = camera.position.x, z = camera.position.z, feet = mode === 'tour' ? tour.feet : player.feet;
+  if (stairH(x, z) !== null) return ROOMS.find((r) => r.id === 'stairs');
+  const lvl = feet > -2 ? 'G' : 'B';
+  return ROOMS.find((r) => r.lvl === lvl && r.rects.some((q) => inR(x, z, q))) || null;
 }
 function updateHud() {
-  const r = mode === 'walk' ? currentRoom() : null;
-  if (r !== lastRoom) {
-    lastRoom = r;
-    document.dispatchEvent(new CustomEvent('tourroom', { detail: r ? {
-      name: r.name,
-      area: ['stairs', 'lobby', 'passage'].includes(r.id) ? (r.note || '') : fmtArea(r.area) + (r.note ? ` · ${r.note}` : ''),
-      level: r.id === 'lobby' ? 'מחוץ לדירה' : r.lvl === 'B' ? 'קומת מרתף' : r.lvl === 'S' ? 'בין הקומות' : (['deck', 'garden'].includes(r.id) ? 'קומת כניסה · חוץ' : 'קומת כניסה'),
-    } : null }));
-  }
+  const r = mode === 'doll' ? null : currentRoom();
+  if (r === lastRoom) return; lastRoom = r;
+  document.dispatchEvent(new CustomEvent('tourroom', { detail: r ? {
+    name: r.name, area: r.area ? fmtArea(r.area) + (r.note ? ` · ${r.note}` : '') : (r.note || ''),
+    level: r.id === 'lobby' ? 'מחוץ לדירה' : r.lvl === 'B' ? 'קומת מרתף' : r.lvl === 'S' ? 'בין הקומות' : ['deck', 'garden'].includes(r.id) ? 'קומת כניסה · חוץ' : 'קומת כניסה',
+  } : null }));
 }
 
 // ---------------------------------------------------------------- לולאה
-const clock = new THREE.Clock();
-const fwd = new THREE.Vector3(), right = new THREE.Vector3();
+const clock = new THREE.Clock(), fwd = new THREE.Vector3(), right = new THREE.Vector3();
+let fpsAcc = 0, fpsN = 0, lowered = false;
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05);
   if (mode === 'walk') {
     const sp = (keys.run ? 3.0 : 1.5) * dt;
-    camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
-    right.crossVectors(fwd, camera.up).normalize();
+    camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize(); right.crossVectors(fwd, camera.up).normalize();
     let mx = 0, mz = 0;
     if (keys.f) { mx += fwd.x; mz += fwd.z; } if (keys.b) { mx -= fwd.x; mz -= fwd.z; }
     if (keys.r) { mx += right.x; mz += right.z; } if (keys.l) { mx -= right.x; mz -= right.z; }
+    mx += fwd.x * -joy.y + right.x * joy.x; mz += fwd.z * -joy.y + right.z * joy.x;
     const len = Math.hypot(mx, mz);
-    if (len > 0) {
-      mx = mx / len * sp; mz = mz / len * sp;
-      const n = 4;
-      for (let i = 0; i < n; i++) { tryMove(player.x + mx / n, player.z) ; tryMove(player.x, player.z + mz / n); }
-    }
+    if (len > 0.02) { const k = Math.min(1, len); mx = mx / len * sp * k; mz = mz / len * sp * k; for (let i = 0; i < 4; i++) { tryMove(player.x + mx / 4, player.z); tryMove(player.x, player.z + mz / 4); } }
     camY += (player.feet + EYE - camY) * Math.min(1, dt * 10);
     camera.position.set(player.x, camY, player.z);
-    updateHud();
-  } else {
-    orbit.update();
-  }
-  const eu = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
-  document.dispatchEvent(new CustomEvent('tourheading', { detail: eu.y }));
+  } else if (mode === 'tour') tourUpdate(dt);
+  else orbit.update();
+  updateHud();
+  document.dispatchEvent(new CustomEvent('tourheading', { detail: new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ').y }));
   renderer.render(scene, camera);
+  // מכשיר איטי: מורידים רזולוציה פעם אחת
+  fpsAcc += dt; fpsN++;
+  if (fpsN === 90) { if (!lowered && fpsAcc / fpsN > 1 / 34) { lowered = true; renderer.setPixelRatio(Math.max(1, renderer.getPixelRatio() * 0.75)); } fpsAcc = 0; fpsN = 0; }
   requestAnimationFrame(frame);
 }
-
-addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
 // ---------------------------------------------------------------- מדידה (בדיקת מידות מול התוכנית)
-// קרניים אופקיות בגובה 0.5 מ' מהרצפה, רק מול קירות. לכל כיוון נלקח הערך השכיח מבין 31 קרניים.
 function measure(x1, x2, z1, z2, lvl) {
-  const y = (lvl === 'B' ? BY : GY) + 0.5;
-  const rc = new THREE.Raycaster();
-  const cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
-  // לכל צד נלקח הקיר הקרוב ביותר (קרניים שעוברות בפתח ממשיכות רחוק יותר ולא משפיעות)
+  const y = (lvl === 'B' ? BY : GY) + 0.5, rc = new THREE.Raycaster(), cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
   const span = (axis) => {
     const side = [Infinity, Infinity];
     for (let i = 0; i <= 30; i++) {
-      const t = 0.04 + 0.92 * i / 30;
-      const o = axis === 'x' ? new THREE.Vector3(cx, y, z1 + (z2 - z1) * t) : new THREE.Vector3(x1 + (x2 - x1) * t, y, cz);
-      [1, -1].forEach((s, k) => {
-        rc.set(o, axis === 'x' ? new THREE.Vector3(s, 0, 0) : new THREE.Vector3(0, 0, s));
-        rc.far = 30;
-        const hit = rc.intersectObjects(wallMeshes, false)[0];
-        if (hit) side[k] = Math.min(side[k], hit.distance);
-      });
+      const t = 0.04 + 0.92 * i / 30, o = axis === 'x' ? new THREE.Vector3(cx, y, z1 + (z2 - z1) * t) : new THREE.Vector3(x1 + (x2 - x1) * t, y, cz);
+      [1, -1].forEach((s, k) => { rc.set(o, axis === 'x' ? new THREE.Vector3(s, 0, 0) : new THREE.Vector3(0, 0, s)); rc.far = 30; const h = rc.intersectObjects(wallMeshes, false)[0]; if (h) side[k] = Math.min(side[k], h.distance); });
     }
     return Math.round((side[0] + side[1]) * 1000) / 1000;
   };
   return { x: span('x'), z: span('z') };
 }
-const CHECKS = [
-  { name: 'חדר שינה הורים (כולל חדר הארונות)', lvl: 'G', r: [2.14, 5.59, 0, 5.65], plan: [3.45, 5.65] },
-  { name: 'חדר רחצה הורים', lvl: 'G', r: [-0.52, 1.94, 3.47, 5.65], plan: [2.46, 2.18] },
-  { name: 'ממ״ד / חדר שינה', lvl: 'G', r: [5.89, 10.13, 2.90, 5.65], plan: [4.24, 2.75] },
-  { name: 'חדר רחצה כללי', lvl: 'G', r: [7.27, 10.46, 5.95, 8.29], plan: [3.19, 2.34] },
-  { name: 'שירותי אורחים', lvl: 'G', r: [2.95, 4.25, 6.75, 8.25], plan: [1.30, null] },
-  { name: 'חדר שינה 2', lvl: 'G', r: [6.12, 10.46, 8.49, 11.29], plan: [4.34, 2.80] },
-  { name: 'מטבח, פינת אוכל וסלון', lvl: 'G', r: [0, 10.46, 11.54, 15.99], plan: [10.46, 4.45] },
-  { name: 'חדר משחקים', lvl: 'B', r: [2.04, 5.49, -0.97, 2.58], plan: [3.45, 3.55] },
-  { name: 'מרחב משפחה', lvl: 'B', r: [0, 5.49, 2.68, 6.65], plan: [5.49, 3.97] },
-  { name: 'סטודיו', lvl: 'B', r: [6.25, 10.46, 5.70, 9.81], plan: [4.21, 4.11] },
-  { name: 'חדר רחצה מרתף 1', lvl: 'B', r: [6.25, 7.85, 2.80, 5.60], plan: [1.60, 2.80] },
-  { name: 'חדר רחצה מרתף 2', lvl: 'B', r: [8.86, 10.46, 2.80, 5.60], plan: [null, 2.80] },
-  { name: 'חדר שירות', lvl: 'B', r: [2.71, 4.71, 8.35, 10.56], plan: [null, 2.21] },
-  { name: 'מחסן', lvl: 'B', r: [0, 2.61, 8.35, 10.64], plan: [2.61, null] },
-  { name: 'חצר אנגלית', lvl: 'B', r: [5.89, 10.28, -1.65, 2.60], plan: [4.39, 4.25] },
-];
+
+// ---------------------------------------------------------------- הפעלה
+export async function start(onProgress = () => {}) {
+  const list = { oak: IMG_OAK, herring: IMG_HERRING, plaster: IMG_PLASTER, stone: IMG_STONE, granite: IMG_GRANITE, walltiles: IMG_WALLTILES, linen: IMG_LINEN,
+    velvet: IMG_VELVET, deck: IMG_DECK, pavers: IMG_PAVERS, walnut: IMG_WALNUT, rug: IMG_RUG, terrazzo: IMG_TERRAZZO };
+  const photos = [PH1, PH2, PH3, PH4, PH5, PH6, PH7, PH8];
+  const panos = { noon: PANO_NOON, sunset: PANO_SUNSET, night: PANO_NIGHT };
+  const total = Object.keys(list).length + photos.length + 3; let done = 0;
+  const tick = () => onProgress(++done / total);
+  await Promise.all(Object.entries(list).map(async ([k, v]) => { IMG[k] = await loadImg(v); tick(); }));
+  const phImgs = await Promise.all(photos.map(async (v) => { const i = await loadImg(v); tick(); return i; }));
+  phImgs.forEach((im) => { const t = imgTex(im); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; PHOTO_M.push(new THREE.MeshStandardMaterial({ map: t, roughness: 0.4 })); });
+  await Promise.all(Object.entries(panos).map(async ([k, v]) => {
+    const im = await loadImg(v); const t = new THREE.Texture(im); t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.SRGBColorSpace; t.needsUpdate = true;
+    PANO[k] = t; ENV[k] = pmrem.fromEquirectangular(t).texture; tick();
+  }));
+  // חומרים קבועים מטקסטורות אמיתיות
+  M.bathFloor.map = imgTex(IMG.granite); M.bathWall.map = imgTex(IMG.walltiles); M.bathWall.map.repeat.set(SPAN / 1.27, SPAN / 1.27);
+  M.facade.map = imgTex(IMG.stone); M.facade.map.repeat.set(SPAN / 1.5, SPAN / 1.5);
+  M.pavers.map = imgTex(IMG.pavers); M.deck.map = imgTex(IMG.deck); M.deck.map.repeat.set(SPAN / 1.8, SPAN / 1.8);
+  M.concrete.map = imgTex(IMG.terrazzo);
+  [M.bathFloor, M.bathWall, M.facade, M.pavers, M.deck, M.concrete].forEach((m) => { m.needsUpdate = true; });
+  applyStyle('modern');
+  buildArchitecture();
+  buildFurniture();
+  ROOMS.forEach((r) => {
+    if (!r.area || ['bhall', 'storage', 'service', 'hall', 'wc'].includes(r.id)) return;
+    const sp = label(r.name, fmtArea(r.area)); sp.position.set(r.cx, (r.lvl === 'B' ? BY : GY) + 2.0, r.cz); sp.userData.lvl = r.lvl; G.labels.add(sp);
+  });
+  G.labels.visible = false;
+  buildLampLights();
+  [G.ground, G.base, G.out, G.roof, G.ceilG, G.ceilB, G.slab].forEach(mergeGroup);
+  applyTime('sunset');
+  frame();
+  return {
+    plc, setMode, setDollLevel, teleport, ROOMS, STYLES, TIMES,
+    setStyle: applyStyle, setTime: applyTime, tourStart, tourStop, tourNext,
+    tourPause: (p) => { tour.paused = p; }, get mode() { return mode; },
+    setJoy: (x, y) => { joy.x = x; joy.y = y; },
+  };
+}
 window.__tour = {
-  measureAll: () => CHECKS.map((c) => ({ ...c, model: measure(c.r[0], c.r[1], c.r[2], c.r[3], c.lvl) })),
-  rooms: () => ROOMS.map((r) => ({ id: r.id, name: r.name, area: +r.area.toFixed(2) })),
-  goto: (x, z, yaw, lvl = 'G', pitch = -0.08) => {
-    player.x = x; player.z = z; player.feet = lvl === 'B' ? BY : GY; camY = player.feet + EYE;
-    walkSaved = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
-    if (mode !== 'walk') setMode('walk'); else { camera.quaternion.copy(walkSaved); camera.position.set(x, camY, z); }
-  },
+  measure, player, colliders, get tour() { return tour; }, ROUTE, setTime: (k) => applyTime(k), setStyle: (k) => applyStyle(k),
+  goto: (x, z, yaw, lvl = 'G', pitch = -0.05) => { player.x = x; player.z = z; player.feet = lvl === 'B' ? BY : GY; camY = player.feet + EYE; walkQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ')); if (mode !== 'walk') { mode = 'x'; setMode('walk'); } else { camera.quaternion.copy(walkQ); camera.position.set(x, camY, z); } },
   walk: (dx, dz, n = 60) => { for (let i = 0; i < n; i++) { tryMove(player.x + dx, player.z); tryMove(player.x, player.z + dz); } return { ...player }; },
   stuck: () => blocked(player.x, player.z, player.feet),
-  player, setMode, setDollLevel, teleport,
-  setSun: (date, hour) => { sunState = { date, hour }; return updateSun(); },
-  setLights: (on) => { G.lights.visible = on; },
-  vitrineWidths: () => [5.86 - 0.66, 9.21 - 6.31],
+  info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, geos: renderer.info.memory.geometries, tex: renderer.info.memory.textures }),
+  tourInfo: () => { if (!tour.curve) buildTourCurve(); return { len: +tour.len.toFixed(1), stops: tour.stops.length, seconds: +(tour.len / tour.speed + tour.stops.length * 2.8 + 4.5).toFixed(1) }; },
+  tourJump: (u) => { tour.u = u; },
+  // בדיקת המסלול: נקודות שעוברות בתוך קיר או רהיט (רדיוס 12 ס"מ)
+  tourClear: () => {
+    if (!tour.curve) buildTourCurve();
+    const bad = []; let feet = GY;
+    for (let i = 0; i <= 1500; i++) {
+      const p = tour.curve.getPointAt(i / 1500), h = surfaceAt(p.x, p.z, feet);
+      if (h === null) { bad.push([i, +p.x.toFixed(2), +p.z.toFixed(2), 'nofloor']); continue; }
+      feet = h;
+      for (const b of colliders) {
+        if (b.y1 >= feet + 1.8 || b.y2 <= feet + 0.35) continue;
+        const cx = Math.max(b.x1, Math.min(p.x, b.x2)), cz = Math.max(b.z1, Math.min(p.z, b.z2));
+        if ((p.x - cx) ** 2 + (p.z - cz) ** 2 < 0.12 * 0.12) { bad.push([i, +p.x.toFixed(2), +p.z.toFixed(2), +feet.toFixed(2), [b.x1, b.x2, b.z1, b.z2].map((v) => +v.toFixed(2))]); break; }
+      }
+    }
+    return bad;
+  },
 };
-
-// ---------------------------------------------------------------- ממשק
-export function start() {
-  updateSun();
-  frame();
-  return { plc, setMode, setDollLevel, teleport, ROOMS, sunState: () => sunState, setSun: (d, h) => { sunState = { date: d, hour: h }; updateSun(); }, setLights: (on) => { G.lights.visible = on; } };
-}
 window.__startTour = start;

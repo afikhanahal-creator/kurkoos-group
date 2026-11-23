@@ -6,7 +6,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const res = await build({
-  entryPoints: [join(here, 'tour.js')], bundle: true, format: 'iife', minify: true, write: false,
+  entryPoints: [join(here, 'tour.js')], bundle: true, format: 'iife', minify: true, write: false, loader: { '.jpg': 'dataurl' },
   target: 'es2020', legalComments: 'none',
 });
 let js = res.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');

@@ -431,7 +431,6 @@ for i, dx in enumerate((-0.75, 0, 0.75)):
         hard(f'knife{i}{side}', 0.015, 0.003, 0.20, 4.55 + dx + 0.17, zz, GY + 0.764, 0, 'chrome', 0)
 hard('runner', 0.36, 0.003, 1.9, 4.55, 14.15, GY + 0.76, R90, 'throw', 0)
 put('ceramic_vase_03', 4.55, 14.15, GY + 0.765, 0, height=0.28)
-put('anthurium_botany_01', 4.55, 14.15, GY + 0.80, 0, height=0.45)
 for dx in (-0.6, 0.6):
     put('modern_ceiling_lamp_01', 4.55 + dx, 14.15, NET - 0.75, 0, height=0.75)
 # --- מטבח: כיסאות בר, קערת פירות, קרש חיתוך, קנקן, בקבוקי יין, סט תה
@@ -681,8 +680,9 @@ if MODE == 'preview':
     scene.cycles.samples = 24
     scene.render.resolution_x, scene.render.resolution_y = 480, 320
 else:
-    scene.cycles.samples = 256
-    scene.render.resolution_x, scene.render.resolution_y = 2400, 1600
+    scene.cycles.samples = int(os.environ.get('SAMPLES', '160'))
+    scene.cycles.adaptive_threshold = 0.02
+    scene.render.resolution_x, scene.render.resolution_y = 1800, 1200
 scene.render.resolution_percentage = 100
 only = os.environ.get('ONLY')
 for key, *_ in CAMS:
@@ -693,5 +693,41 @@ for key, *_ in CAMS:
     scene.render.filepath = os.path.join(OUT, f'{MODE}_{key}.png')
     bpy.ops.render.render(write_still=True)
 json.dump([(k, n) for k, n, *_ in CAMS], open(os.path.join(OUT, 'cams.json'), 'w'), ensure_ascii=False)
+
+# ------------------------------------------------------------------ מבט מלמעלה בלי תקרה (פוטוריאליסטי), שתי הקומות
+if MODE == 'final' and os.environ.get('TOP', '1') == '1':
+    so.rotation_euler = Vector((math.sin(math.radians(200)) * math.cos(math.radians(65)), math.cos(math.radians(200)) * math.cos(math.radians(65)),
+                               math.sin(math.radians(65)))).to_track_quat('Z', 'Y').to_euler()
+    for li in bpy.data.lights:
+        if li.type in ('AREA', 'POINT'):
+            li.energy *= 0.4
+    topcam = bpy.data.cameras.new('top')
+    topcam.type = 'ORTHO'
+    topcam.sensor_fit = 'VERTICAL'
+    tco = bpy.data.objects.new('top', topcam)
+    scene.collection.objects.link(tco)
+    scene.camera = tco
+    scene.view_settings.exposure = 0.3
+    scene.cycles.samples = 64
+    views = {}
+    HIDE_ALWAYS = ('G_ceil', 'B_ceil', 'ROOFSLAB', 'UPPER', 'UPPER_glass')
+    for lvl, (x1, x2, z1, z2) in (('ground', (-1.6, 14.6, -2.2, 22.9)), ('basement', (-1.6, 12.6, -2.2, 12.9))):
+        for ob in bpy.data.objects:
+            hide = ob.name in HIDE_ALWAYS or ob.name.startswith('room')
+            if lvl == 'basement':
+                hide = hide or ob.name.startswith(('G_', 'OUT', 'SLAB', 'ROOF')) or (ob.parent is None and ob.type in ('MESH', 'EMPTY') and ob.name not in ('B_walls',) and not ob.name.startswith('B_') and ob.location.z > -2.0)
+            ob.hide_render = hide
+        ppm = 80
+        topcam.ortho_scale = z2 - z1
+        tco.location = (( x1 + x2) / 2, -(z1 + z2) / 2, 30)
+        tco.rotation_euler = (0, 0, 0)
+        scene.render.resolution_x, scene.render.resolution_y = int((x2 - x1) * ppm), int((z2 - z1) * ppm)
+        fn = f'top_{lvl}.png'
+        scene.render.filepath = os.path.join(OUT, fn)
+        bpy.ops.render.render(write_still=True)
+        views[lvl] = {'file': fn, 'x1': x1, 'x2': x2, 'z1': z1, 'z2': z2, 'ppm': ppm}
+    json.dump(views, open(os.path.join(OUT, 'views.json'), 'w'))
+    for ob in bpy.data.objects:
+        ob.hide_render = False
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, 'apartment_250_photoreal.blend'))
 print('DONE')

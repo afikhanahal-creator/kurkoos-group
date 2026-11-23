@@ -325,10 +325,11 @@ def opening(lvl, o, axis, x1, x2, z1, z2, fl):
         la = hinge - th if o.get('hinge') == 'b' else hinge
         face = t1 if o['swing'] > 0 else t0
         ta, tb = (face, face + w) if o['swing'] > 0 else (face - w, face)
-        put(la, la + th, ys + 0.008, yh - 0.035, ta, tb, {'mamad': 'steel', 'entry': 'entry'}.get(kind, 'leaf_door'))
+        lb = lvl + '_leaf' if kind == 'door' else None    # כנפי דלתות פנים בשכבה נפרדת: מוסתרות בצילומי החדרים
+        put(la, la + th, ys + 0.008, yh - 0.035, ta, tb, {'mamad': 'steel', 'entry': 'entry'}.get(kind, 'leaf_door'), lb)
         hf = tb if o['swing'] > 0 else ta
         h1_, h2_ = (hf - 0.2, hf - 0.06) if o['swing'] > 0 else (hf + 0.06, hf + 0.2)
-        put(la - 0.035, la + th + 0.035, ys + 1.02, ys + 1.045, h1_, h2_, 'chrome' if kind == 'entry' else 'black')
+        put(la - 0.035, la + th + 0.035, ys + 1.02, ys + 1.045, h1_, h2_, 'chrome' if kind == 'entry' else 'black', lb)
         return
     if kind in ('win', 'mwin'):
         fw, fd = (0.07, 0.05) if kind == 'mwin' else (0.05, 0.035)

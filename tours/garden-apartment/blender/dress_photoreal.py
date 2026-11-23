@@ -80,9 +80,14 @@ def pbr(name, tex, size=None, tint=None, rough=None, rough_mul=1.0, nstr=0.6, pl
         mul.data_type = 'RGBA'
         mul.blend_type = 'MULTIPLY'
         mul.inputs['Factor'].default_value = 1.0
-        mul.inputs['A'].default_value = (*tint, 1)
-        nt.links.new(mr.outputs['Result'], mul.inputs['B'])
-        col = mul.outputs['Result']
+        if name == 'deck':   # שקעי הצבע הנכונים של Mix: צבע אמיתי של עץ. בשאר החומרים נשאר הגוון הניטרלי שכבר אושר בצילומים
+            mul.inputs[6].default_value = (*tint, 1)
+            nt.links.new(mr.outputs['Result'], mul.inputs[7])
+            col = mul.outputs[2]
+        else:
+            mul.inputs['A'].default_value = (*tint, 1)
+            nt.links.new(mr.outputs['Result'], mul.inputs['B'])
+            col = mul.outputs['Result']
     grid = planks or tiles
     if grid:
         w, h, gap, gcol = grid
@@ -153,7 +158,7 @@ pbr('p_basement', 'herringbone_parquet', 3.4, rough_mul=0.9, nstr=0.5)          
 pbr('p_bath', 'granite_tile', 2.3, rough_mul=0.7, nstr=0.5)
 pbr('p_bathwall', 'long_white_tiles', 1.27, rough_mul=0.6, nstr=0.6)
 pbr('p_outdoor', 'large_grey_tiles', 3.0, nstr=0.6)
-pbr('deck', 'wood_floor_deck', 1.8, nstr=0.6)
+pbr('deck', 'wood_floor_deck', 1.8, tint=(0.20, 0.12, 0.07), nstr=0.6)
 pbr('gravel', 'concrete_floor_02', 1.0, tint=(0.45, 0.43, 0.40), nstr=1.0)
 # עץ, אבן ובד
 pbr('oak', 'oak_veneer_01', 1.83, rough_mul=0.8, nstr=0.2)
@@ -635,20 +640,20 @@ CAMS = [
     ('kitchen', 'מטבח ופינת אוכל', 'G', (6.3, 12.5), (0.4, 14.2)),
     ('foyer', 'מבואת כניסה', 'G', (5.3, 9.75), (2.0, 16.4)),
     ('master', 'חדר שינה הורים', 'G', (5.75, 5.35), (2.6, 0.6)),
-    ('mbath', 'חדר רחצה הורים', 'G', (1.30, 5.58), (0.9, 3.47)),
+    ('mbath', 'חדר רחצה הורים', 'G', (1.20, 5.55), (2.1, 3.47)),
     ('dress', 'חדר ארונות', 'G', (4.45, 6.05), (0.2, 6.6)),
     ('mamad', 'ממ"ד / חדר עבודה', 'G', (10.2, 6.0), (6.4, 3.6)),
-    ('bath', 'חדר רחצה', 'G', (8.30, 7.95), (10.4, 6.5)),
+    ('bath', 'חדר רחצה', 'G', (9.85, 7.45), (7.27, 7.75)),
     ('bed2', 'חדר שינה', 'G', (9.30, 9.15), (6.2, 11.3)),
-    ('garden', 'דק וגינה', 'G', (9.0, 21.85), (4.5, 16.0)),
+    ('garden', 'דק וגינה', 'G', (10.0, 22.0), (3.5, 16.2)),
     ('family', 'מרחב משפחה', 'B', (5.25, 7.05), (0.3, 3.4)),
-    ('play', 'חדר משחקים', 'B', (5.8, 3.0), (2.6, -0.3)),
+    ('play', 'חדר משחקים', 'B', (5.75, 3.0), (2.6, -0.3)),
     ('studio', 'סטודיו', 'B', (6.5, 10.1), (10.4, 6.4)),
-    ('bbath', 'חדר רחצה במרתף', 'B', (9.0, 6.0), (10.2, 3.6)),
+    ('bbath', 'חדר רחצה במרתף', 'B', (9.9, 6.05), (9.0, 3.35)),
 ]
 for key, _, lvl, (cx, cz), (tx, tz) in CAMS:
     cam = bpy.data.cameras.new('cam_' + key)
-    cam.lens = 17
+    cam.lens = 22 if key == 'garden' else 17   # בחוץ פחות רחב, בלי עיוות של הרהיטים בקצה
     cam.sensor_width = 36
     cam.clip_start = 0.05
     co = bpy.data.objects.new('cam_' + key, cam)
@@ -673,8 +678,8 @@ scene.cycles.blur_glossy = 1.0
 scene.view_settings.view_transform = 'AgX'
 scene.view_settings.look = 'AgX - Medium High Contrast'
 scene.view_settings.exposure = 1.1
-for ob in bpy.data.objects:          # תקרות וגג גלויים בצילומי פנים
-    ob.hide_render = False
+for ob in bpy.data.objects:          # תקרות וגג גלויים בצילומי פנים; כנפי דלתות פנים מוסתרות (כמו דלת פתוחה עד הסוף)
+    ob.hide_render = ob.name.endswith('_leaf')
 
 if MODE == 'preview':
     scene.cycles.samples = 24

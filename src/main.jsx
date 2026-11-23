@@ -69,7 +69,10 @@ function holdPrerendered(node) {
     for (const ch of main.children) if (ch !== node) len += (ch.innerText || '').length
     return len > 600
   }
-  const done = () => { node.remove(); mo.disconnect(); clearTimeout(timer) }
+  /* hidden by default (prerender-static.mjs): on a normal load the real page arrives first and nothing flashes.
+     Only when the page is still not there after 1.2 s does the text copy show, so a slow phone is not left on a blank screen. */
+  const show = setTimeout(() => node.classList.add('ssr-show'), 1200)
+  const done = () => { node.remove(); mo.disconnect(); clearTimeout(timer); clearTimeout(show) }
   const mo = new MutationObserver(() => {
     if (location.pathname !== startPath) return done()
     if (!main) { main = document.getElementById('top'); if (main) main.prepend(node) }

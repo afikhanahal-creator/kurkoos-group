@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { createLead } from './cms.js'
 import { track } from './track.js'
+import { forLead } from './attribution.js'
 
 /* ============================================================
    לוגיקה משותפת לכל טפסי הלידים באתר (סקשן צור קשר, החלון הקופץ,
@@ -97,7 +98,8 @@ export function useLeadForm({ form, idPrefix }) {
       message: values.message.trim(),
     }
     try {
-      await createLead(build(clean), { read: false })
+      // the marketing source (channel, UTM, landing page, device) travels with every lead from the site
+      await createLead({ ...build(clean), ...forLead() }, { read: false })
       track('generate_lead', { form, ...meta })
       setSent(true)
     } catch (err) {

@@ -9,6 +9,7 @@
 // ============================================================
 
 import { sendLeadWhatsApp } from './_whatsapp.js'
+import { ATTR_MAX, channelLabel } from '../src/lib/attribution.js'
 
 // Rate limiter פשוט בזיכרון — מגן מפני SPAM/flood בכל instance של Vercel
 const _rl = new Map()
@@ -25,12 +26,13 @@ function rateLimit(ip, max = 15, windowMs = 60_000) {
 const FIELD_LABELS = {
   name: 'שם', phone: 'טלפון', email: 'אימייל', project: 'פרויקט',
   message: 'הודעה', source: 'מקור', notes: 'הערות', created_at: 'תאריך',
+  channel: 'הגיע מ', utm_campaign: 'קמפיין', device: 'מכשיר',
 }
 const SOURCE_LABELS = { project: 'עמוד פרויקט', home: 'דף הבית', contact: 'צור קשר', manual: 'ידני' }
 const DEFAULT_FIELDS = ['name', 'phone', 'email', 'project', 'message', 'source', 'created_at']
 
 // עמודות טבלת leads — כל שדה אחר שמגיע מהדפדפן (למשל saveFailed) נזרק לפני הכנסה
-const LEAD_COLS = { name: 200, phone: 30, email: 200, message: 2000, notes: 2000 }
+const LEAD_COLS = { name: 200, phone: 30, email: 200, message: 2000, notes: 2000, ...ATTR_MAX }
 const VALID_SOURCES = new Set(['project', 'contact', 'home', 'manual'])
 function leadRowForInsert(lead) {
   const row = {}
@@ -173,10 +175,16 @@ export default async function handler(req, res) {
     }
     if (!to.length) { res.status(200).json({ ok: true, skipped: 'no_recipients', rescued, whatsapp }); return }
 
-    const fields = Array.isArray(settings.include_fields) && settings.include_fields.length ? settings.include_fields : DEFAULT_FIELDS
+    const chosen = Array.isArray(settings.include_fields) && settings.include_fields.length ? settings.include_fields : DEFAULT_FIELDS
+    // where the lead came from is always in the mail, right after the form it was sent from
+    const fields = [...chosen]
+    for (const k of ['channel', 'utm_campaign']) {
+      if (lead[k] && !fields.includes(k)) fields.splice(Math.max(0, fields.indexOf('source') + 1) || fields.length, 0, k)
+    }
     const val = (k) => {
       let v = lead[k]
       if (k === 'source') v = SOURCE_LABELS[v] || v
+      if (k === 'channel') v = v ? channelLabel(v) : v
       if (k === 'project' && v && typeof v === 'object') v = v.he || v.en || v.slug || ''
       if (k === 'created_at' && v) {
         try { v = new Date(v).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }) }

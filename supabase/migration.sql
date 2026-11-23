@@ -143,6 +143,22 @@ create table if not exists public.leads (
 -- שדרוג למסדי-נתונים קיימים: updated_at חסר בטבלת לידים (נוצרה לפני הוספת העמודה)
 alter table public.leads add column if not exists updated_at timestamptz default now();
 
+-- Where the lead came from (src/lib/attribution.js): the marketing channel, the UTM tags of the last visit that came from
+-- somewhere, the first channel ever, the referring host, the landing page, the page the form was sent from and the device.
+-- No IP and no ad click id are stored.
+alter table public.leads add column if not exists channel text;
+alter table public.leads add column if not exists first_channel text;
+alter table public.leads add column if not exists utm_source text;
+alter table public.leads add column if not exists utm_medium text;
+alter table public.leads add column if not exists utm_campaign text;
+alter table public.leads add column if not exists utm_content text;
+alter table public.leads add column if not exists utm_term text;
+alter table public.leads add column if not exists referrer text;
+alter table public.leads add column if not exists landing_page text;
+alter table public.leads add column if not exists lead_page text;
+alter table public.leads add column if not exists device text;
+create index if not exists leads_channel_idx on public.leads (channel, created_at desc);
+
 -- updated_at triggers
 drop trigger if exists trg_projects_updated on public.projects;
 create trigger trg_projects_updated before update on public.projects for each row execute function public.set_updated_at();
@@ -204,7 +220,18 @@ create policy "leads public insert" on public.leads
     (email   is null or length(email)   <= 200) and
     (message is null or length(message) <= 2000) and
     (notes   is null or length(notes)   <= 2000) and
-    (coalesce(source, 'contact') in ('project', 'contact', 'home', 'manual'))
+    (coalesce(source, 'contact') in ('project', 'contact', 'home', 'manual')) and
+    (channel       is null or length(channel)       <= 40)  and
+    (first_channel is null or length(first_channel) <= 40)  and
+    (utm_source    is null or length(utm_source)    <= 100) and
+    (utm_medium    is null or length(utm_medium)    <= 100) and
+    (utm_campaign  is null or length(utm_campaign)  <= 150) and
+    (utm_content   is null or length(utm_content)   <= 150) and
+    (utm_term      is null or length(utm_term)      <= 150) and
+    (referrer      is null or length(referrer)      <= 120) and
+    (landing_page  is null or length(landing_page)  <= 200) and
+    (lead_page     is null or length(lead_page)     <= 200) and
+    (device        is null or length(device)        <= 80)
   );
 drop policy if exists "leads admin all" on public.leads;
 create policy "leads admin all" on public.leads for all to authenticated using (true) with check (true);

@@ -64,18 +64,6 @@ export default function Testimonials() {
 
   const item = testimonials[i] || testimonials[0]
 
-  /* The card's light (red glow on top, turquoise wash, passing shine) used to need a hover, and since the 16.10 design pass
-     a phone never showed it. The owner wants it on without hover: it lights up on every device while the card is in view. */
-  const cardRef = useRef(null)
-  const [inView, setInView] = useState(false)
-  useEffect(() => {
-    const el = cardRef.current
-    if (!el || typeof IntersectionObserver === 'undefined') return
-    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.45 })
-    io.observe(el)
-    return () => io.disconnect()
-  }, [item])
-
   // תמונות הבית המצורפות להמלצה הנוכחית (מנורמלות לכתובות URL)
   const shots = useMemo(() => {
     const arr = Array.isArray(item?.photos) ? item.photos : []
@@ -130,7 +118,7 @@ export default function Testimonials() {
                   role=button שעוטף כפתורים אחרים. הצד שלא מוצג מסומן inert. */}
               {/* ===== צד קדמי — ההמלצה ===== */}
               <div className="tc__face tc__face--front" inert={flipped ? '' : undefined}>
-                <div ref={cardRef} className={`tc__card${inView ? ' is-lit' : ''}`}>
+                <div className="tc__card">
                   <span className="tc__liquid" aria-hidden="true" />
                   <span className="tc__shine" aria-hidden="true" />
                   <span className="tc__glow" aria-hidden="true" />

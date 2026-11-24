@@ -16,8 +16,8 @@ const ORG_ID = `${SITE}/#organization`
 
 export const HH_PATH = '/hod-hasharon/bniya-vepikuach'
 /* התאריך שמוצג בעמוד ונכתב ל-dateModified. מעדכנים כשמשנים את התוכן. */
-export const HH_UPDATED = '2026-10-18'
-export const HH_UPDATED_HE = '18.10.2026'
+export const HH_UPDATED = '2026-11-24'
+export const HH_UPDATED_HE = '24.11.2026'
 
 export const HH_TITLE = 'חברת בנייה ופיקוח בהוד השרון'
 export const HH_DESCRIPTION =
@@ -69,8 +69,8 @@ export const HH_PROJECTS = [
     name: 'הנרייטה סאלד 22-24',
     place: 'מערב הוד השרון',
     status: 'בבנייה',
-    text: 'ארבע יחידות דו משפחתיות לשמונה משפחות. לכל יחידה מגרש 380 מ"ר בטאבו וכ-300 מ"ר בנוי בשלושה מפלסים.',
-    to: '/villas-sharon',
+    text: 'ארבע יחידות דו משפחתיות לשמונה משפחות. לכל יחידה מגרש 380 מ"ר בטאבו, כ-300 מ"ר בנוי בשלושה מפלסים, מרתף עם כניסה נפרדת ובריכה פרטית 3x6 מטר, במתחם עם כניסה מאובטחת. ההיתרים מאושרים, והמסירה מתוכננת ל-2027.',
+    to: '/projects/henrietta-sald-22-24',
   },
   {
     name: 'יורדי הים 3',

@@ -64,6 +64,19 @@ export default function Testimonials() {
 
   const item = testimonials[i] || testimonials[0]
 
+  /* The card's light (red glow on top, turquoise wash, passing shine) shows on hover with a mouse. A phone has no hover,
+     so since the 16.10 design pass the effect was never seen there. On touch screens it now lights up while the card is in view. */
+  const cardRef = useRef(null)
+  const [inView, setInView] = useState(false)
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.45 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [item])
+
   // תמונות הבית המצורפות להמלצה הנוכחית (מנורמלות לכתובות URL)
   const shots = useMemo(() => {
     const arr = Array.isArray(item?.photos) ? item.photos : []
@@ -118,7 +131,7 @@ export default function Testimonials() {
                   role=button שעוטף כפתורים אחרים. הצד שלא מוצג מסומן inert. */}
               {/* ===== צד קדמי — ההמלצה ===== */}
               <div className="tc__face tc__face--front" inert={flipped ? '' : undefined}>
-                <div className="tc__card">
+                <div ref={cardRef} className={`tc__card${inView ? ' is-lit' : ''}`}>
                   <span className="tc__liquid" aria-hidden="true" />
                   <span className="tc__shine" aria-hidden="true" />
                   <span className="tc__glow" aria-hidden="true" />

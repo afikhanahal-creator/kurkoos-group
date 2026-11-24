@@ -9,6 +9,7 @@
 // ============================================================
 
 import { sendLeadWhatsApp } from './_whatsapp.js'
+import { sendLeadWelcome } from './_lead-welcome.js'
 import { ATTR_MAX, channelLabel } from '../src/lib/attribution.js'
 
 // Rate limiter פשוט בזיכרון — מגן מפני SPAM/flood בכל instance של Vercel
@@ -134,6 +135,12 @@ export default async function handler(req, res) {
         rescued = false
       }
     }
+
+    /* The lead's own welcome on WhatsApp ("מתי נוח לכם שנדבר?"), from the Afik Hanahal office number (_lead-welcome.js).
+       After the rescue, so a lead the server saved gets it too; before the alert settings, so switching the office
+       alerts off does not switch it off. Never throws and never blocks the alerts below. */
+    const welcome = await sendLeadWelcome(lead, { sbGet, isTest })
+    if (welcome?.error) console.error('lead welcome:', welcome.error)
 
     const [settingsRows, recipients] = await Promise.all([
       sbGet('lead_notify_settings?id=eq.1&select=*'),

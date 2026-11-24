@@ -2,153 +2,249 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>דירת גן 250 מ״ר</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap">
 <style>
-  :root { --ink:#1d2125; --muted:#5e656d; --card:rgba(255,255,255,0.93); --line:rgba(29,33,37,0.12); --accent:#1f4f46; --accent2:#c98e6a; }
+  :root { --ink:#16191c; --muted:#5b636b; --glass:rgba(255,255,255,0.86); --line:rgba(22,25,28,0.10); --accent:#1f5f52; --accent-soft:#e3efeb; --warm:#b9774f; --warm-d:#a0623e;
+    --r:16px; --shadow:0 10px 30px rgba(16,24,32,0.16); --safe-b:env(safe-area-inset-bottom, 0px); }
   * { box-sizing:border-box; }
-  html,body { margin:0; height:100%; overflow:hidden; background:#cfd6dc; font-family:"Segoe UI","Heebo",Arial,sans-serif; color:var(--ink); -webkit-tap-highlight-color:transparent; }
-  #c { position:fixed; inset:0; width:100vw; height:100vh; display:block; touch-action:none; }
-  .card { position:fixed; background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:0 8px 28px rgba(0,0,0,0.14); backdrop-filter:blur(8px); }
-  #panel { top:16px; right:16px; width:300px; padding:14px 16px 16px; max-height:calc(100vh - 32px); overflow:auto; }
-  #panel h1 { margin:0; font-size:18px; }
-  #panel .sub { color:var(--muted); font-size:13px; margin:2px 0 12px; }
-  .cap { font-size:12px; color:var(--muted); margin:12px 0 6px; }
-  .seg { display:flex; gap:6px; }
-  .seg button { flex:1; padding:8px 4px; font-size:13px; }
-  button { font:inherit; font-size:14px; padding:9px 10px; border-radius:10px; border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; }
+  html,body { margin:0; height:100%; overflow:hidden; background:#d9dedf; font-family:Heebo,"Segoe UI",Arial,sans-serif; color:var(--ink); -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; }
+  #c { position:fixed; inset:0; width:100vw; height:100vh; height:100dvh; display:block; touch-action:none; }
+  .glass { position:fixed; background:var(--glass); border:1px solid rgba(255,255,255,0.6); border-radius:var(--r); box-shadow:var(--shadow); backdrop-filter:blur(14px) saturate(1.2); -webkit-backdrop-filter:blur(14px) saturate(1.2); }
+  button { font:inherit; font-size:14px; font-weight:500; padding:9px 10px; border-radius:11px; border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; transition:background .15s, color .15s, border-color .15s, transform .1s; }
+  button:active { transform:scale(0.97); }
   button.on { background:var(--accent); color:#fff; border-color:var(--accent); }
-  button:focus-visible, select:focus-visible { outline:2px solid #2b7bd6; outline-offset:2px; }
-  #bMore { display:none; flex:0 0 52px; font-size:20px; }
-  #bTour { flex:1; width:100%; margin-top:2px; padding:12px; font-size:16px; font-weight:700; background:var(--accent2); border-color:var(--accent2); color:#fff; }
-  select { width:100%; padding:8px; border-radius:9px; border:1px solid var(--line); background:#fff; font:inherit; font-size:14px; }
-  #room { top:16px; left:16px; min-width:230px; padding:12px 16px; }
-  #room .lvl { font-size:12px; color:var(--muted); }
-  #room .name { font-size:20px; font-weight:700; margin-top:2px; }
-  #room .area { font-size:15px; color:var(--accent); font-weight:600; margin-top:2px; }
-  #compass { position:fixed; left:16px; bottom:16px; width:60px; height:60px; }
-  #help { bottom:16px; left:50%; transform:translateX(-50%); padding:8px 14px; font-size:13px; color:var(--muted); white-space:nowrap; }
-  #stop { left:50%; bottom:92px; transform:translate(-50%, 12px); width:min(560px, calc(100vw - 32px)); padding:16px 20px; opacity:0; transition:opacity .45s, transform .45s; pointer-events:none; }
+  button:focus-visible { outline:2px solid #2b7bd6; outline-offset:2px; }
+  .seg { display:flex; gap:6px; }
+  .seg button { flex:1; padding:8px 4px; font-size:13.5px; }
+  .cap { font-size:12px; font-weight:700; letter-spacing:.02em; color:var(--muted); margin:14px 0 7px; }
+  .go { background:var(--warm); border-color:var(--warm); color:#fff; font-weight:700; }
+  .go:hover { background:var(--warm-d); }
+  .hidden { display:none !important; }
+
+  /* ---------- מחשב: פאנל צד */
+  #panel { top:16px; right:16px; width:316px; padding:16px 16px 18px; max-height:calc(100vh - 32px); overflow:auto; }
+  #panel h1 { margin:0; font-size:20px; font-weight:800; }
+  #panel .sub { color:var(--muted); font-size:13px; margin:2px 0 12px; }
+  #bTour { width:100%; padding:13px; font-size:16px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chips button { padding:6px 10px; font-size:13px; border-radius:999px; }
+  .chips .fl { width:100%; font-size:11.5px; color:var(--muted); font-weight:700; margin:4px 0 0; }
+  #room { top:16px; left:16px; min-width:220px; padding:11px 16px 12px; transition:opacity .3s; }
+  #room .lvl { font-size:12px; color:var(--muted); font-weight:500; }
+  #room .name { font-size:20px; font-weight:800; margin-top:1px; }
+  #room .area { font-size:15px; color:var(--accent); font-weight:700; margin-top:1px; }
+  #compass { position:fixed; left:16px; bottom:16px; width:58px; height:58px; filter:drop-shadow(0 4px 10px rgba(0,0,0,0.18)); }
+  #hint { bottom:16px; left:50%; transform:translateX(-50%); padding:8px 10px 8px 16px; font-size:13px; color:var(--muted); white-space:nowrap; display:flex; align-items:center; gap:12px; }
+  #hint button { padding:7px 12px; font-size:13px; font-weight:700; }
+  #stop { left:50%; bottom:96px; transform:translate(-50%, 12px); width:min(560px, calc(100vw - 32px)); padding:16px 20px; opacity:0; transition:opacity .45s, transform .45s; pointer-events:none; }
   #stop.show { opacity:1; transform:translate(-50%, 0); }
   #stop .row1 { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
   #stop .nm { font-size:24px; font-weight:800; }
-  #stop .ar { font-size:18px; color:var(--accent); font-weight:700; white-space:nowrap; }
-  #stop .ln { font-size:16px; color:#3b4148; margin-top:6px; line-height:1.45; }
-  #stop .ix { font-size:12px; color:var(--muted); margin-top:8px; }
+  #stop .ar { font-size:18px; color:var(--accent); font-weight:800; white-space:nowrap; }
+  #stop .ln { font-size:16px; color:#353b41; margin-top:6px; line-height:1.45; }
+  #stop .prog { height:4px; background:rgba(0,0,0,0.08); border-radius:2px; margin-top:12px; overflow:hidden; }
+  #stop .prog i { display:block; height:100%; background:var(--warm); width:0; transition:width .4s; }
+  #stop .ix { font-size:12px; color:var(--muted); margin-top:6px; }
   #tourbar { bottom:16px; left:50%; transform:translateX(-50%); padding:8px; display:flex; gap:8px; }
-  #tourbar button { min-width:110px; }
-  #loading { position:fixed; inset:0; background:#eef0f1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; z-index:20; }
-  #loading .bar { width:220px; height:6px; background:#dde1e4; border-radius:3px; overflow:hidden; }
+  #tourbar button { min-width:116px; }
+  #fade { position:fixed; inset:0; background:#f3f2ef; opacity:0; pointer-events:none; transition:opacity .22s; z-index:5; }
+  #fade.on { opacity:1; }
+
+  #loading { position:fixed; inset:0; background:#eef0ef; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; z-index:20; font-weight:500; }
+  #loading .bar { width:220px; height:6px; background:#dde1e1; border-radius:3px; overflow:hidden; }
   #loading .bar i { display:block; height:100%; width:0; background:var(--accent); transition:width .2s; }
-  #start { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(20,26,30,0.38); z-index:15; }
-  #start .box { background:#fff; border-radius:18px; padding:26px 28px; width:min(440px, calc(100vw - 32px)); text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.25); }
-  #start h2 { margin:0 0 8px; font-size:22px; }
-  #start p { margin:6px 0; color:var(--muted); font-size:15px; line-height:1.5; }
+  #start { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(16,22,26,0.34); z-index:15; padding:16px; }
+  #start .box { background:#fff; border-radius:22px; padding:26px 26px 22px; width:min(440px, 100%); text-align:center; box-shadow:0 24px 70px rgba(0,0,0,0.28); }
+  #start .kick { font-size:13px; color:var(--warm); font-weight:700; }
+  #start h2 { margin:4px 0 6px; font-size:24px; font-weight:800; }
+  #start .facts { display:flex; justify-content:center; gap:8px; margin:12px 0 6px; flex-wrap:wrap; }
+  #start .facts span { background:var(--accent-soft); color:var(--accent); font-weight:700; font-size:13px; padding:5px 10px; border-radius:999px; }
+  #start p { margin:8px 0; color:var(--muted); font-size:14.5px; line-height:1.5; }
   #start .btns { display:flex; gap:10px; margin-top:16px; }
-  #start .btns button { flex:1; padding:12px; font-size:16px; font-weight:700; }
-  #start .go { background:var(--accent2); border-color:var(--accent2); color:#fff; }
-  #joy { position:fixed; left:24px; bottom:24px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.35); border:2px solid rgba(255,255,255,0.7); touch-action:none; display:none; }
-  #joy i { position:absolute; left:35px; top:35px; width:50px; height:50px; border-radius:50%; background:rgba(255,255,255,0.9); box-shadow:0 2px 8px rgba(0,0,0,0.2); }
-  .hidden { display:none !important; }
-  @media (max-width:760px) {
-    #panel { width:auto; left:12px; right:12px; top:auto; bottom:12px; padding:10px 12px; max-height:46vh; }
-    #panel h1, #panel .sub { display:none; }
-    #bMore { display:block; }
-    #panel:not(.open) #more { display:none; }
-    #room { top:12px; left:12px; right:12px; min-width:0; padding:8px 12px; }
-    #room .name { font-size:17px; }
-    #help, #compass { display:none; }
-    #stop { bottom:auto; top:12px; }
-    #tourbar { bottom:12px; }
-    #tourbar button { min-width:0; flex:1; }
-    body.touch #joy { bottom:84px; }
-    body.touch #panel.open ~ #joy { display:none; }
+  #start .btns button { flex:1; padding:13px; font-size:16px; font-weight:700; }
+
+  #joy { position:fixed; left:20px; bottom:calc(96px + var(--safe-b)); width:116px; height:116px; border-radius:50%; background:rgba(255,255,255,0.28); border:2px solid rgba(255,255,255,0.75); touch-action:none; display:none; backdrop-filter:blur(4px); }
+  #joy i { position:absolute; left:33px; top:33px; width:50px; height:50px; border-radius:50%; background:rgba(255,255,255,0.95); box-shadow:0 2px 10px rgba(0,0,0,0.25); }
+  #outBtn { display:none; }
+
+  /* ---------- טלפון: סרגל תחתון וגיליון */
+  #dock, #sheet { display:none; }
+  @media (max-width:760px), (pointer:coarse) and (max-height:520px) {
+    #panel, #compass, #hint { display:none !important; }
+    #room { top:calc(10px + env(safe-area-inset-top, 0px)); left:10px; right:10px; min-width:0; padding:8px 14px; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+    #room .lvl { order:3; width:100%; margin-top:-2px; }
+    #room .name { font-size:17px; } #room .area { font-size:14px; }
+    #dock { display:flex; left:10px; right:10px; bottom:calc(10px + var(--safe-b)); padding:7px; gap:6px; }
+    #dock button { flex:1; display:flex; flex-direction:column; align-items:center; gap:1px; padding:7px 2px 6px; font-size:12px; font-weight:700; border:none; background:transparent; }
+    #dock button b { font-size:19px; line-height:1.1; font-weight:400; }
+    #dock button.go { background:var(--warm); color:#fff; }
+    #dock button.on { background:var(--accent-soft); color:var(--accent); }
+    #sheet { display:block; left:0; right:0; bottom:0; border-radius:22px 22px 0 0; padding:8px 16px calc(18px + var(--safe-b)); max-height:72vh; overflow:auto; transform:translateY(105%); transition:transform .3s cubic-bezier(.2,.8,.2,1); z-index:12; }
+    #sheet.open { transform:none; }
+    #sheet .grab { width:44px; height:5px; border-radius:3px; background:rgba(0,0,0,0.18); margin:2px auto 6px; }
+    #sheet .top { display:flex; justify-content:space-between; align-items:center; }
+    #sheet .top b { font-size:17px; font-weight:800; }
+    #sheet .top button { border:none; background:rgba(0,0,0,0.05); width:36px; height:36px; border-radius:50%; padding:0; font-size:18px; }
+    #sheet .seg button, #sheet .chips button { padding:10px 6px; font-size:14px; }
+    #sheet .chips button { padding:8px 12px; }
+    body.walk #outBtn { display:flex; position:fixed; right:12px; bottom:calc(96px + var(--safe-b)); width:52px; height:52px; border-radius:50%; align-items:center; justify-content:center; font-size:22px; padding:0; }
+    #stop { bottom:auto; top:calc(10px + env(safe-area-inset-top, 0px)); padding:12px 16px; }
+    #stop .nm { font-size:20px; } #stop .ar { font-size:16px; } #stop .ln { font-size:14.5px; }
+    #tourbar { left:10px; right:10px; transform:none; bottom:calc(10px + var(--safe-b)); }
+    #tourbar button { min-width:0; flex:1; padding:12px 6px; }
+    body.touring #room { display:none; }
+    #tip { position:fixed; left:50%; transform:translateX(-50%); top:calc(78px + env(safe-area-inset-top, 0px)); padding:7px 14px; font-size:13px; color:var(--ink); white-space:nowrap; transition:opacity .6s; max-width:calc(100vw - 20px); overflow:hidden; text-overflow:ellipsis; }
   }
-  body.touch #joy { display:block; }
-  body.touring #panel, body.touring #joy, body.touring #help { display:none !important; }
-  body.touring #room { opacity:0.75; }
+  #tip { display:none; }
+  @media (max-width:760px), (pointer:coarse) and (max-height:520px) { #tip { display:block; } #tip.gone { opacity:0; pointer-events:none; } }
+  body.touch.walk #joy { display:block; }
+  body.sheet #joy, body.sheet #outBtn, body.sheet #tip { display:none !important; }
+  body.touring #panel, body.touring #joy, body.touring #hint, body.touring #dock, body.touring #outBtn, body.touring #tip, body.flying #joy { display:none !important; }
+  body.touring #room { opacity:0.8; }
 </style>
 </head>
-<body>
+<body class="walk">
 <canvas id="c" aria-label="סיור תלת-ממדי בדירה"></canvas>
-
+<div id="fade"></div>
 <div id="loading"><div>טוענים את הדירה…</div><div class="bar"><i></i></div></div>
 
-<div id="panel" class="card">
+<div id="panel" class="glass">
   <h1>דירת גן · 250 מ״ר</h1>
-  <div class="sub">כניסה 151 מ״ר · מרתף 99 מ״ר · גינה 122 מ״ר</div>
-  <div class="seg"><button id="bTour">▶ התחילו סיור</button><button id="bMore" class="mob" aria-expanded="false" aria-label="אפשרויות">⚙</button></div>
-  <div id="more">
+  <div class="sub">קומת כניסה 151 מ״ר · מרתף 99 מ״ר · גינה 122 מ״ר</div>
+  <button id="bTour" class="go">▶ התחילו סיור מודרך</button>
   <div class="cap">תצוגה</div>
-  <div class="seg"><button id="bWalk" class="on">הליכה חופשית</button><button id="bDoll">מבט מלמעלה</button></div>
-  <div class="seg hidden" id="floors" style="margin-top:6px"><button data-l="G" class="on">קומת כניסה</button><button data-l="B">מרתף</button></div>
-  <div class="cap">סגנון</div>
-  <div class="seg" id="styles"><button data-s="modern" class="on">מודרני בהיר</button><button data-s="med">ים-תיכוני חם</button><button data-s="lux">יוקרה כהה</button></div>
+  <div class="seg modes"><button data-m="walk" class="on">בתוך הדירה</button><button data-m="doll">דגם מלמעלה</button></div>
+  <div class="cap">קומה</div>
+  <div class="seg floors"><button data-l="G" class="on">כניסה</button><button data-l="B">מרתף</button><button data-l="X">שתי הקומות</button></div>
+  <div class="cap">סגנון עיצוב</div>
+  <div class="seg styles"><button data-s="modern" class="on">מודרני בהיר</button><button data-s="med">ים-תיכוני חם</button><button data-s="lux">יוקרה כהה</button></div>
   <div class="cap">שעה ביום</div>
-  <div class="seg" id="times"><button data-t="morning">בוקר</button><button data-t="noon">צהריים</button><button data-t="sunset" class="on">שקיעה</button><button data-t="night">לילה</button></div>
-  <div class="cap">קפיצה לחדר</div>
-  <select id="jump"><option value="">בחרו חדר…</option></select>
-  </div>
+  <div class="seg times"><button data-t="morning">בוקר</button><button data-t="noon">צהריים</button><button data-t="sunset" class="on">שקיעה</button><button data-t="night">לילה</button></div>
+  <div class="cap">חדרים</div>
+  <div class="chips rooms"></div>
 </div>
 
-<div id="room" class="card hidden" aria-live="polite"><div class="lvl"></div><div class="name"></div><div class="area"></div></div>
+<div id="room" class="glass hidden" aria-live="polite"><div class="lvl"></div><div class="name"></div><div class="area"></div></div>
 
 <svg id="compass" viewBox="-32 -32 64 64" aria-label="מצפן">
-  <circle r="30" fill="rgba(255,255,255,0.9)" stroke="rgba(0,0,0,0.15)"/>
+  <circle r="30" fill="rgba(255,255,255,0.92)" stroke="rgba(0,0,0,0.12)"/>
   <g id="needle"><path d="M0,-24 L7,2 L0,-3 L-7,2 Z" fill="#c0392b"/><path d="M0,24 L7,-2 L0,3 L-7,-2 Z" fill="#9aa1a8"/>
-  <text y="-26" x="0" text-anchor="middle" font-size="8" font-weight="700" fill="#c0392b">N</text></g>
+  <text y="-25" x="0" text-anchor="middle" font-size="8" font-weight="700" fill="#c0392b">N</text></g>
 </svg>
 
-<div id="help" class="card">W A S D או החצים להליכה · עכבר לסיבוב המבט · Shift להליכה מהירה · Esc לשחרור העכבר</div>
+<div id="hint" class="glass"><span class="t"></span><button id="hOut">⤢ צאו החוצה</button></div>
+<div id="tip" class="glass"></div>
+<button id="outBtn" class="glass" aria-label="צאו החוצה לדגם">⤢</button>
 
-<div id="stop" class="card" aria-live="polite"><div class="row1"><div class="nm"></div><div class="ar"></div></div><div class="ln"></div><div class="ix"></div></div>
-<div id="tourbar" class="card hidden"><button id="tPause">השהה</button><button id="tNext">לחדר הבא</button><button id="tExit">יציאה מהסיור</button></div>
+<div id="dock" class="glass">
+  <button id="dTour" class="go"><b>▶</b>סיור</button>
+  <button id="dMode"><b>⌂</b><span>דגם</span></button>
+  <button id="dFloor"><b>⇅</b><span>מרתף</span></button>
+  <button id="dMore"><b>☰</b>עוד</button>
+</div>
+
+<div id="sheet" class="glass" aria-hidden="true">
+  <div class="grab"></div>
+  <div class="top"><b>אפשרויות</b><button id="sClose" aria-label="סגירה">✕</button></div>
+  <div class="cap">קומה</div>
+  <div class="seg floors"><button data-l="G" class="on">כניסה</button><button data-l="B">מרתף</button><button data-l="X">שתי הקומות</button></div>
+  <div class="cap">סגנון עיצוב</div>
+  <div class="seg styles"><button data-s="modern" class="on">מודרני בהיר</button><button data-s="med">ים-תיכוני</button><button data-s="lux">יוקרה כהה</button></div>
+  <div class="cap">שעה ביום</div>
+  <div class="seg times"><button data-t="morning">בוקר</button><button data-t="noon">צהריים</button><button data-t="sunset" class="on">שקיעה</button><button data-t="night">לילה</button></div>
+  <div class="cap">חדרים</div>
+  <div class="chips rooms"></div>
+</div>
+
+<div id="stop" class="glass" aria-live="polite"><div class="row1"><div class="nm"></div><div class="ar"></div></div><div class="ln"></div><div class="prog"><i></i></div><div class="ix"></div></div>
+<div id="tourbar" class="glass hidden"><button id="tPause">❚❚ השהה</button><button id="tNext">לחדר הבא ‹</button><button id="tExit">✕ יציאה</button></div>
 
 <div id="joy" aria-label="ג׳ויסטיק הליכה"><i></i></div>
 
 <div id="start" class="hidden">
   <div class="box">
-    <h2>ברוכים הבאים לדירת הגן</h2>
+    <div class="kick">סיור תלת-ממדי</div>
+    <h2>דירת הגן</h2>
+    <div class="facts"><span>250 מ״ר</span><span>גינה 122 מ״ר</span><span>2 קומות</span></div>
     <p>סיור מודרך של דקה וחצי עובר בכל החדרים, מדלת הכניסה ועד המרתף.</p>
-    <p>אפשר גם להסתובב לבד: W A S D או החצים, ועכבר להסתכל. בטלפון: ג׳ויסטיק וגרירה.</p>
-    <div class="btns"><button class="go" id="sTour">▶ התחילו סיור</button><button id="sFree">הליכה חופשית</button></div>
+    <p class="how"></p>
+    <div class="btns"><button class="go" id="sTour">▶ התחילו סיור</button><button id="sFree">הסתובבו לבד</button></div>
   </div>
 </div>
 
 <script>/*__BUNDLE__*/</script>
 <script>
 (function () {
-  var $ = function (s) { return document.querySelector(s); };
-  var touch = matchMedia('(pointer: coarse)').matches;
-  if (touch) document.body.classList.add('touch');
+  var $ = function (s) { return document.querySelector(s); }, $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  var touch = matchMedia('(pointer: coarse)').matches, body = document.body;
+  if (touch) body.classList.add('touch');
   var loadBar = $('#loading i');
   window.__startTour(function (p) { loadBar.style.width = Math.round(p * 100) + '%'; }).then(function (api) {
     $('#loading').classList.add('hidden'); $('#start').classList.remove('hidden');
-    var start = $('#start'), room = $('#room'), help = $('#help'), floors = $('#floors'), stop = $('#stop'), bar = $('#tourbar');
+    var start = $('#start'), room = $('#room'), stop = $('#stop'), bar = $('#tourbar'), sheet = $('#sheet'), tip = $('#tip'), fade = $('#fade');
+    start.querySelector('.how').textContent = touch
+      ? 'בטלפון: גררו כדי להסתכל, הקישו על הרצפה כדי ללכת, וצבטו כדי לצאת החוצה לדגם.'
+      : 'אפשר גם להסתובב לבד: W A S D או החצים ללכת, עכבר להסתכל, וגלגלת אחורה כדי לצאת החוצה.';
+    var level = 'G', mode = 'walk';
+    function closeStart() { start.classList.add('hidden'); }
     function lock() { if (!touch) { try { api.plc.lock(); } catch (e) {} } }
-    function tour() { start.classList.add('hidden'); api.tourStart(); }
-    $('#sTour').onclick = tour; $('#bTour').onclick = tour;
-    $('#bMore').onclick = function () { var o = $('#panel').classList.toggle('open'); this.setAttribute('aria-expanded', o); };
-    $('#sFree').onclick = function () { start.classList.add('hidden'); lock(); };
-    $('#c').addEventListener('click', function () { if (api.mode === 'walk' && start.classList.contains('hidden')) lock(); });
-    $('#bWalk').onclick = function () { api.setMode('walk'); };
-    $('#bDoll').onclick = function () { start.classList.add('hidden'); api.setMode('doll'); };
-    floors.querySelectorAll('button').forEach(function (b) { b.onclick = function () {
-      floors.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); }); api.setDollLevel(b.dataset.l); }; });
-    $('#styles').querySelectorAll('button').forEach(function (b) { b.onclick = function () { api.setStyle(b.dataset.s); }; });
-    $('#times').querySelectorAll('button').forEach(function (b) { b.onclick = function () { api.setTime(b.dataset.t); }; });
-    document.addEventListener('tourstyle', function (e) { $('#styles').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.dataset.s === e.detail); }); });
-    document.addEventListener('tourtime', function (e) { $('#times').querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.dataset.t === e.detail); }); });
+    function openSheet(o) { sheet.classList.toggle('open', o); body.classList.toggle('sheet', o); sheet.setAttribute('aria-hidden', !o); }
+    function tour() { closeStart(); openSheet(false); api.tourStart(); }
+    function withFade(fn) { fade.classList.add('on'); setTimeout(function () { fn(); setTimeout(function () { fade.classList.remove('on'); }, 60); }, 230); }
+    var tipT;
+    function showTip(t, ms) { tip.textContent = t; tip.classList.remove('gone'); clearTimeout(tipT); tipT = setTimeout(function () { tip.classList.add('gone'); }, ms || 6000); }
+    $('#sTour').onclick = tour; $('#bTour').onclick = tour; $('#dTour').onclick = tour;
+    $('#sFree').onclick = function () { closeStart(); lock(); if (touch) showTip('גררו להסתכל · הקישו על הרצפה ללכת · צבטו לצאת'); };
+    $('#c').addEventListener('click', function () { if (api.mode === 'walk' && start.classList.contains('hidden') && !touch) lock(); });
+    function out() { closeStart(); openSheet(false); api.flyOut(); }
+    $('#hOut').onclick = out; $('#outBtn').onclick = out;
+    function setMode(m) { closeStart(); openSheet(false); if (m === 'doll') { if (api.mode === 'walk') api.flyOut(); else api.setMode('doll'); } else api.setMode('walk'); }
+    $$('.modes button').forEach(function (b) { b.onclick = function () { setMode(b.dataset.m); }; });
+    $('#dMode').onclick = function () { setMode(mode === 'doll' ? 'walk' : 'doll'); };
+    function goFloor(l) {
+      closeStart();
+      if (api.mode === 'doll' || l === 'X') api.setDollLevel(l);
+      else withFade(function () { api.teleport(l === 'B' ? 'family' : 'great'); });
+    }
+    $$('.floors button').forEach(function (b) { b.onclick = function () { openSheet(false); goFloor(b.dataset.l); }; });
+    $('#dFloor').onclick = function () { goFloor(mode === 'doll' ? ({ G: 'B', B: 'X', X: 'G' })[level] : (level === 'B' ? 'G' : 'B')); };
+    $('#dMore').onclick = function () { openSheet(!sheet.classList.contains('open')); };
+    $('#sClose').onclick = function () { openSheet(false); };
+    $$('.styles button').forEach(function (b) { b.onclick = function () { api.setStyle(b.dataset.s); }; });
+    $$('.times button').forEach(function (b) { b.onclick = function () { api.setTime(b.dataset.t); }; });
+    document.addEventListener('tourstyle', function (e) { $$('.styles button').forEach(function (b) { b.classList.toggle('on', b.dataset.s === e.detail); }); });
+    document.addEventListener('tourtime', function (e) { $$('.times button').forEach(function (b) { b.classList.toggle('on', b.dataset.t === e.detail); }); });
+    var FL = { G: 'כניסה', B: 'מרתף', X: 'שתיהן' };
+    function syncFloor() {
+      $$('.floors button').forEach(function (b) { b.classList.toggle('on', b.dataset.l === level); });
+      $('#dFloor span').textContent = mode === 'doll' ? ({ G: 'מרתף', B: 'שתיהן', X: 'כניסה' })[level] : (level === 'B' ? 'כניסה' : 'מרתף');
+    }
+    document.addEventListener('tourlevel', function (e) { level = e.detail; syncFloor(); });
+    document.addEventListener('tourexterior', function (e) { if (mode === 'doll') hintText(e.detail ? 'הבניין מבחוץ · התקרבו כדי לראות את הדירה מבפנים' : null); });
+    var hint = $('#hint .t');
+    function hintText(t) {
+      hint.textContent = t || (mode === 'doll' ? 'גררו לסיבוב · גלגלת להתקרבות · לחצו על חדר כדי להיכנס אליו'
+        : 'W A S D או החצים ללכת · עכבר להסתכל · גלגלת אחורה לצאת החוצה');
+      $('#hOut').classList.toggle('hidden', mode !== 'walk');
+    }
     document.addEventListener('tourmode', function (e) {
-      var m = e.detail; document.body.classList.toggle('touring', m === 'tour');
-      $('#bWalk').classList.toggle('on', m === 'walk'); $('#bDoll').classList.toggle('on', m === 'doll');
-      floors.classList.toggle('hidden', m !== 'doll'); bar.classList.toggle('hidden', m !== 'tour');
-      $('#tPause').textContent = 'השהה';
-      help.textContent = m === 'doll' ? 'גררו לסיבוב · גלגלת או צביטה להתקרבות · קליק ימני להזזה'
-        : 'W A S D או החצים להליכה · עכבר לסיבוב המבט · Shift להליכה מהירה · Esc לשחרור העכבר';
+      var m = e.detail; if (m !== 'fly') mode = m;
+      body.classList.toggle('touring', m === 'tour'); body.classList.toggle('flying', m === 'fly');
+      body.classList.toggle('walk', m === 'walk'); body.classList.toggle('doll', m === 'doll');
+      $$('.modes button').forEach(function (b) { b.classList.toggle('on', b.dataset.m === (m === 'doll' ? 'doll' : 'walk')); });
+      $('#dMode').classList.toggle('on', m === 'doll');
+      $('#dMode span').textContent = m === 'doll' ? 'פנים' : 'דגם'; $('#dMode b').textContent = m === 'doll' ? '◉' : '⌂';
+      bar.classList.toggle('hidden', m !== 'tour');
+      $('#tPause').textContent = '❚❚ השהה'; paused = false;
+      hintText(); syncFloor();
+      if (m === 'doll' && touch) showTip('סובבו באצבע · צבטו להתקרבות · הקישו על חדר כדי להיכנס');
+      if (m === 'walk' && touch && !tip.classList.contains('shown')) { tip.classList.add('shown'); showTip('גררו להסתכל · הקישו על הרצפה ללכת · צבטו לצאת'); }
     });
     var paused = false;
-    $('#tPause').onclick = function () { paused = !paused; api.tourPause(paused); this.textContent = paused ? 'המשך' : 'השהה'; };
+    $('#tPause').onclick = function () { paused = !paused; api.tourPause(paused); this.textContent = paused ? '▶ המשך' : '❚❚ השהה'; };
     $('#tNext').onclick = function () { api.tourNext(); };
     $('#tExit').onclick = function () { api.tourStop(true); };
     document.addEventListener('tourstop', function (e) {
@@ -157,29 +253,38 @@
       stop.querySelector('.nm').textContent = s.name;
       stop.querySelector('.ar').textContent = s.area ? s.area.toFixed(s.area >= 100 ? 0 : 1) + ' מ״ר' : '';
       stop.querySelector('.ln').textContent = s.line || '';
-      stop.querySelector('.ix').textContent = s.count ? ('עצירה ' + s.index + ' מתוך ' + s.count) : 'סוף הסיור · אפשר לסובב ולהתקרב';
+      stop.querySelector('.prog i').style.width = s.count ? (100 * s.index / s.count) + '%' : '100%';
+      stop.querySelector('.ix').textContent = s.count ? ('עצירה ' + s.index + ' מתוך ' + s.count) : 'סוף הסיור · אפשר לסובב, להתקרב וללחוץ על חדר';
       stop.classList.add('show');
     });
-    document.addEventListener('tourdone', function () { bar.classList.add('hidden'); setTimeout(function () { stop.classList.remove('show'); }, 4500); });
+    document.addEventListener('tourdone', function () { bar.classList.add('hidden'); setTimeout(function () { stop.classList.remove('show'); }, 5000); });
     document.addEventListener('tourroom', function (e) {
       var r = e.detail; room.classList.toggle('hidden', !r);
       if (r) { room.querySelector('.lvl').textContent = r.level; room.querySelector('.name').textContent = r.name; room.querySelector('.area').textContent = r.area; }
     });
     var needle = $('#needle');
     document.addEventListener('tourheading', function (e) { needle.setAttribute('transform', 'rotate(' + (e.detail * 180 / Math.PI).toFixed(1) + ')'); });
-    var jump = $('#jump'), seen = {};
-    api.ROOMS.forEach(function (r) {
-      if (r.id === 'stairs' || seen[r.name + r.lvl]) return; seen[r.name + r.lvl] = 1;
-      var o = document.createElement('option'); o.value = r.id; o.textContent = (r.lvl === 'B' ? 'מרתף · ' : '') + r.name; jump.appendChild(o);
+    // חדרים כצ'יפים, לפי קומה
+    var SKIP = { stairs: 1, lobby: 1, hall: 1, bhall: 1 };
+    $$('.chips.rooms').forEach(function (box) {
+      [['G', 'קומת כניסה'], ['B', 'מרתף']].forEach(function (fl) {
+        var h = document.createElement('div'); h.className = 'fl'; h.textContent = fl[1]; box.appendChild(h);
+        api.ROOMS.forEach(function (r) {
+          if (SKIP[r.id] || r.lvl !== fl[0]) return;
+          var b = document.createElement('button'); b.textContent = r.name.replace(' (מרתף)', ''); b.dataset.id = r.id;
+          b.onclick = function () { closeStart(); openSheet(false); if (api.mode === 'doll') api.teleport(r.id); else withFade(function () { api.teleport(r.id); }); };
+          box.appendChild(b);
+        });
+      });
     });
-    jump.onchange = function () { if (!jump.value) return; start.classList.add('hidden'); api.teleport(jump.value); jump.value = ''; jump.blur(); };
+    hintText(); syncFloor();
     // ג'ויסטיק לטלפון
     var joy = $('#joy'), knob = joy.querySelector('i'), jid = null;
     function jmove(e) {
       var r = joy.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       var dx = (e.clientX - cx) / (r.width / 2), dy = (e.clientY - cy) / (r.height / 2), d = Math.hypot(dx, dy);
       if (d > 1) { dx /= d; dy /= d; }
-      knob.style.transform = 'translate(' + (dx * 35) + 'px,' + (dy * 35) + 'px)'; api.setJoy(dx, dy);
+      knob.style.transform = 'translate(' + (dx * 33) + 'px,' + (dy * 33) + 'px)'; api.setJoy(dx, dy);
     }
     joy.addEventListener('pointerdown', function (e) { jid = e.pointerId; joy.setPointerCapture(jid); jmove(e); e.stopPropagation(); });
     joy.addEventListener('pointermove', function (e) { if (e.pointerId === jid) jmove(e); });

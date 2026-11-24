@@ -142,8 +142,8 @@ const M = {
   pavers: std({ roughness: 0.85 }), deck: std({ roughness: 0.7 }), grass: std({ color: 0x5f8a3e, roughness: 1 }), gravel: std({ color: 0x8c877e, roughness: 1 }),
   wood: std({ roughness: 0.55 }), woodDark: std({ roughness: 0.5 }), cabinet: std({ roughness: 0.35 }), counter: std({ roughness: 0.15 }),
   sofa: std({ roughness: 1 }), sofaDark: std({ roughness: 1 }), bedding: std({ roughness: 1 }), throw: std({ roughness: 1 }), accent: std({ roughness: 1 }),
-  accent2: std({ roughness: 1 }), rug: std({ roughness: 1 }), headboard: std({ roughness: 1 }), metal: std({}), chrome: std({ color: 0xdedede, roughness: 0.1, metalness: 1 }),
-  ceramic: std({ color: 0xf6f5f2, roughness: 0.12 }), mirror: std({ color: 0xdfe4e8, roughness: 0.02, metalness: 1, envMapIntensity: 1.6 }),
+  accent2: std({ roughness: 1 }), rug: std({ roughness: 1 }), headboard: std({ roughness: 1 }), metal: std({}), chrome: std({ color: 0xdedede, roughness: 0.18, metalness: 1, envMapIntensity: 0.6 }), steel: std({ color: 0x8e9194, roughness: 0.5, metalness: 0.5, envMapIntensity: 0.4 }),
+  ceramic: std({ color: 0xf6f5f2, roughness: 0.12 }), mirror: std({ color: 0xa9afb2, roughness: 0.32, metalness: 0.7, envMapIntensity: 0.25 }),   // בלי שמיים בתוך המראה
   glass: std({ color: 0xe3eeef, roughness: 0.02, metalness: 0.15, transparent: true, opacity: 0.12, depthWrite: false, envMapIntensity: 1.8, side: THREE.DoubleSide }),
   drinkGlass: std({ color: 0xffffff, roughness: 0.03, metalness: 0.2, transparent: true, opacity: 0.25, depthWrite: false, envMapIntensity: 2 }),
   frame: std({ color: 0x2a2c2f, roughness: 0.35, metalness: 0.6 }), screen: std({ color: 0x070708, roughness: 0.12, metalness: 0.3 }),
@@ -194,7 +194,7 @@ function applyStyle(key) {
 // ---------------------------------------------------------------- קבוצות
 const G = {
   ground: new THREE.Group(), base: new THREE.Group(), out: new THREE.Group(), ceilG: new THREE.Group(), ceilB: new THREE.Group(),
-  roof: new THREE.Group(), slab: new THREE.Group(), labels: new THREE.Group(), lights: new THREE.Group(),
+  roof: new THREE.Group(), slab: new THREE.Group(), labels: new THREE.Group(), lights: new THREE.Group(), under: new THREE.Group(), trees: new THREE.Group(), street: new THREE.Group(),
 };
 Object.values(G).forEach((g) => scene.add(g));
 const colliders = [];
@@ -409,8 +409,8 @@ function buildArchitecture() {
   const o = G.out;
   [[-40, 50, -40, -1.35], [-40, -3.75, -1.35, 60], [13.71, 50, -1.35, 60], [-3.75, 13.71, 22.10, 60], [10.90, 13.71, -1.35, 1.06],
     [-3.75, 6.01, -1.35, -0.62], [-3.75, 2.31, -0.62, 0.95], [-3.75, -0.25, 0.95, 9.20], [-3.75, -0.25, 11.38, 22.10]]
-    .forEach(([a, b, c, d]) => bx(a, b, -0.4, -0.03, c, d, M.pavers, o, { cast: false }));
-  bx(-40, 50, BY - 0.35, BY - 0.05, -40, 60, M.concrete, scene, { cast: false });
+    .forEach(([a, b, c, d]) => bx(a, b, -0.4, -0.03, c, d, M.pavers, G.street, { cast: false }));
+  bx(-40, 50, BY - 0.35, BY - 0.05, -40, 60, M.concrete, G.under, { cast: false });
   bx(0.97, 10.71, -0.3, GY + 0.01, 16.69, 19.69, M.deck, o);
   [[-0.25, 13.71, 19.69, 22.10], [10.71, 13.71, 16.69, 19.69], [10.71, 13.71, 10.56, 16.69], [11.76, 13.71, 4.28, 10.56], [10.71, 13.71, 1.06, 4.28]]
     .forEach(([a, b, c, d]) => bx(a, b, -0.4, GY + 0.005, c, d, M.grass, o, { cast: false }));
@@ -805,8 +805,8 @@ function buildFurniture() {
   // חדר שירות ומחסן
   [3.1, 3.75].forEach((x) => { const w = grp(); B(w, 0.6, 0.85, 0.6, 0, 0.425, 0, M.ceramic); const d2 = C(w, 0.17, 0.17, 0.02, 0, 0.45, 0.3, M.screen, 24); d2.rotation.x = R90; place(w, g1, x, BY, 11.36, Math.PI); });
   place(counter(0.6, { sink: 0 }), g1, 4.4, BY, 11.35, Math.PI);
-  place(shelf(1.2, 2.0, 0.4, M.chrome, 15), g1, 5.29, BY, 10.2, -R90);
-  place(shelf(2.2, 2.2, 0.45, M.chrome, 16), g1, 1.2, BY, 11.52, Math.PI); place(shelf(1.4, 2.2, 0.45, M.chrome, 17), g1, 0.25, BY, 10.2, R90);
+  place(shelf(1.2, 2.0, 0.4, M.steel, 15), g1, 5.29, BY, 10.2, -R90);
+  place(shelf(2.2, 2.2, 0.45, M.steel, 16), g1, 1.2, BY, 11.52, Math.PI); place(shelf(1.4, 2.2, 0.45, M.steel, 17), g1, 0.25, BY, 10.2, R90);
   // חצר אנגלית
   const pl = grp(); B(pl, 1.4, 0.55, 1.4, 0, 0.275, 0, M.concrete); B(pl, 1.3, 0.02, 1.3, 0, 0.54, 0, M.soil); place(pl, g1, 9.2, BY, 0.6, 0);
   place(tree(3.2, M.olive, 0.9, 21), g1, 9.2, BY + 0.55, 0.6, 0, false);
@@ -821,7 +821,7 @@ function buildFurniture() {
   [4.6, 5.6].forEach((x) => { const sb = grp(); B(sb, 0.7, 0.3, 1.95, 0, 0.18, 0, M.teak); S(sb, 0.66, 0.08, 1.4, 0, 0.37, 0.25, M.cushion, 0.03, 0.3); const bk = S(sb, 0.66, 0.08, 0.6, 0, 0.55, -0.62, M.cushion, 0.03, 0.3); bk.rotation.x = -0.7; place(sb, go, x, GY, 21.0, Math.PI); });
   [[0.6, 21.6, 4.5, M.leaf, 1.6], [12.6, 20.6, 5.0, M.olive, 1.4], [12.9, 13.0, 4.0, M.leaf, 1.2], [-3.0, 14.0, 7.0, M.leaf, 2.2], [16.5, 8.0, 6.0, M.leafDark, 2.0],
     [6.0, 26.0, 7.5, M.leaf, 2.4], [17.0, 22.0, 6.5, M.olive, 2.0], [-2.5, 24.0, 6.0, M.leafDark, 2.0]]
-    .forEach(([x, z, h, m, c], i) => place(tree(h, m, c, 40 + i), go, x, GY, z, i, i < 3));
+    .forEach(([x, z, h, m, c], i) => place(tree(h, m, c, 40 + i), G.trees, x, GY, z, i, i < 3));
   placePlant(plant(1.0, M.leaf, M.potDark, 50), go, 10.3, GY, 16.95);
 }
 
@@ -919,6 +919,7 @@ const ROOMS = [
   { id: 'lobby', lvl: 'G', name: 'לובי הבניין', note: 'שטח משותף · הכניסה לדירה', rects: [[-3.5, 1.28, 9.45, 11.13]] },
   { id: 'foyer', lvl: 'G', name: 'מבואת כניסה', area: 11.4, rects: [[1.38, 5.87, 9.45, 11.99]], line: 'כניסה מרווחת עם מבט ישיר לסלון ולגינה.' },
   { id: 'great', lvl: 'G', name: 'סלון, מטבח ופינת אוכל', area: 47.4, rects: [[0, 10.46, 11.99, 16.44], [0, 1.38, 11.38, 11.99]], line: 'חלל אחד פתוח, עם ויטרינות הזזה בגובה 3.40 לגינה.' },
+  { id: 'kitchen', lvl: 'G', name: 'מטבח ופינת אוכל', rects: [] },   // נקודת צילום בלבד: השטח נספר בסלון
   { id: 'master', lvl: 'G', name: 'חדר שינה הורים', area: 19.5, rects: [[2.56, 6.01, 0, 5.65]], line: 'חדר שינה גדול, עם חלון לחצר האנגלית.' },
   { id: 'dress', lvl: 'G', name: 'חדר ארונות', area: 6.9, rects: [[0, 4.62, 5.75, 7.25]], line: 'מעבר עם ארונות לאורך הקיר, בתוך יחידת ההורים.' },
   { id: 'mbath', lvl: 'G', name: 'חדר רחצה הורים', area: 5.4, rects: [[0, 2.46, 3.47, 5.65]], line: 'מקלחון, כיור כפול וחיפוי קרמיקה עד התקרה.' },
@@ -940,16 +941,21 @@ const ROOMS = [
   { id: 'storage', lvl: 'B', name: 'מחסן', area: 6.0, rects: [[0, 2.61, 9.45, 11.74]] },
   { id: 'court', lvl: 'B', name: 'חצר אנגלית', area: 18.7, rects: [[6.26, 10.65, -1.10, 3.15]] },
 ];
-ROOMS.forEach((r) => { const [a, b, c, d] = r.rects[0]; r.cx = (a + b) / 2; r.cz = (c + d) / 2; });
+ROOMS.forEach((r) => { if (!r.rects.length) return; const [a, b, c, d] = r.rects[0]; r.cx = (a + b) / 2; r.cz = (c + d) / 2; });
 const fmtArea = (a) => `${a.toFixed(1)} מ״ר`;
-function label(text, sub) {
+function label(text, sub) {   // תווית בגודל קבוע על המסך, ברוחב הטקסט
   const c = document.createElement('canvas'); c.width = 512; c.height = 160;
   const x = c.getContext('2d'); x.direction = 'rtl'; x.textAlign = 'center';
-  x.fillStyle = 'rgba(255,255,255,0.9)'; x.beginPath(); x.roundRect(8, 18, 496, 124, 22); x.fill();
-  x.fillStyle = '#1f2328'; x.font = 'bold 44px "Segoe UI", Arial, sans-serif'; x.fillText(text, 256, 74);
-  x.fillStyle = '#1f4f46'; x.font = '36px "Segoe UI", Arial, sans-serif'; x.fillText(sub, 256, 122);
+  const F1 = '700 42px Heebo, "Segoe UI", Arial, sans-serif', F2 = '500 32px Heebo, "Segoe UI", Arial, sans-serif';
+  x.font = F1; let w = x.measureText(text).width; x.font = F2; w = Math.min(496, Math.max(w, x.measureText(sub).width) + 48);
+  x.shadowColor = 'rgba(0,0,0,0.22)'; x.shadowBlur = 10; x.shadowOffsetY = 3;
+  x.fillStyle = 'rgba(255,255,255,0.95)'; x.beginPath(); x.roundRect(256 - w / 2, 16, w, 128, 30); x.fill();
+  x.shadowColor = 'transparent';
+  x.fillStyle = '#1b1f23'; x.font = F1; x.fillText(text, 256, 72);
+  x.fillStyle = '#1f6b5c'; x.font = F2; x.fillText(sub, 256, 120);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); sp.scale.set(2.9, 0.91, 1); sp.renderOrder = 10;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true, sizeAttenuation: false }));
+  const hh = MOBILE ? 0.07 : 0.05; sp.scale.set(hh * 3.2, hh, 1); sp.renderOrder = 10;
   return sp;
 }
 
@@ -992,60 +998,217 @@ function tryMove(nx, nz) {
 // ---------------------------------------------------------------- שליטה
 const plc = new PointerLockControls(camera, renderer.domElement);
 const orbit = new OrbitControls(camera, renderer.domElement);
-orbit.enabled = false; orbit.enableDamping = true; orbit.maxPolarAngle = Math.PI * 0.47; orbit.minDistance = 4; orbit.maxDistance = 60;
+orbit.enabled = false; orbit.enableDamping = true; orbit.maxPolarAngle = Math.PI * 0.47; orbit.minDistance = 3; orbit.maxDistance = 80; orbit.zoomToCursor = true;
 let mode = 'walk', camY = player.feet + EYE;
 const keys = {}, joy = { x: 0, y: 0 };
 const KEYMAP = { KeyW: 'f', ArrowUp: 'f', KeyS: 'b', ArrowDown: 'b', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
 addEventListener('keydown', (e) => { if (KEYMAP[e.code]) { keys[KEYMAP[e.code]] = true; if (mode === 'walk') e.preventDefault(); } if (e.code.startsWith('Shift')) keys.run = true; });
 addEventListener('keyup', (e) => { if (KEYMAP[e.code]) keys[KEYMAP[e.code]] = false; if (e.code.startsWith('Shift')) keys.run = false; });
 camera.position.set(player.x, camY, player.z); camera.rotation.set(0, -R90, 0);
-let drag = null;
-renderer.domElement.addEventListener('pointerdown', (e) => { if (mode === 'walk' && !plc.isLocked) drag = { x: e.clientX, y: e.clientY, id: e.pointerId }; });
-addEventListener('pointerup', (e) => { if (drag && drag.id === e.pointerId) drag = null; });
+let drag = null, glide = null;
+const touches = new Map();
+let pinch0 = 0, wheelAcc = 0, tap = null;
+const el = renderer.domElement;
+el.addEventListener('pointerdown', (e) => {
+  touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  tap = touches.size === 1 ? { x: e.clientX, y: e.clientY, t: performance.now(), id: e.pointerId } : null;
+  if (touches.size === 2) { const [p, q] = [...touches.values()]; pinch0 = Math.hypot(p.x - q.x, p.y - q.y); drag = null; }
+  else if (mode === 'walk' && !plc.isLocked) { drag = { x: e.clientX, y: e.clientY, id: e.pointerId }; glide = null; }
+});
+addEventListener('pointerup', (e) => {
+  touches.delete(e.pointerId); if (touches.size < 2) pinch0 = 0;
+  if (drag && drag.id === e.pointerId) drag = null;
+  if (tap && tap.id === e.pointerId && performance.now() - tap.t < 400 && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) < 8) onTap(e.clientX, e.clientY, e.pointerType);
+  tap = null;
+});
+addEventListener('pointercancel', (e) => { touches.delete(e.pointerId); pinch0 = 0; drag = null; tap = null; });
 addEventListener('pointermove', (e) => {
+  if (touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch0 && touches.size === 2 && mode === 'walk') {   // צביטה פנימה בתוך הבית: יוצאים החוצה לדגם
+    const [p, q] = [...touches.values()];
+    if (Math.hypot(p.x - q.x, p.y - q.y) < pinch0 * 0.72) { pinch0 = 0; flyOut(); }
+    return;
+  }
   if (!drag || drag.id !== e.pointerId || mode !== 'walk' || plc.isLocked) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY;
+  const k = e.pointerType === 'touch' ? 0.0065 : 0.005;
   const eu = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
-  eu.y -= dx * 0.005; eu.x = Math.max(-1.3, Math.min(1.3, eu.x - dy * 0.004)); camera.quaternion.setFromEuler(eu);
+  eu.y += dx * k; eu.x = Math.max(-1.3, Math.min(1.3, eu.x + dy * k * 0.8)); eu.z = 0; camera.quaternion.setFromEuler(eu);   // גוררים את התמונה, כמו בתמונת 360
 });
-
-function setLevel(lvl) {
-  const showG = lvl !== 'B';
-  G.ground.visible = showG; G.slab.visible = showG; G.out.visible = showG;
-  G.labels.children.forEach((s) => { s.visible = lvl === 'B' ? s.userData.lvl === 'B' : s.userData.lvl !== 'B'; });
+el.addEventListener('wheel', (e) => {   // גלגלת אחורה בתוך הבית: זום אאוט החוצה
+  if (mode !== 'walk') return;
+  e.preventDefault();
+  wheelAcc = Math.max(0, wheelAcc + e.deltaY);
+  if (wheelAcc > 220) { wheelAcc = 0; flyOut(); }
+  setTimeout(() => { wheelAcc = Math.max(0, wheelAcc - 60); }, 400);
+}, { passive: false });
+function onTap(x, y, type) {
+  if (mode === 'doll') { const r = roomAtScreen(x, y); if (r) flyIn(r.id); return; }
+  if (mode === 'walk' && type !== 'mouse') {   // בטלפון: הקשה על הרצפה מובילה לשם
+    const rc = new THREE.Raycaster(); rc.setFromCamera(new THREE.Vector2(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1), camera);
+    const hit = new THREE.Vector3();
+    if (rc.ray.direction.y < -0.05 && rc.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -player.feet), hit)) {
+      const d = Math.hypot(hit.x - player.x, hit.z - player.z);
+      if (d > 0.3 && d < 14) glide = { x: hit.x, z: hit.z, stall: 0 };
+    }
+  }
 }
-let dollLevel = 'G', walkQ = null;
-function setMode(m) {
+
+// ---------------------------------------------------------------- תצוגות: פנים, דגם לפי קומה, שתי הקומות (פיצוץ), מבט מבחוץ
+const EXPL = 2.4, EXDX = 16, EXDZ = -24;   // בתצוגת "שתי הקומות": קומת הכניסה לצד המרתף ומעט גבוה יותר (במסך לאורך: מעליו)
+const exOff = () => (camera.aspect < 1 ? new THREE.Vector3(0, EXPL, EXDZ) : new THREE.Vector3(EXDX, EXPL, 0));
+let dollLevel = 'G', walkQ = null, lifted = '0,0', exterior = false;
+// עדשה רחבה כמו צלם נדל"ן: שדה ראייה אופקי קבוע, גם בטלפון לאורך
+function fitFov() {
+  const doll = mode === 'doll' || (mode === 'fly' && fly.toDoll);
+  const v = 2 * Math.atan(Math.tan(88 * Math.PI / 360) / camera.aspect) * 180 / Math.PI;
+  camera.fov = doll ? dollFov() : Math.max(58, Math.min(100, v)); viewOffset(doll); camera.updateProjectionMatrix();
+}
+function shadowArea(wide) {   // בתצוגה הרחבה הצל מכסה את שתי הקומות
+  const d = sun.position.clone().sub(sun.target.position);
+  const o = exOff(); sun.target.position.set(wide ? 5.5 + o.x / 2 : 5.5, 0, wide ? 8 + o.z / 2 : 10); sun.position.copy(sun.target.position).add(d);
+  const e = wide ? 26 : 17; Object.assign(sun.shadow.camera, { left: -e, right: e, top: e, bottom: -e }); sun.shadow.camera.updateProjectionMatrix();
+}
+function liftGround(on) {
+  const o = on ? exOff() : new THREE.Vector3(), key = `${o.x},${o.z}`;
+  if (key === lifted) return;
+  [G.ground, G.out, G.slab, G.ceilG, G.roof, G.trees].forEach((g) => { g.position.copy(o); });
+  G.lights.children.forEach((l) => { if (!l.userData.p0) l.userData.p0 = l.position.clone(); if (l.userData.p0.y > -2) l.position.copy(l.userData.p0).add(o); });
+  G.labels.children.forEach((s) => { if (!s.userData.p0) s.userData.p0 = s.position.clone(); if (s.userData.lvl !== 'B') s.position.copy(s.userData.p0).add(o); });
+  lifted = key; shadowArea(on); renderer.shadowMap.needsUpdate = true;
+}
+function setLevel(lvl, doll = mode === 'doll' || mode === 'fly') {   // 'G' | 'B' | 'X' (שתי הקומות)
+  const showG = lvl !== 'B';
+  G.ground.visible = showG; G.slab.visible = lvl === 'G'; G.out.visible = showG; G.under.visible = lvl === 'G'; G.street.visible = lvl === 'G';
+  G.trees.visible = lvl === 'G' && (!doll || exterior);
+  liftGround(lvl === 'X');
+  G.labels.children.forEach((s) => { s.visible = lvl === 'X' ? s.userData.big : lvl === 'B' ? s.userData.lvl === 'B' : s.userData.lvl !== 'B'; });
+  renderer.shadowMap.needsUpdate = true;
+}
+function dollFov() { const v = 2 * Math.atan(Math.tan(52 * Math.PI / 360) / camera.aspect) * 180 / Math.PI; return Math.max(38, Math.min(78, v)); }
+function dollView(l) {   // [מיקום מצלמה, מטרה]: המרחק מחושב כך שכל הקומה נכנסת למסך, גם בטלפון לאורך
+  const V = { G: [new THREE.Vector3(5.2, 0, 10.8), 11.5, new THREE.Vector3(-0.42, 0.78, 0.5)],
+    B: [new THREE.Vector3(5.2, BY, 5.2), 8.2, new THREE.Vector3(-0.42, 0.8, 0.48)],
+    X: camera.aspect < 1 ? [new THREE.Vector3(5.6, (BY + EXPL) / 2, 9.5 + EXDZ / 2), 14, new THREE.Vector3(-0.12, 0.85, 0.5)]
+      : [new THREE.Vector3(5.2 + EXDX / 2 + 0.6, (BY + EXPL) / 2, 9.5), 16.5, new THREE.Vector3(-0.12, 0.78, 0.62)] }[l];
+  const vf = dollFov() * Math.PI / 180, hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
+  const d = V[1] / Math.sin(Math.min(vf, hf) / 2) * (camera.aspect < 1 ? 0.92 : 0.8);
+  return [V[0].clone().addScaledVector(V[2].clone().normalize(), d), V[0]];
+}
+// במחשב הפאנל מכסה את צד ימין: מזיזים את מרכז התמונה שמאלה כדי שהדגם לא יוסתר
+function viewOffset(on) {
+  const pw = innerWidth > 760 ? 340 : 0;
+  if (on && pw) camera.setViewOffset(innerWidth + pw, innerHeight, pw, 0, innerWidth, innerHeight); else camera.clearViewOffset();
+}
+function setExterior(on) {   // התרחקות בדגם: רואים את הבניין מבחוץ, עם הגג והקומות שמעל
+  if (on === exterior) return; exterior = on;
+  G.roof.visible = on; G.trees.visible = on; G.labels.visible = !on; renderer.shadowMap.needsUpdate = true;
+  document.dispatchEvent(new CustomEvent('tourexterior', { detail: on }));
+}
+function enterDoll(keepCam) {
+  walkQ = walkQ || camera.quaternion.clone(); plc.unlock();
+  G.ceilG.visible = G.ceilB.visible = false; G.roof.visible = false; exterior = false; G.labels.visible = true; setLevel(dollLevel);
+  scene.background = DOLL_BG;   // במבט מלמעלה: רקע נקי במקום תחתית הפנורמה
+  orbit.enabled = true;
+  const [p, t] = dollView(dollLevel); orbit.target.copy(t); if (!keepCam) camera.position.copy(p); orbit.update();
+}
+function setMode(m, keepCam = false) {
   if (mode === 'tour' && m !== 'tour' && tour.active) tourStop(false);
   mode = m;
-  if (m === 'doll') {
-    walkQ = walkQ || camera.quaternion.clone(); plc.unlock();
-    G.ceilG.visible = G.ceilB.visible = G.roof.visible = false; G.labels.visible = true; setLevel(dollLevel);
-    scene.background = DOLL_BG;   // במבט מלמעלה: רקע נקי במקום תחתית הפנורמה
-    orbit.enabled = true; orbit.target.set(5, dollLevel === 'B' ? BY : 0, 9); camera.position.set(-3, 17 + (dollLevel === 'B' ? BY : 0), 26); orbit.update();
-  } else {
-    orbit.enabled = false; G.ceilG.visible = G.ceilB.visible = G.roof.visible = true; G.labels.visible = false; setLevel('G');
+  if (m === 'doll') enterDoll(keepCam);
+  else {
+    orbit.enabled = false; G.ceilG.visible = G.ceilB.visible = G.roof.visible = true; exterior = false; G.labels.visible = false; setLevel('G', false);
     scene.background = PANO[TIMES[timeKey].pano];
     if (m === 'walk') { camera.position.set(player.x, player.feet + EYE, player.z); if (walkQ) camera.quaternion.copy(walkQ); camY = player.feet + EYE; }
   }
+  fitFov();
   renderer.shadowMap.needsUpdate = true;
   document.dispatchEvent(new CustomEvent('tourmode', { detail: m }));
+  document.dispatchEvent(new CustomEvent('tourlevel', { detail: m === 'doll' ? dollLevel : (player.feet < -2 ? 'B' : 'G') }));
 }
-function setDollLevel(l) { dollLevel = l; if (mode === 'doll') { setLevel(l); const dy = (l === 'B' ? BY : 0) - orbit.target.y; orbit.target.y += dy; camera.position.y += dy; orbit.update(); } }
+function setDollLevel(l) {
+  dollLevel = l;
+  if (mode !== 'doll') { setMode('doll'); return; }
+  setExterior(false); setLevel(l);
+  const [p, t] = dollView(l); flyTo(p, t, 1.1, () => { mode = 'doll'; orbit.enabled = true; orbit.target.copy(t); orbit.update(); }, true);
+  document.dispatchEvent(new CustomEvent('tourlevel', { detail: l }));
+}
+
+// ---------------------------------------------------------------- מעוף חלק בין נקודות מבט (יציאה החוצה בזום אאוט, כניסה לחדר מהדגם)
+const fly = { t: 0, dur: 1, p0: new THREE.Vector3(), p1: new THREE.Vector3(), l0: new THREE.Vector3(), l1: new THREE.Vector3(), done: null, toDoll: false, mid: null };
+function lookPoint() { const d = new THREE.Vector3(); camera.getWorldDirection(d); return camera.position.clone().addScaledVector(d, mode === 'doll' ? camera.position.distanceTo(orbit.target) : 4); }
+function flyTo(p, l, dur, done, toDoll, mid) {
+  const wasDoll = mode === 'doll';
+  Object.assign(fly, { t: 0, dur, done, toDoll: !!toDoll, mid: mid || null, f0: camera.fov });
+  fly.p0.copy(camera.position); fly.p1.copy(p); fly.l0.copy(lookPoint()); fly.l1.copy(l);
+  plc.unlock(); orbit.enabled = false; mode = 'fly';
+  fly.f1 = toDoll ? dollFov() : Math.max(58, Math.min(100, 2 * Math.atan(Math.tan(88 * Math.PI / 360) / camera.aspect) * 180 / Math.PI));
+  if (!wasDoll) viewOffset(false);
+}
+function flyUpdate(dt) {
+  fly.t = Math.min(1, fly.t + dt / fly.dur);
+  const e = fly.t < 0.5 ? 4 * fly.t ** 3 : 1 - (-2 * fly.t + 2) ** 3 / 2;
+  camera.position.lerpVectors(fly.p0, fly.p1, e);
+  camera.lookAt(new THREE.Vector3().lerpVectors(fly.l0, fly.l1, e));
+  camera.fov = fly.f0 + (fly.f1 - fly.f0) * e; camera.updateProjectionMatrix();
+  if (fly.mid) fly.mid(fly.t);
+  if (fly.t >= 1) { const d = fly.done; fly.done = null; d && d(); }
+}
+function flyOut() {   // מתוך החדר החוצה, אל הדגם של הקומה שבה עומדים
+  if (mode !== 'walk') return;
+  walkQ = camera.quaternion.clone();
+  dollLevel = player.feet < -2 ? 'B' : 'G';
+  const [p, t] = dollView(dollLevel); let hid = false;
+  flyTo(p, t, 1.9, () => { mode = 'x'; setMode('doll', true); }, true, (k) => {
+    if (!hid && k > 0.12) { hid = true; G.ceilG.visible = G.ceilB.visible = G.roof.visible = false; setLevel(dollLevel); scene.background = DOLL_BG; }
+  });
+  document.dispatchEvent(new CustomEvent('tourmode', { detail: 'fly' }));
+}
+function flyIn(id) {   // מהדגם אל נקודת הצילום של החדר
+  const r = ROOMS.find((q) => q.id === id); if (!r) return;
+  const [x, z, tx, tz] = SPOTS[id] || [r.cx, r.cz, r.cx, r.cz - 1];
+  const feet = r.lvl === 'B' ? BY : GY, yaw = Math.atan2(-(tx - x), -(tz - z));
+  setExterior(false); G.labels.visible = false;
+  if (dollLevel === 'X') setLevel(r.lvl === 'B' ? 'B' : 'G');
+  else if ((r.lvl === 'B') !== (dollLevel === 'B')) setLevel(r.lvl === 'B' ? 'B' : 'G');
+  let shown = false;
+  flyTo(new THREE.Vector3(x, feet + EYE, z), new THREE.Vector3(x - Math.sin(yaw) * 4, feet + EYE, z - Math.cos(yaw) * 4), 1.8, () => {
+    player.x = x; player.z = z; player.feet = feet; camY = feet + EYE;
+    walkQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0, 'YXZ')); mode = 'x'; setMode('walk');
+  }, false, (k) => { if (!shown && k > 0.9) { shown = true; G.ceilG.visible = G.ceilB.visible = true; scene.background = PANO[TIMES[timeKey].pano]; } });
+  document.dispatchEvent(new CustomEvent('tourmode', { detail: 'fly' }));
+}
+// נקודות צילום בכל חדר: גובה עיניים, מצלמה ישרה (בלי הטיה), עדשה רחבה. אותן זוויות כמו בצילומי הבלנדר
 const SPOTS = {   // [x, z, x מבט, z מבט]
-  great: [6.6, 12.5, 9.8, 16.0], master: [5.6, 5.2, 2.8, 1.4], mbath: [1.3, 5.55, 0.9, 3.5], mamad: [10.0, 5.9, 6.8, 3.8], bath: [8.3, 7.95, 10.4, 6.5],
-  bed2: [9.3, 9.15, 6.6, 11.2], family: [5.0, 7.0, 0.8, 4.2], play: [5.6, 2.9, 3.0, 0.0], studio: [6.6, 9.9, 10.2, 6.8], garden: [9.0, 21.8, 4.5, 16.0],
-  deck: [6.0, 17.3, 8.0, 22.0], foyer: [2.3, 10.4, 7.5, 14.5], lobby: [-2.6, 10.3, 1.3, 10.3], court: [8.0, 2.9, 8.5, -1.0], dress: [4.3, 6.2, 0.2, 6.4],
-  wc: [4.3, 9.0, 3.6, 7.4], bbath1: [6.6, 5.9, 7.2, 3.4], bbath2: [9.4, 5.9, 9.8, 3.4], service: [3.4, 9.8, 4.5, 11.5], storage: [2.2, 10.0, 0.5, 11.2],
-  bhall: [4.6, 8.2, 6.5, 8.0], hall: [5.3, 6.2, 5.3, 10.0],
+  lobby: [-2.6, 10.3, 1.3, 10.3], foyer: [5.3, 9.75, 2.0, 16.4], great: [3.3, 12.35, 9.8, 16.0], kitchen: [6.3, 12.5, 0.4, 14.2],
+  master: [5.75, 5.35, 2.6, 0.6], mbath: [1.4, 4.85, 1.5, 3.47], dress: [4.4, 5.95, 0.3, 6.45], mamad: [10.2, 6.0, 6.4, 3.6],
+  bath: [9.85, 7.45, 7.27, 7.75], bed2: [9.3, 9.15, 6.2, 11.3], deck: [10.2, 17.2, 2.0, 18.6], garden: [10.0, 22.0, 3.5, 16.2],
+  hall: [5.3, 6.2, 5.3, 10.0], wc: [4.4, 9.25, 3.4, 7.9],
+  family: [5.25, 7.05, 0.3, 3.4], play: [5.75, 2.2, 2.6, -0.3], studio: [6.75, 10.0, 10.4, 6.4], bbath1: [6.6, 5.9, 7.2, 3.4],
+  bbath2: [9.9, 6.05, 9.0, 3.35], service: [2.95, 9.75, 5.3, 11.5], storage: [2.4, 9.7, 0.2, 11.6], bhall: [4.6, 8.2, 6.5, 8.0], court: [6.6, 2.8, 10.3, -0.9],
 };
 function teleport(id) {
   const r = ROOMS.find((q) => q.id === id); if (!r) return;
+  if (mode === 'doll') { flyIn(id); return; }
   const [x, z, tx, tz] = SPOTS[id] || [r.cx, r.cz, r.cx, r.cz - 1];
   const yaw = Math.atan2(-(tx - x), -(tz - z));
   player.x = x; player.z = z; player.feet = r.lvl === 'B' ? BY : GY; camY = player.feet + EYE;
-  walkQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.06, yaw, 0, 'YXZ'));
-  if (mode !== 'walk') setMode('walk'); else { camera.quaternion.copy(walkQ); camera.position.set(x, camY, z); }
+  walkQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0, 'YXZ'));
+  if (mode !== 'walk') { mode = 'x'; setMode('walk'); } else { camera.quaternion.copy(walkQ); camera.position.set(x, camY, z); }
+  document.dispatchEvent(new CustomEvent('tourlevel', { detail: r.lvl === 'B' ? 'B' : 'G' }));
+}
+// בחירת חדר בדגם: הקשה על החדר נכנסת אליו
+function roomAtScreen(cx, cy) {
+  const rc = new THREE.Raycaster(), ndc = new THREE.Vector2(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1);
+  rc.setFromCamera(ndc, camera);
+  const o = exOff(), levels = dollLevel === 'X' ? [['G', GY + EXPL, o.x, o.z], ['B', BY, 0, 0]] : dollLevel === 'B' ? [['B', BY, 0, 0]] : [['G', GY, 0, 0]];
+  for (const [lvl, y, dx, dz] of levels) {
+    const hit = new THREE.Vector3(); if (!rc.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -y), hit)) continue;
+    hit.x -= dx; hit.z -= dz;
+    const r = ROOMS.find((q) => (q.lvl === lvl || (lvl === 'G' && q.id === 'stairs')) && q.rects.some((s) => inR(hit.x, hit.z, s)));
+    if (r && r.id !== 'stairs') return r;
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------- סיור מודרך לפי מסלול הקונה
@@ -1084,7 +1247,7 @@ function tourStart() {
   if (!tour.curve) buildTourCurve();
   plc.unlock();
   mode = 'tour'; orbit.enabled = false; G.ceilG.visible = G.ceilB.visible = G.roof.visible = true; G.labels.visible = false; setLevel('G');
-  scene.background = PANO[TIMES[timeKey].pano];
+  scene.background = PANO[TIMES[timeKey].pano]; fitFov();
   Object.assign(tour, { active: true, paused: false, u: 0, next: 0, hold: 0, phase: 'move', feet: GY, rise: 0 });
   const p = tour.curve.getPointAt(0), q = tour.curve.getPointAt(0.004);
   tour.yaw = Math.atan2(-(q.x - p.x), -(q.z - p.z)); camY = GY + EYE;
@@ -1108,9 +1271,9 @@ function tourUpdate(dt) {
   if (tour.phase === 'rise') {
     tour.rise += dt / 4.5; const k = Math.min(1, tour.rise), e = k * k * (3 - 2 * k);
     camera.position.lerpVectors(tour.from, tour.to, e);
-    camera.lookAt(new THREE.Vector3().lerpVectors(tour.lookFrom, new THREE.Vector3(5.2, 0, 9.5), e));
+    camera.lookAt(new THREE.Vector3().lerpVectors(tour.lookFrom, tour.lookTo, e));
     if (k > 0.55 && !tour.showedG) { tour.showedG = true; setLevel('G'); renderer.shadowMap.needsUpdate = true; }
-    if (k >= 1) { tour.active = false; dollLevel = 'G'; mode = 'x'; setMode('doll'); document.dispatchEvent(new CustomEvent('tourdone')); }
+    if (k >= 1) { tour.active = false; dollLevel = 'G'; mode = 'x'; setMode('doll', true); document.dispatchEvent(new CustomEvent('tourdone')); }
     return;
   }
   if (tour.phase === 'hold') {
@@ -1131,7 +1294,7 @@ function tourUpdate(dt) {
     }
     if (tour.u >= 1) {
       tour.phase = 'rise'; tour.rise = 0; tour.showedG = false;
-      tour.from = camera.position.clone(); tour.to = new THREE.Vector3(-2.5, 17, 25);
+      tour.from = camera.position.clone(); [tour.to, tour.lookTo] = dollView('G');
       tour.lookFrom = camera.position.clone().add(new THREE.Vector3(-Math.sin(tour.yaw), -0.2, -Math.cos(tour.yaw)));
       G.ceilG.visible = G.ceilB.visible = G.roof.visible = false; setLevel('B'); renderer.shadowMap.needsUpdate = true;
       document.dispatchEvent(new CustomEvent('tourstop', { detail: { name: 'כל הדירה', area: 250, line: 'קומת כניסה 151 מ״ר, מרתף 99 מ״ר וגינה פרטית 122 מ״ר.', index: 0, count: 0 } }));
@@ -1146,7 +1309,7 @@ function tourUpdate(dt) {
 }
 
 // ---------------------------------------------------------------- HUD
-let lastRoom;
+let lastRoom, lastLvl = null;
 function currentRoom() {
   const x = camera.position.x, z = camera.position.z, feet = mode === 'tour' ? tour.feet : player.feet;
   if (stairH(x, z) !== null) return ROOMS.find((r) => r.id === 'stairs');
@@ -1154,7 +1317,11 @@ function currentRoom() {
   return ROOMS.find((r) => r.lvl === lvl && r.rects.some((q) => inR(x, z, q))) || null;
 }
 function updateHud() {
-  const r = mode === 'doll' ? null : currentRoom();
+  const r = mode === 'doll' || mode === 'fly' ? null : currentRoom();
+  if (mode === 'walk' || mode === 'tour') {
+    const lv = (mode === 'tour' ? tour.feet : player.feet) < -2 ? 'B' : 'G';
+    if (lv !== lastLvl) { lastLvl = lv; document.dispatchEvent(new CustomEvent('tourlevel', { detail: lv })); }
+  } else lastLvl = null;
   if (r === lastRoom) return; lastRoom = r;
   document.dispatchEvent(new CustomEvent('tourroom', { detail: r ? {
     name: r.name, area: r.area ? fmtArea(r.area) + (r.note ? ` · ${r.note}` : '') : (r.note || ''),
@@ -1178,8 +1345,19 @@ function frame() {
     if (len > 0.02) { const k = Math.min(1, len); mx = mx / len * sp * k; mz = mz / len * sp * k; for (let i = 0; i < 4; i++) { tryMove(player.x + mx / 4, player.z); tryMove(player.x, player.z + mz / 4); } }
     camY += (player.feet + EYE - camY) * Math.min(1, dt * 10);
     camera.position.set(player.x, camY, player.z);
+    if (glide) {   // הליכה אוטומטית לנקודה שהוקשה
+      const gx = glide.x - player.x, gz = glide.z - player.z, d = Math.hypot(gx, gz), st = Math.min(d, 1.6 * dt);
+      const ox = player.x, oz = player.z;
+      if (d < 0.12) glide = null; else { tryMove(player.x + gx / d * st, player.z); tryMove(player.x, player.z + gz / d * st); }
+      if (glide && Math.hypot(player.x - ox, player.z - oz) < st * 0.25) { if (++glide.stall > 6) glide = null; }
+      camera.position.set(player.x, camY, player.z);
+    }
   } else if (mode === 'tour') tourUpdate(dt);
-  else orbit.update();
+  else if (mode === 'fly') flyUpdate(dt);
+  else if (mode === 'doll') {
+    orbit.update();
+    if (dollLevel === 'G') { const dd = camera.position.distanceTo(orbit.target); if (!exterior && dd > 40) setExterior(true); else if (exterior && dd < 35) setExterior(false); }
+  }
   updateHud();
   document.dispatchEvent(new CustomEvent('tourheading', { detail: new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ').y }));
   renderer.render(scene, camera);
@@ -1188,7 +1366,7 @@ function frame() {
   if (fpsN === 90) { if (!lowered && fpsAcc / fpsN > 1 / 34) { lowered = true; renderer.setPixelRatio(Math.max(1, renderer.getPixelRatio() * 0.75)); } fpsAcc = 0; fpsN = 0; }
   requestAnimationFrame(frame);
 }
-addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; fitFov(); renderer.setSize(innerWidth, innerHeight); });
 
 // ---------------------------------------------------------------- מדידה (בדיקת מידות מול התוכנית)
 function measure(x1, x2, z1, z2, lvl) {
@@ -1228,17 +1406,19 @@ export async function start(onProgress = () => {}) {
   applyStyle('modern');
   buildArchitecture();
   buildFurniture();
+  try { await Promise.race([document.fonts.load('700 42px Heebo'), new Promise((r) => setTimeout(r, 2500))]); } catch (e) { /* בלי חיבור: גופן גיבוי */ }
   ROOMS.forEach((r) => {
-    if (!r.area || ['bhall', 'storage', 'service', 'hall', 'wc'].includes(r.id)) return;
-    const sp = label(r.name, fmtArea(r.area)); sp.position.set(r.cx, (r.lvl === 'B' ? BY : GY) + 2.0, r.cz); sp.userData.lvl = r.lvl; G.labels.add(sp);
+    if (!r.area || r.area < 6 || ['bhall', 'hall', 'wc'].includes(r.id)) return;
+    const sp = label(r.name.replace(' (מרתף)', ''), fmtArea(r.area)); sp.userData.big = r.area >= 11; sp.position.set(r.cx, (r.lvl === 'B' ? BY : GY) + 1.2, r.cz); sp.userData.lvl = r.lvl; sp.userData.y0 = sp.position.y; G.labels.add(sp);
   });
   G.labels.visible = false;
   buildLampLights();
-  [G.ground, G.base, G.out, G.roof, G.ceilG, G.ceilB, G.slab].forEach(mergeGroup);
+  [G.ground, G.base, G.out, G.roof, G.ceilG, G.ceilB, G.slab, G.trees, G.street].forEach(mergeGroup);
   applyTime('sunset');
+  fitFov();
   frame();
   return {
-    plc, setMode, setDollLevel, teleport, ROOMS, STYLES, TIMES,
+    plc, setMode, setDollLevel, teleport, flyOut, ROOMS, STYLES, TIMES, get dollLevel() { return dollLevel; },
     setStyle: applyStyle, setTime: applyTime, tourStart, tourStop, tourNext,
     tourPause: (p) => { tour.paused = p; }, get mode() { return mode; },
     setJoy: (x, y) => { joy.x = x; joy.y = y; },

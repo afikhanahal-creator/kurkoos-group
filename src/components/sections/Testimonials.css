@@ -481,12 +481,10 @@
   border-radius: var(--radius-pill);
 }
 
-/* touch screens: the same light while the card is in view (Testimonials.jsx adds .is-lit) */
-@media (hover: none), (pointer: coarse) {
-  .tc__card.is-lit .tc__liquid { opacity: 0.5; transform: translateY(30px) translateX(20px) rotate(-20deg) scale(1.2); }
-  .tc__card.is-lit .tc__glow { opacity: 1; }
-  .tc__card.is-lit .tc__shine { opacity: 1; animation: tc-shine 2.2s linear infinite; }
-}
+/* the light is on, without hover, on every device while the card is in view (Testimonials.jsx adds .is-lit) */
+.tc__card.is-lit .tc__liquid { opacity: 0.5; transform: translateY(30px) translateX(20px) rotate(-20deg) scale(1.2); }
+.tc__card.is-lit .tc__glow { opacity: 1; }
+.tc__card.is-lit .tc__shine { opacity: 1; animation: tc-shine 2.2s linear infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   .tc__card { transform: none; }

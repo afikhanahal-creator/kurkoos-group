@@ -64,14 +64,13 @@ export default function Testimonials() {
 
   const item = testimonials[i] || testimonials[0]
 
-  /* The card's light (red glow on top, turquoise wash, passing shine) shows on hover with a mouse. A phone has no hover,
-     so since the 16.10 design pass the effect was never seen there. On touch screens it now lights up while the card is in view. */
+  /* The card's light (red glow on top, turquoise wash, passing shine) used to need a hover, and since the 16.10 design pass
+     a phone never showed it. The owner wants it on without hover: it lights up on every device while the card is in view. */
   const cardRef = useRef(null)
   const [inView, setInView] = useState(false)
   useEffect(() => {
     const el = cardRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
-    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
     const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.45 })
     io.observe(el)
     return () => io.disconnect()

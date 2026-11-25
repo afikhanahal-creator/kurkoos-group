@@ -1124,11 +1124,12 @@ function setMode(m, keepCam = false) {
   document.dispatchEvent(new CustomEvent('tourmode', { detail: m }));
   document.dispatchEvent(new CustomEvent('tourlevel', { detail: m === 'doll' ? dollLevel : (player.feet < -2 ? 'B' : 'G') }));
 }
+const dollish = () => mode === 'doll' || (mode === 'fly' && fly.toDoll);   // גם באמצע מעוף בין קומות
 function setDollLevel(l) {
   dollLevel = l;
-  if (mode !== 'doll') { setMode('doll'); return; }
+  if (!dollish()) { setMode('doll'); return; }
   setExterior(false); setLevel(l);
-  const [p, t] = dollView(l); flyTo(p, t, 1.1, () => { mode = 'doll'; orbit.enabled = true; orbit.target.copy(t); orbit.update(); }, true);
+  const [p, t] = dollView(l); flyTo(p, t, 1.1, () => { mode = 'doll'; orbit.enabled = true; orbit.target.copy(t); orbit.update(); fitFov(); }, true);
   document.dispatchEvent(new CustomEvent('tourlevel', { detail: l }));
 }
 
@@ -1136,7 +1137,7 @@ function setDollLevel(l) {
 const fly = { t: 0, dur: 1, p0: new THREE.Vector3(), p1: new THREE.Vector3(), l0: new THREE.Vector3(), l1: new THREE.Vector3(), done: null, toDoll: false, mid: null };
 function lookPoint() { const d = new THREE.Vector3(); camera.getWorldDirection(d); return camera.position.clone().addScaledVector(d, mode === 'doll' ? camera.position.distanceTo(orbit.target) : 4); }
 function flyTo(p, l, dur, done, toDoll, mid) {
-  const wasDoll = mode === 'doll';
+  const wasDoll = mode === 'doll' || (mode === 'fly' && fly.toDoll);
   Object.assign(fly, { t: 0, dur, done, toDoll: !!toDoll, mid: mid || null, f0: camera.fov });
   fly.p0.copy(camera.position); fly.p1.copy(p); fly.l0.copy(lookPoint()); fly.l1.copy(l);
   plc.unlock(); orbit.enabled = false; mode = 'fly';
@@ -1187,7 +1188,7 @@ const SPOTS = {   // [x, z, x מבט, z מבט]
 };
 function teleport(id) {
   const r = ROOMS.find((q) => q.id === id); if (!r) return;
-  if (mode === 'doll') { flyIn(id); return; }
+  if (dollish()) { flyIn(id); return; }
   const [x, z, tx, tz] = SPOTS[id] || [r.cx, r.cz, r.cx, r.cz - 1];
   const yaw = Math.atan2(-(tx - x), -(tz - z));
   player.x = x; player.z = z; player.feet = r.lvl === 'B' ? BY : GY; camY = player.feet + EYE;
@@ -1418,7 +1419,7 @@ export async function start(onProgress = () => {}) {
   return {
     plc, setMode, setDollLevel, teleport, flyOut, ROOMS, STYLES, TIMES, get dollLevel() { return dollLevel; },
     setStyle: applyStyle, setTime: applyTime, tourStart, tourStop, tourNext,
-    tourPause: (p) => { tour.paused = p; }, get mode() { return mode; },
+    tourPause: (p) => { tour.paused = p; }, get mode() { return dollish() ? 'doll' : mode; },
     setJoy: (x, y) => { joy.x = x; joy.y = y; },
   };
 }

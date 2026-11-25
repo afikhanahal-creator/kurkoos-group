@@ -456,95 +456,97 @@ soft('bench_cush', 1.1, 0.06, 0.36, 3.97, 9.66, GY + 0.42, 0, 'fabric', 0.5, 0.0
 frame_photo('art_foyer', PH['misty_pines'][0], 3.97, 9.47, GY + 1.25, 0, 1.0, 0.7)
 put('potted_plant_04', 1.72, 11.15, GY, 0, height=1.4)
 put('wicker_basket_01', 5.35, 9.72, GY, 0, height=0.35)
-# --- יחידת הורים
-bed('mbed', 3.67, 1.9, GY, R90, 1.8, 2.0)
-for zz in (0.62, 3.18):
+# --- יחידת הורים (החדר 3.45 רוחב; המיטה עם הראש לקיר המערבי, חלון לחצר האנגלית במזרח)
+bed('mbed', 3.67, 3.35, GY, R90, 1.8, 2.0)
+for zz in (2.08, 4.62):
     put('ClassicNightstand_01', 2.84, zz, GY, R90, height=0.55)
     cyl(f'lampb{zz}', 0.06, 0.30, 2.84, zz, GY + 0.55, 'ceramic', 32, r2=0.08)
     cyl(f'lamps{zz}', 0.13, 0.20, 2.84, zz, GY + 0.85, 'linen', 32, r2=0.16)
-hard('rug_master', 2.4, 0.012, 3.0, 4.3, 1.9, GY, 0, 'rug_dark', 0.002)
-put('Ottoman_01', 5.0, 1.9, GY, R90, width=0.9)
-put('mid_century_lounge_chair', 5.35, 3.55, GY, -R90 - 0.6, width=0.8)
-put('potted_plant_01', 5.65, 0.35, GY, 0, height=1.2)
-frame_photo('art_master', PH['kloofendal_48d_partly_cloudy'][0], 2.575, 1.9, GY + 1.35, R90, 1.4, 0.95)
-put('standing_picture_frame_01', 2.84, 3.15, GY + 0.56, R90, height=0.2)
-# חדר ארונות במעבר: הדום ושטיח
-hard('rug_dress', 3.6, 0.01, 0.75, 2.6, 6.20, GY, 0, 'rug', 0.002)
+hard('rug_master', 2.4, 0.012, 3.0, 4.3, 3.35, GY, 0, 'rug_dark', 0.002)
+put('Ottoman_01', 5.0, 3.35, GY, R90, width=0.9)
+put('mid_century_lounge_chair', 5.3, 2.2, GY, -R90 + 0.5, width=0.8)
+put('potted_plant_01', 5.65, 5.2, GY, 0, height=1.2)
+frame_photo('art_master', PH['kloofendal_48d_partly_cloudy'][0], 2.575, 3.35, GY + 1.35, R90, 1.4, 0.95)
+frame_photo('art_master2', PH['misty_pines'][0], 4.0, 1.615, GY + 1.4, 0, 0.9, 0.65)
+put('standing_picture_frame_01', 2.84, 4.6, GY + 0.56, R90, height=0.2)
+# רצועת הארונות: שטיח רץ
+hard('rug_dress', 3.4, 0.01, 0.7, 2.4, 6.15, GY, 0, 'rug', 0.002)
 # חדר רחצה הורים
 towel('tw1', 1.20, 3.535, GY + 0.95, 0, 0.5, 0.6)
-put('anthurium_botany_01', 2.22, 3.85, GY + 0.87, 0, height=0.4)
 put('ceramic_vase_04' if os.path.exists(f'{A}/models/ceramic_vase_04') else 'ceramic_vase_01', 2.25, 3.75, GY + 0.87, 0, height=0.18)
-# ממ"ד כחדר עבודה
-hard('mamad_desk', 1.5, 0.035, 0.65, 7.8, 3.78, GY + 0.72, 0, 'oak', 0.004)
+# ממ"ד כחדר עבודה (הדלת נפתחת פנימה: הספה בקיר המזרחי)
+hard('mamad_desk', 1.5, 0.035, 0.65, 7.8, 3.96, GY + 0.72, 0, 'oak', 0.004)
 for dx in (-0.7, 0.7):
-    hard(f'mdl{dx}', 0.04, 0.72, 0.55, 7.8 + dx, 3.78, GY, 0, 'black', 0.002)
-put('GreenChair_01', 7.8, 4.4, GY, math.pi, height=0.85)
-put('desk_lamp_arm_01', 8.35, 3.65, GY + 0.755, 0.6, height=0.45)
-put('book_encyclopedia_set_01', 7.4, 3.62, GY + 0.755, 0, width=0.35)
-soft('mamad_sofa', 1.9, 0.42, 0.9, 6.71, 4.9, GY, R90, 'fabric', 0.3, 0.04)
-soft('mamad_back', 1.9, 0.45, 0.2, 6.36, 4.9, GY + 0.35, R90, 'fabric', 0.4, 0.05)
-put('throw_pillows_01', 6.75, 4.9, GY + 0.42, R90, width=1.2)
-put('potted_plant_02', 10.1, 3.85, GY, 0, height=1.1)
-frame_photo('art_mamad', PH['golden_bay'][0], 6.275, 4.9, GY + 1.35, R90, 1.2, 0.8)
+    hard(f'mdl{dx}', 0.04, 0.72, 0.55, 7.8 + dx, 3.96, GY, 0, 'black', 0.002)
+put('GreenChair_01', 7.8, 4.58, GY, math.pi, height=0.85)
+put('desk_lamp_arm_01', 8.35, 3.83, GY + 0.755, 0.6, height=0.45)
+put('book_encyclopedia_set_01', 7.4, 3.80, GY + 0.755, 0, width=0.35)
+soft('mamad_sofa', 1.7, 0.42, 0.9, 9.98, 5.0, GY, -R90, 'fabric', 0.3, 0.04)
+soft('mamad_back', 1.7, 0.45, 0.2, 10.36, 5.0, GY + 0.35, -R90, 'fabric', 0.4, 0.05)
+put('throw_pillows_01', 9.95, 5.0, GY + 0.42, -R90, width=1.2)
+put('potted_plant_02', 6.62, 3.98, GY, 0, height=1.1)
+frame_photo('art_mamad', PH['golden_bay'][0], 6.275, 4.6, GY + 1.35, R90, 1.2, 0.8)
 # חדר רחצה כללי
-towel('tw2', 9.6, 8.715, GY + 1.05, math.pi, 0.5, 0.7)
-put('calathea_orbifolia_01', 8.0, 8.55, GY + 0.87, 0, height=0.35)
+towel('tw2', 9.62, 8.925, GY + 1.05, math.pi, 0.5, 0.7)
+put('calathea_orbifolia_01', 7.75, 8.75, GY + 0.87, 0, height=0.35)
 # חדר שינה 2
-bed('bed2', 7.21, 10.5, GY, R90, 1.6, 2.0)
-put('ClassicNightstand_01', 6.40, 11.48, GY, R90, height=0.55)
-hard('desk2', 1.2, 0.035, 0.6, 10.16, 9.8, GY + 0.72, -R90, 'oak', 0.004)
-put('GreenChair_01', 9.55, 9.8, GY, R90, height=0.85)
-frame_photo('art_bed2', PH['lake_pier'][1], 6.135, 10.5, GY + 1.35, R90, 0.7, 1.0)
-hard('rug_bed2', 1.8, 0.012, 2.6, 8.3, 10.4, GY, 0, 'rug', 0.002)
+bed('bed2', 7.21, 10.63, GY, R90, 1.6, 2.0)
+put('ClassicNightstand_01', 6.40, 11.61, GY, R90, height=0.55)
+hard('desk2', 1.2, 0.035, 0.6, 10.16, 9.93, GY + 0.72, -R90, 'oak', 0.004)
+put('GreenChair_01', 9.55, 9.93, GY, R90, height=0.85)
+frame_photo('art_bed2', PH['lake_pier'][1], 6.135, 10.63, GY + 1.35, R90, 0.7, 1.0)
+hard('rug_bed2', 1.8, 0.012, 2.6, 8.3, 10.53, GY, 0, 'rug', 0.002)
 # שירותי אורחים
-put('ceramic_vase_01', 3.57, 8.45, GY + 0.87, 0, height=0.16)
+put('ceramic_vase_01', 4.4, 8.15, GY + 0.87, 0, height=0.16)
 
 # ================================================================== מרתף
-# מרחב משפחה ומיני בר
-hard('rug_family', 3.0, 0.012, 2.6, 2.6, 5.2, BY, 0, 'rug', 0.002)
-put('sofa_02', 0.95, 5.2, BY, R90, width=2.4)
-put('coffee_table_round_01', 2.5, 5.2, BY, 0, width=0.9)
-put('mid_century_lounge_chair', 3.9, 3.95, BY, -R90 - 0.7, width=0.8)
-hard('media_b', 2.2, 0.42, 0.42, 5.28, 5.2, BY + 0.2, -R90, 'walnut', 0.006)
-hard('tv_family', 1.60, 0.92, 0.035, 5.47, 5.2, BY + 1.0, -R90, 'screen', 0.004)
+# מרחב משפחה: ספה לקיר המערבי מול טלוויזיה, פינת קריאה ליד הוויטרינה לחצר האנגלית, מיני בר בגומחה
+hard('rug_family', 3.0, 0.012, 2.6, 2.7, 5.75, BY, 0, 'rug', 0.002)
+put('sofa_02', 0.95, 5.75, BY, R90, width=2.4)
+put('coffee_table_round_01', 2.55, 5.75, BY, 0, width=0.9)
+hard('media_b', 2.2, 0.42, 0.42, 5.92, 5.75, BY + 0.2, -R90, 'walnut', 0.006)
+hard('tv_family', 1.60, 0.92, 0.035, 6.12, 5.75, BY + 1.0, -R90, 'screen', 0.004)
 put('potted_plant_01', 0.45, 6.85, BY, 0, height=1.3)
-for zz in (1.8, 2.6):
-    put('bar_chair_round_01', 0.95, zz, BY, R90, height=0.95)
-put('wine_bottles_01', 0.25, 2.9, BY + 0.92, 0, height=0.33)
-frame_photo('art_family', PH['spaichingen_hill'][0], 0.015, 5.2, BY + 1.3, R90, 1.6, 1.05)
+put('mid_century_lounge_chair', 4.35, 2.3, BY, -R90 + 0.6, width=0.8)
+put('side_table_tall_01', 4.9, 2.95, BY, 0, height=0.6)
+for zz in (2.0, 2.7):
+    put('bar_chair_round_01', 3.55, zz, BY, R90, height=0.95)
+put('wine_bottles_01', 2.75, 2.92, BY + 0.92, 0, height=0.33)
+frame_photo('art_family', PH['spaichingen_hill'][0], 0.015, 5.75, BY + 1.3, R90, 1.6, 1.05)
 # חדר משחקים
-hard('rug_play', 2.6, 0.012, 2.6, 4.3, 1.3, BY, 0, 'rug', 0.002)
-hard('kids_table', 0.9, 0.03, 0.6, 4.3, 1.2, BY + 0.5, 0, 'oak', 0.004)
-for i, (cx, cz, m) in enumerate(((3.9, 0.7, 'sage'), (4.7, 0.7, 'throw'), (3.9, 1.7, 'headboard'), (4.7, 1.7, 'sage'))):
+hard('rug_play', 2.6, 0.012, 2.6, 4.3, -0.5, BY, 0, 'rug', 0.002)
+hard('kids_table', 0.9, 0.03, 0.6, 4.3, -0.6, BY + 0.5, 0, 'oak', 0.004)
+for i, (cx, cz, m) in enumerate(((3.9, -1.1, 'sage'), (4.7, -1.1, 'throw'), (3.9, -0.1, 'headboard'), (4.7, -0.1, 'sage'))):
     hard(f'kc{i}', 0.32, 0.30, 0.32, cx, cz, BY, 0, 'oak', 0.004)
     soft(f'kcs{i}', 0.32, 0.05, 0.32, cx, cz, BY + 0.30, 0, m, 0.5, 0.05)
-soft('beanbag1', 0.75, 0.45, 0.75, 5.4, 0.05, BY, 0, 'sage', 1.0, 0.8, 3, wrinkle=0.01)
-soft('beanbag2', 0.75, 0.45, 0.75, 5.45, 2.55, BY, 0, 'throw', 1.0, 0.8, 3, wrinkle=0.01)
-put('wicker_basket_01', 2.85, -0.05, BY, 0, height=0.38)
-put('Ottoman_01', 3.2, 2.75, BY, 0, width=0.6)
-put('potted_plant_04', 5.7, -0.1, BY, 0, height=1.1)
-frame_photo('art_play', PH['cape_hill'][0], 2.575, 1.3, BY + 1.3, R90, 1.2, 0.8)
+soft('beanbag1', 0.75, 0.45, 0.75, 5.4, -1.7, BY, 0, 'sage', 1.0, 0.8, 3, wrinkle=0.01)
+soft('beanbag2', 0.75, 0.45, 0.75, 3.15, 0.85, BY, 0, 'throw', 1.0, 0.8, 3, wrinkle=0.01)
+put('wicker_basket_01', 2.85, -1.85, BY, 0, height=0.38)
+put('Ottoman_01', 4.5, 0.95, BY, 0, width=0.6)
+frame_photo('art_play', PH['cape_hill'][0], 2.575, -0.4, BY + 1.3, R90, 1.2, 0.8)
 # סטודיו
-hard('studio_desk', 1.8, 0.035, 0.8, 10.06, 8.3, BY + 0.72, -R90, 'oak', 0.004)
+hard('studio_desk', 1.8, 0.035, 0.8, 10.06, 8.58, BY + 0.72, -R90, 'oak', 0.004)
 for dz in (-0.8, 0.8):
-    hard(f'sdl{dz}', 0.7, 0.72, 0.04, 10.06, 8.3 + dz, BY, 0, 'black', 0.002)
-put('GreenChair_01', 9.4, 8.3, BY, R90, height=0.85)
-put('desk_lamp_arm_01', 10.25, 7.6, BY + 0.755, 0, height=0.45)
-put('mid_century_lounge_chair', 7.2, 7.0, BY, R90 + 0.5, width=0.8)
-put('side_table_tall_01', 7.0, 7.85, BY, 0, height=0.6)
-put('pachira_aquatica_01', 6.65, 9.95, BY, 0, height=1.6)
-hard('studio_shelf', 2.4, 2.2, 0.35, 8.2, 10.18, BY, math.pi, 'oak', 0.004)
+    hard(f'sdl{dz}', 0.7, 0.72, 0.04, 10.06, 8.58 + dz, BY, 0, 'black', 0.002)
+put('GreenChair_01', 9.4, 8.58, BY, R90, height=0.85)
+put('desk_lamp_arm_01', 10.25, 7.88, BY + 0.755, 0, height=0.45)
+soft('studio_sofa', 2.0, 0.42, 0.9, 8.3, 7.02, BY, 0, 'fabric', 0.3, 0.04)
+soft('studio_back', 2.0, 0.45, 0.2, 8.3, 6.66, BY + 0.35, 0, 'fabric', 0.4, 0.05)
+put('throw_pillows_01', 8.3, 7.0, BY + 0.42, 0, width=1.3)
+put('coffee_table_round_01', 8.3, 8.2, BY, 0, width=0.8)
+put('pachira_aquatica_01', 6.65, 10.25, BY, 0, height=1.6)
+hard('studio_shelf', 2.4, 2.2, 0.35, 8.2, 10.46, BY, math.pi, 'oak', 0.004)
 for i, xx in enumerate((7.4, 8.2, 9.0)):
     for j, hh in enumerate((0.5, 1.1, 1.7)):
         if (i + j) % 2 == 0:
-            put('book_encyclopedia_set_01', xx, 10.12, BY + hh, math.pi, width=0.45)
+            put('book_encyclopedia_set_01', xx, 10.40, BY + hh, math.pi, width=0.45)
         else:
-            put('ceramic_vase_02', xx, 10.12, BY + hh, 0, height=0.22)
-hard('rug_studio', 2.4, 0.012, 2.0, 8.2, 7.6, BY, 0, 'rug_dark', 0.002)
-frame_photo('art_studio', PH['rosendal_plains_2'][0], 8.0, 6.265, BY + 1.35, 0, 1.6, 1.0)
+            put('ceramic_vase_02', xx, 10.40, BY + hh, 0, height=0.22)
+hard('rug_studio', 2.6, 0.012, 2.0, 8.3, 8.1, BY, 0, 'rug_dark', 0.002)
+frame_photo('art_studio', PH['rosendal_plains_2'][0], 8.3, 6.545, BY + 1.45, 0, 1.6, 1.0)
 # חדרי רחצה במרתף
-towel('tw3', 7.05, 6.125, BY + 1.0, math.pi)
-towel('tw4', 9.0, 6.125, BY + 1.0, math.pi)
+towel('tw3', 6.6, 3.655, BY + 1.0, 0)
+towel('tw4', 8.95, 6.405, BY + 1.0, math.pi)
 
 # ================================================================== חוץ: דק, גינה, עצים מעבר לגדר
 put('outdoor_table_chair_set_01', 3.2, 18.25, GY, 0, width=2.2)
@@ -565,9 +567,9 @@ for i, (x, z) in enumerate(((0.3, 22.8), (3.0, 22.9), (8.0, 22.9), (11.0, 22.8),
 put('planter_box_01', 10.3, 16.95, GY, 0, width=0.9)
 put('potted_plant_02', 0.3, 16.95, GY, 0, height=1.0)
 # חצר אנגלית
-put('island_tree_01', 9.2, 0.6, BY + 0.55, 0, height=3.2)
-put('shrub_02', 10.2, -0.6, BY, 0, height=1.2)
-put('shrub_01', 10.2, 2.4, BY, 0, height=1.3)
+put('island_tree_01', 9.2, 0.5, BY + 0.55, 0, height=3.2)
+put('shrub_02', 10.2, -0.05, BY, 0, height=1.2)
+put('shrub_01', 10.2, 2.7, BY, 0, height=1.3)
 
 # ------------------------------------------------------------------ אור: שמש של אחר הצהריים + שמיים ונוף עיר אמיתי (HDRI)
 world = bpy.data.worlds.get('w') or bpy.data.worlds.new('w')
@@ -609,11 +611,11 @@ so.rotation_euler = d.to_track_quat('Z', 'Y').to_euler()
 
 # ------------------------------------------------------------------ תאורה פנימית (כמו בצילום נדל"ן: האורות דולקים)
 ROOM_LIGHTS = [  # x1, x2, z1, z2, רמה
-    (0.0, 10.46, 11.99, 16.44, 'G'), (1.38, 5.87, 9.45, 11.99, 'G'), (4.72, 7.17, 5.75, 8.74, 'G'), (2.56, 6.01, 0.0, 5.65, 'G'),
-    (0.0, 2.46, 3.47, 5.65, 'G'), (0.0, 4.62, 5.75, 7.25, 'G'), (6.26, 10.50, 3.45, 6.20, 'G'), (7.27, 10.46, 6.40, 8.74, 'G'),
-    (6.12, 10.46, 8.94, 11.74, 'G'), (3.32, 4.62, 7.35, 9.35, 'G'), (0.0, 5.49, 3.28, 7.25, 'B'), (0.0, 2.46, 1.20, 3.28, 'B'),
-    (2.56, 6.01, -0.37, 3.18, 'B'), (6.25, 10.46, 6.25, 10.36, 'B'), (6.25, 7.85, 3.35, 6.15, 'B'), (8.86, 10.46, 3.35, 6.15, 'B'),
-    (3.22, 5.49, 7.35, 9.35, 'B'), (2.71, 5.49, 9.45, 11.66, 'B'), (0.0, 2.61, 9.45, 11.74, 'B'),
+    (0.0, 10.46, 11.99, 16.44, 'G'), (1.38, 5.87, 9.45, 11.99, 'G'), (4.72, 7.17, 6.61, 8.95, 'G'), (2.56, 6.01, 1.60, 5.75, 'G'),
+    (0.0, 2.46, 3.47, 5.65, 'G'), (0.0, 4.62, 5.75, 7.25, 'G'), (6.26, 10.50, 3.63, 6.38, 'G'), (7.27, 10.46, 6.61, 8.95, 'G'),
+    (6.12, 10.46, 9.07, 11.87, 'G'), (3.32, 4.62, 7.35, 9.35, 'G'), (0.0, 6.15, 3.28, 7.25, 'B'), (2.56, 6.01, 1.60, 3.28, 'B'),
+    (2.56, 6.01, -2.15, 1.40, 'B'), (6.25, 10.46, 6.53, 10.64, 'B'), (6.25, 8.26, 3.63, 6.43, 'B'), (8.40, 10.46, 3.63, 6.43, 'B'),
+    (3.22, 6.15, 7.25, 8.40, 'B'), (2.71, 6.15, 9.45, 10.64, 'B'), (3.32, 4.79, 8.50, 9.35, 'B'),
 ]
 for i, (x1, x2, z1, z2, lvl) in enumerate(ROOM_LIGHTS):
     area = (x2 - x1) * (z2 - z1)
@@ -625,7 +627,7 @@ for i, (x1, x2, z1, z2, lvl) in enumerate(ROOM_LIGHTS):
     lo = bpy.data.objects.new(f'room{i}', li)
     lo.location = W((x1 + x2) / 2, (z1 + z2) / 2, (BY if lvl == 'B' else GY) + NET - 0.03)
     scene.collection.objects.link(lo)
-for i, (x, z) in enumerate(((2.84, 0.62), (2.84, 3.18), (6.40, 11.48))):   # מנורות לילה דולקות
+for i, (x, z) in enumerate(((2.84, 2.08), (2.84, 4.62), (6.40, 11.61))):   # מנורות לילה דולקות
     li = bpy.data.lights.new(f'lamp{i}', 'POINT')
     li.energy = 18
     li.shadow_soft_size = 0.08
@@ -639,17 +641,18 @@ CAMS = [
     ('living', 'סלון', 'G', (3.3, 12.35), (9.8, 16.0)),
     ('kitchen', 'מטבח ופינת אוכל', 'G', (6.3, 12.5), (0.4, 14.2)),
     ('foyer', 'מבואת כניסה', 'G', (5.3, 9.75), (2.0, 16.4)),
-    ('master', 'חדר שינה הורים', 'G', (5.75, 5.35), (2.6, 0.6)),
-    ('mbath', 'חדר רחצה הורים', 'G', (1.20, 5.55), (2.1, 3.47)),
-    ('dress', 'חדר ארונות', 'G', (4.45, 6.05), (0.2, 6.6)),
-    ('mamad', 'ממ"ד / חדר עבודה', 'G', (10.2, 6.0), (6.4, 3.6)),
-    ('bath', 'חדר רחצה', 'G', (9.85, 7.45), (7.27, 7.75)),
-    ('bed2', 'חדר שינה', 'G', (9.30, 9.15), (6.2, 11.3)),
+    ('master', 'חדר שינה הורים', 'G', (5.7, 5.5), (2.7, 2.0)),
+    ('mbath', 'חדר רחצה הורים', 'G', (1.75, 5.5), (1.3, 3.47)),
+    ('dress', 'חדר ארונות', 'G', (5.6, 6.2), (0.2, 6.35)),
+    ('mamad', 'ממ"ד / חדר עבודה', 'G', (6.6, 6.2), (10.3, 3.8)),
+    ('bath', 'חדר רחצה', 'G', (10.2, 7.75), (7.3, 7.95)),
+    ('bed2', 'חדר שינה', 'G', (9.30, 9.30), (6.2, 11.45)),
     ('garden', 'דק וגינה', 'G', (10.0, 22.0), (3.5, 16.2)),
-    ('family', 'מרחב משפחה', 'B', (5.25, 7.05), (0.3, 3.4)),
-    ('play', 'חדר משחקים', 'B', (5.75, 3.0), (2.6, -0.3)),
-    ('studio', 'סטודיו', 'B', (6.5, 10.1), (10.4, 6.4)),
-    ('bbath', 'חדר רחצה במרתף', 'B', (9.9, 6.05), (9.0, 3.35)),
+    ('family', 'מרחב משפחה', 'B', (5.8, 7.0), (0.3, 4.2)),
+    ('bar', 'פינת קריאה ומיני בר', 'B', (3.3, 4.6), (4.6, 1.6)),
+    ('play', 'חדר משחקים', 'B', (2.85, 1.15), (6.0, -1.7)),
+    ('studio', 'סטודיו', 'B', (6.6, 9.75), (10.3, 6.7)),
+    ('bbath', 'חדר רחצה במרתף', 'B', (9.9, 6.2), (9.2, 3.63)),
 ]
 for key, _, lvl, (cx, cz), (tx, tz) in CAMS:
     cam = bpy.data.cameras.new('cam_' + key)
@@ -716,7 +719,7 @@ if MODE == 'final' and os.environ.get('TOP', '1') == '1':
     scene.cycles.samples = 64
     views = {}
     HIDE_ALWAYS = ('G_ceil', 'B_ceil', 'ROOFSLAB', 'UPPER', 'UPPER_glass')
-    for lvl, (x1, x2, z1, z2) in (('ground', (-1.6, 14.6, -2.2, 22.9)), ('basement', (-1.6, 12.6, -2.2, 12.9))):
+    for lvl, (x1, x2, z1, z2) in (('ground', (-1.6, 14.6, -2.2, 22.9)), ('basement', (-1.6, 12.6, -3.2, 11.8))):
         for ob in bpy.data.objects:
             hide = ob.name in HIDE_ALWAYS or ob.name.startswith('room')
             if lvl == 'basement':

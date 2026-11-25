@@ -265,7 +265,7 @@
     var needle = $('#needle');
     document.addEventListener('tourheading', function (e) { needle.setAttribute('transform', 'rotate(' + (e.detail * 180 / Math.PI).toFixed(1) + ')'); });
     // חדרים כצ'יפים, לפי קומה
-    var SKIP = { stairs: 1, lobby: 1, hall: 1, bhall: 1 };
+    var SKIP = { stairs: 1, lobby: 1, hall: 1, storage: 1 };
     $$('.chips.rooms').forEach(function (box) {
       [['G', 'קומת כניסה'], ['B', 'מרתף']].forEach(function (fl) {
         var h = document.createElement('div'); h.className = 'fl'; h.textContent = fl[1]; box.appendChild(h);

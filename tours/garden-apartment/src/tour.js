@@ -143,7 +143,7 @@ const M = {
   wood: std({ roughness: 0.55 }), woodDark: std({ roughness: 0.5 }), cabinet: std({ roughness: 0.35 }), counter: std({ roughness: 0.15 }),
   sofa: std({ roughness: 1 }), sofaDark: std({ roughness: 1 }), bedding: std({ roughness: 1 }), throw: std({ roughness: 1 }), accent: std({ roughness: 1 }),
   accent2: std({ roughness: 1 }), rug: std({ roughness: 1 }), headboard: std({ roughness: 1 }), metal: std({}), chrome: std({ color: 0xdedede, roughness: 0.18, metalness: 1, envMapIntensity: 0.6 }), steel: std({ color: 0x8e9194, roughness: 0.5, metalness: 0.5, envMapIntensity: 0.4 }),
-  ceramic: std({ color: 0xf6f5f2, roughness: 0.12 }), mirror: std({ color: 0xa9afb2, roughness: 0.32, metalness: 0.7, envMapIntensity: 0.25 }),   // בלי שמיים בתוך המראה
+  ceramic: std({ color: 0xf6f5f2, roughness: 0.12 }), mirror: std({ color: 0xcfd6d9, roughness: 0.12, metalness: 0.25, envMapIntensity: 0.45 }),   // בלי שמיים בתוך המראה
   glass: std({ color: 0xe3eeef, roughness: 0.02, metalness: 0.15, transparent: true, opacity: 0.12, depthWrite: false, envMapIntensity: 1.8, side: THREE.DoubleSide }),
   drinkGlass: std({ color: 0xffffff, roughness: 0.03, metalness: 0.2, transparent: true, opacity: 0.25, depthWrite: false, envMapIntensity: 2 }),
   frame: std({ color: 0x2a2c2f, roughness: 0.35, metalness: 0.6 }), screen: std({ color: 0x070708, roughness: 0.12, metalness: 0.3 }),
@@ -1180,11 +1180,11 @@ function flyIn(id) {   // מהדגם אל נקודת הצילום של החדר
 // נקודות צילום בכל חדר: גובה עיניים, מצלמה ישרה (בלי הטיה), עדשה רחבה. אותן זוויות כמו בצילומי הבלנדר
 const SPOTS = {   // [x, z, x מבט, z מבט]
   lobby: [-2.6, 10.3, 1.3, 10.3], foyer: [5.3, 9.75, 2.0, 16.4], great: [3.3, 12.35, 9.8, 16.0], kitchen: [6.3, 12.5, 0.4, 14.2],
-  master: [5.7, 5.5, 2.7, 2.0], mbath: [1.4, 4.85, 2.3, 3.6], dress: [5.6, 6.15, 0.2, 6.4], mamad: [6.6, 6.2, 10.3, 3.8],
+  master: [5.7, 5.5, 2.7, 2.0], mbath: [1.5, 5.3, 1.2, 3.47], dress: [5.6, 6.15, 0.2, 6.4], mamad: [6.6, 6.2, 10.3, 3.8],
   bath: [10.2, 7.75, 7.3, 7.95], bed2: [9.3, 9.3, 6.2, 11.45], deck: [10.2, 17.2, 2.0, 18.6], garden: [10.0, 22.0, 3.5, 16.2],
-  hall: [5.9, 8.7, 5.9, 6.6], wc: [3.6, 9.1, 4.3, 7.4],
-  family: [5.8, 7.0, 0.3, 4.2], play: [5.7, 1.1, 2.7, -2.0], studio: [6.6, 10.35, 10.3, 6.6], bbath1: [6.5, 3.9, 8.2, 6.4],
-  bbath2: [9.9, 6.2, 9.2, 3.63], service: [4.5, 8.7, 3.4, 9.3], court: [6.6, 3.0, 10.3, -0.3],
+  hall: [5.9, 8.7, 5.9, 6.6], wc: [3.55, 8.7, 4.2, 7.4],
+  family: [5.8, 7.0, 0.3, 4.2], play: [2.9, 1.1, 6.0, -1.6], studio: [6.6, 9.75, 10.3, 6.7], bbath1: [6.5, 3.9, 8.2, 6.4],
+  bbath2: [9.9, 6.2, 9.2, 3.63], service: [3.5, 8.62, 4.6, 9.35], court: [6.6, 3.0, 10.3, -0.3],
 };
 function teleport(id) {
   const r = ROOMS.find((q) => q.id === id); if (!r) return;
